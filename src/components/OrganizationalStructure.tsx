@@ -55,8 +55,8 @@ export default function OrganizationalStructure({ generations, members }: Organi
   const finalMembersList = useMemo(() => {
     return filteredByGenMembers.filter(m => {
       const matchDivision = selectedDivision === 'all' || m.division === selectedDivision;
-      const matchSearch = m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          m.position.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchSearch = (m.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          (m.position ?? '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchDivision && matchSearch;
     });
   }, [filteredByGenMembers, selectedDivision, searchQuery]);
@@ -167,8 +167,8 @@ export default function OrganizationalStructure({ generations, members }: Organi
         {finalMembersList.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 pt-2">
             {finalMembersList.map((m) => {
-              const isBPH = m.division.includes('BPH');
-              const isKetum = m.position.includes('Ketua');
+              const isBPH = m.division?.includes('BPH') ?? false;
+              const isKetum = m.position?.includes('Ketua') ?? false;
               return (
                 <div 
                   key={m.id}
@@ -215,7 +215,7 @@ export default function OrganizationalStructure({ generations, members }: Organi
                         {m.name}
                       </h3>
                       <p className="text-xs text-slate-500 font-medium mt-1">
-                        {m.division}
+                        {m.division ?? '—'}
                       </p>
                     </div>
 

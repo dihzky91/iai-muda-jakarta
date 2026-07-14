@@ -15,10 +15,10 @@ export interface Member {
   generationId: number; // References Generation
   name: string;
   position: string;     // e.g., "Ketua", "Wakil Ketua", "Kepala Bidang Edukasi", "Staf Humas"
-  division: string;     // e.g., "Badan Pengurus Harian (BPH)", "Bidang Edukasi & Sertifikasi", "Bidang Hubungan Masyarakat", "Bidang Kewirausahaan & Kemitraan"
-  email?: string;
-  imageUrl?: string;
-  linkedinUrl?: string;
+  division: string | null; // e.g., "Badan Pengurus Harian (BPH)", "Bidang Edukasi & Sertifikasi"
+  email?: string | null;
+  imageUrl?: string | null;
+  linkedinUrl?: string | null;
 }
 
 export interface Event {
