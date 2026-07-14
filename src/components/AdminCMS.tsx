@@ -717,7 +717,6 @@ export default function AdminCMS({
                 {members.length}
               </span>
             </button>
-            )}
 
             <button
               onClick={() => setCmsTab('gallery')}

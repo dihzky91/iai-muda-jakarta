@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Generation, Member } from '../types';
 import { Mail, Linkedin, Users, Filter, Award, History, Search } from 'lucide-react';
 
@@ -60,6 +60,41 @@ export default function OrganizationalStructure({ generations, members }: Organi
       return matchDivision && matchSearch;
     });
   }, [filteredByGenMembers, selectedDivision, searchQuery]);
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    const el = scrollRef.current;
+    if (!el) return;
+    dragState.current = {
+      isDown: true,
+      startX: e.pageX - el.offsetLeft,
+      scrollLeft: el.scrollLeft,
+      moved: false,
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const el = scrollRef.current;
+    const ds = dragState.current;
+    if (!ds.isDown || !el) return;
+    e.preventDefault();
+    const x = e.pageX - el.offsetLeft;
+    const walk = (x - ds.startX) * 1.5;
+    if (Math.abs(walk) > 5) ds.moved = true;
+    el.scrollLeft = ds.scrollLeft - walk;
+  };
+
+  const handleDragEnd = () => {
+    dragState.current.isDown = false;
+  };
+
+  const handleDivClick = (e: React.MouseEvent) => {
+    if (dragState.current.moved) {
+      e.stopPropagation();
+    }
+  };
 
   return (
     <div className="space-y-12 py-8" id="organizational-structure-section">
@@ -129,8 +164,15 @@ export default function OrganizationalStructure({ generations, members }: Organi
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           
           {/* Division filters tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-            <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5 whitespace-nowrap bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
+          <div ref={scrollRef}
+               onMouseDown={handleMouseDown}
+               onMouseMove={handleMouseMove}
+               onMouseUp={handleDragEnd}
+               onMouseLeave={handleDragEnd}
+               onClickCapture={handleDivClick}
+               className="flex items-center gap-2 overflow-x-auto pb-2 snap-x snap-mandatory scrollbar-none cursor-grab active:cursor-grabbing select-none"
+               style={{ maskImage: 'linear-gradient(to right, transparent 6px, black 20px, black 90%, transparent 98%)', WebkitMaskImage: 'linear-gradient(to right, transparent 6px, black 20px, black 90%, transparent 98%)' }}>
+            <span className="shrink-0 text-xs font-bold text-slate-600 flex items-center gap-1.5 whitespace-nowrap bg-slate-50 px-3 py-2 rounded-xl border border-slate-100">
               <Filter className="h-3.5 w-3.5 text-blue-600" />
               <span>Saring Divisi:</span>
             </span>
@@ -138,7 +180,7 @@ export default function OrganizationalStructure({ generations, members }: Organi
               <button
                 key={div}
                 onClick={() => setSelectedDivision(div)}
-                className={`rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                className={`snap-start shrink-0 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
                   selectedDivision === div
                     ? 'bg-blue-50 text-blue-600 border-blue-200'
                     : 'bg-white hover:bg-slate-50 text-slate-500 border-slate-200'

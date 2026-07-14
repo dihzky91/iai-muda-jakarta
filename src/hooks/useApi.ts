@@ -39,6 +39,8 @@ export function useGenerations() {
 
   return { generations, loading, error };
 }
+
+export function useEvents(status?: string) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

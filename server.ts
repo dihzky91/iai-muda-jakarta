@@ -274,13 +274,34 @@ async function startServer() {
   app.get('/api/members', async (req, res) => {
     try {
       const generationId = req.query.generationId ? parseInt(req.query.generationId as string) : undefined;
-      let query = db.select().from(schema.members);
+      let query = db
+        .select({
+          id: schema.members.id,
+          generationId: schema.members.generationId,
+          positionId: schema.members.positionId,
+          name: schema.members.name,
+          division: schema.members.division,
+          email: schema.members.email,
+          imageUrl: schema.members.imageUrl,
+          linkedinUrl: schema.members.linkedinUrl,
+          bio: schema.members.bio,
+          isActive: schema.members.isActive,
+          createdAt: schema.members.createdAt,
+          updatedAt: schema.members.updatedAt,
+          position: schema.positions.name,
+        })
+        .from(schema.members)
+        .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id));
       
       if (generationId) {
         query = query.where(eq(schema.members.generationId, generationId)) as any;
       }
       
-      const members = await query.orderBy(schema.members.id);
+      const rows = await query.orderBy(schema.members.id);
+      const members = rows.map((row) => ({
+        ...row,
+        position: row.position || '',
+      }));
       res.json({ success: true, data: members });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to fetch members' });
@@ -289,11 +310,31 @@ async function startServer() {
 
   app.get('/api/members/:id', async (req, res) => {
     try {
-      const member = await db.select().from(schema.members).where(eq(schema.members.id, parseInt(req.params.id))).limit(1);
-      if (!member.length) {
+      const rows = await db
+        .select({
+          id: schema.members.id,
+          generationId: schema.members.generationId,
+          positionId: schema.members.positionId,
+          name: schema.members.name,
+          division: schema.members.division,
+          email: schema.members.email,
+          imageUrl: schema.members.imageUrl,
+          linkedinUrl: schema.members.linkedinUrl,
+          bio: schema.members.bio,
+          isActive: schema.members.isActive,
+          createdAt: schema.members.createdAt,
+          updatedAt: schema.members.updatedAt,
+          position: schema.positions.name,
+        })
+        .from(schema.members)
+        .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
+        .where(eq(schema.members.id, parseInt(req.params.id)))
+        .limit(1);
+      if (!rows.length) {
         return res.status(404).json({ success: false, message: 'Member not found' });
       }
-      res.json({ success: true, data: member[0] });
+      const member = { ...rows[0], position: rows[0].position || '' };
+      res.json({ success: true, data: member });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to fetch member' });
     }
