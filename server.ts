@@ -2,10 +2,13 @@ import express from 'express';
 import path from 'path';
 import fs from 'fs';
 import multer from 'multer';
+import cookieParser from 'cookie-parser';
 import { createServer as createViteServer } from 'vite';
 import 'dotenv/config';
+import bcrypt from 'bcrypt';
 import { db, schema } from './src/db/index';
 import { eq } from 'drizzle-orm';
+import { signToken, authenticate, requireRole } from './src/server/auth';
 
 // Ensure uploads folder exists
 const uploadDir = path.join(process.cwd(), 'uploads');
@@ -44,12 +47,13 @@ async function startServer() {
   // JSON parsing middlewares
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+  app.use(cookieParser());
 
   // Serve uploads directory statically BEFORE Vite middleware
   app.use('/uploads', express.static(uploadDir));
 
   // File Upload API endpoint
-  app.post('/api/upload', upload.single('image'), (req, res) => {
+  app.post('/api/upload', authenticate, requireRole('superadmin', 'admin', 'editor'), upload.single('image'), (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -82,6 +86,141 @@ async function startServer() {
       res.json({ success: true, files: fileList });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to list uploads' });
+    }
+  });
+
+  // ========== AUTH ENDPOINTS ==========
+
+  // Login
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { username, password } = req.body;
+      if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Username and password required' });
+      }
+
+      const rows = await db.select().from(schema.users).where(eq(schema.users.username, username)).limit(1);
+      const user = rows[0];
+
+      if (!user) {
+        return res.status(401).json({ success: false, message: 'Username atau password salah' });
+      }
+
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({ success: false, message: 'Username atau password salah' });
+      }
+
+      const token = signToken({ userId: user.id, username: user.username, role: user.role });
+
+      // Set httpOnly cookie for session persistence
+      res.cookie('auth_token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        maxAge: 8 * 60 * 60 * 1000, // 8 hours
+      });
+
+      res.json({
+        success: true,
+        user: { id: user.id, username: user.username, role: user.role },
+        token,
+      });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Login failed' });
+    }
+  });
+
+  // Logout
+  app.post('/api/auth/logout', (req, res) => {
+    res.clearCookie('auth_token');
+    res.json({ success: true, message: 'Logged out' });
+  });
+
+  // Get current authenticated user
+  app.get('/api/auth/me', authenticate, (req, res) => {
+    res.json({ success: true, user: req.user });
+  });
+
+  // ========== USER MANAGEMENT (superadmin only) ==========
+
+  // List all users
+  app.get('/api/users', authenticate, requireRole('superadmin'), async (req, res) => {
+    try {
+      const users = await db
+        .select({ id: schema.users.id, username: schema.users.username, role: schema.users.role, createdAt: schema.users.createdAt })
+        .from(schema.users)
+        .orderBy(schema.users.createdAt);
+      res.json({ success: true, data: users });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch users' });
+    }
+  });
+
+  // Create user
+  app.post('/api/users', authenticate, requireRole('superadmin'), async (req, res) => {
+    try {
+      const { username, password, role } = req.body;
+      if (!username || !password || !role) {
+        return res.status(400).json({ success: false, message: 'username, password, and role are required' });
+      }
+      if (!['superadmin', 'admin', 'editor'].includes(role)) {
+        return res.status(400).json({ success: false, message: 'Invalid role' });
+      }
+
+      // Check duplicate
+      const existing = await db.select().from(schema.users).where(eq(schema.users.username, username)).limit(1);
+      if (existing.length > 0) {
+        return res.status(409).json({ success: false, message: 'Username sudah digunakan' });
+      }
+
+      const passwordHash = await bcrypt.hash(password, 12);
+      const result = await db.insert(schema.users).values({ username, passwordHash, role });
+      res.json({ success: true, message: 'User created', id: (result as any).insertId });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to create user' });
+    }
+  });
+
+  // Update user (role or password)
+  app.put('/api/users/:id', authenticate, requireRole('superadmin'), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      const { role, password } = req.body;
+
+      const updates: Record<string, any> = {};
+      if (role) {
+        if (!['superadmin', 'admin', 'editor'].includes(role)) {
+          return res.status(400).json({ success: false, message: 'Invalid role' });
+        }
+        updates.role = role;
+      }
+      if (password) {
+        updates.passwordHash = await bcrypt.hash(password, 12);
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ success: false, message: 'Nothing to update' });
+      }
+
+      await db.update(schema.users).set(updates).where(eq(schema.users.id, userId));
+      res.json({ success: true, message: 'User updated' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to update user' });
+    }
+  });
+
+  // Delete user (cannot delete yourself)
+  app.delete('/api/users/:id', authenticate, requireRole('superadmin'), async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (req.user?.userId === userId) {
+        return res.status(400).json({ success: false, message: 'Tidak bisa menghapus akun sendiri' });
+      }
+      await db.delete(schema.users).where(eq(schema.users.id, userId));
+      res.json({ success: true, message: 'User deleted' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to delete user' });
     }
   });
 
@@ -173,7 +312,7 @@ async function startServer() {
   // ========== CRUD ENDPOINTS FOR ADMIN ==========
 
   // Create Event
-  app.post('/api/events', async (req, res) => {
+  app.post('/api/events', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
     try {
       const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = req.body;
       
@@ -200,7 +339,7 @@ async function startServer() {
   });
 
   // Update Event
-  app.put('/api/events/:id', async (req, res) => {
+  app.put('/api/events/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
     try {
       const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = req.body;
       const eventId = parseInt(req.params.id);
@@ -224,7 +363,7 @@ async function startServer() {
   });
 
   // Delete Event
-  app.delete('/api/events/:id', async (req, res) => {
+  app.delete('/api/events/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
     try {
       const eventId = parseInt(req.params.id);
       
@@ -237,7 +376,7 @@ async function startServer() {
   });
 
   // Create Member
-  app.post('/api/members', async (req, res) => {
+  app.post('/api/members', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
     try {
       const { generationId, positionId, name, division, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
       
@@ -264,7 +403,7 @@ async function startServer() {
   });
 
   // Update Member
-  app.put('/api/members/:id', async (req, res) => {
+  app.put('/api/members/:id', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
     try {
       const { generationId, positionId, name, division, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
       const memberId = parseInt(req.params.id);
@@ -288,7 +427,7 @@ async function startServer() {
   });
 
   // Delete Member
-  app.delete('/api/members/:id', async (req, res) => {
+  app.delete('/api/members/:id', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
     try {
       const memberId = parseInt(req.params.id);
       
@@ -301,7 +440,7 @@ async function startServer() {
   });
 
   // Create Generation
-  app.post('/api/generations', async (req, res) => {
+  app.post('/api/generations', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const { slug, name, years, isActive, description } = req.body;
       
@@ -324,7 +463,7 @@ async function startServer() {
   });
 
   // Update Generation
-  app.put('/api/generations/:id', async (req, res) => {
+  app.put('/api/generations/:id', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const { name, years, isActive, description } = req.body;
       const genId = parseInt(req.params.id);
@@ -348,7 +487,7 @@ async function startServer() {
   });
 
   // Delete Generation
-  app.delete('/api/generations/:id', async (req, res) => {
+  app.delete('/api/generations/:id', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const genId = parseInt(req.params.id);
       
@@ -361,7 +500,7 @@ async function startServer() {
   });
 
   // Create Position
-  app.post('/api/positions', async (req, res) => {
+  app.post('/api/positions', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const { name, category, sortOrder } = req.body;
       
@@ -382,7 +521,7 @@ async function startServer() {
   });
 
   // Update Position
-  app.put('/api/positions/:id', async (req, res) => {
+  app.put('/api/positions/:id', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const { name, category, sortOrder } = req.body;
       const posId = parseInt(req.params.id);
@@ -400,7 +539,7 @@ async function startServer() {
   });
 
   // Delete Position
-  app.delete('/api/positions/:id', async (req, res) => {
+  app.delete('/api/positions/:id', authenticate, requireRole('superadmin'), async (req, res) => {
     try {
       const posId = parseInt(req.params.id);
       

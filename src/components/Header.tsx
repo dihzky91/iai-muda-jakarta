@@ -4,7 +4,8 @@
  */
 
 import React from 'react';
-import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera } from 'lucide-react';
+import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera, LogOut } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
   currentTab: string;
@@ -14,6 +15,8 @@ interface HeaderProps {
   currentGenName: string;
 }
 
+const ROLE_LABELS = { superadmin: 'Super Admin', admin: 'Admin', editor: 'Editor' };
+
 export default function Header({ 
   currentTab, 
   setCurrentTab, 
@@ -21,6 +24,24 @@ export default function Header({
   setIsAdminMode,
   currentGenName
 }: HeaderProps) {
+  const { user, logout } = useAuth();
+
+  const handleAdminToggle = () => {
+    if (isAdminMode) {
+      setIsAdminMode(false);
+      setCurrentTab('beranda');
+    } else {
+      setIsAdminMode(true);
+      setCurrentTab('admin');
+    }
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    setIsAdminMode(false);
+    setCurrentTab('beranda');
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
       <div className="mx-auto flex max-w-7xl h-18 items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -51,79 +72,61 @@ export default function Header({
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-1" id="desktop-navigation">
-          <button
-            id="nav-btn-beranda"
-            onClick={() => { setCurrentTab('beranda'); setIsAdminMode(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              currentTab === 'beranda' && !isAdminMode
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
-            }`}
-          >
-            Beranda
-          </button>
-          <button
-            id="nav-btn-struktur"
-            onClick={() => { setCurrentTab('struktur'); setIsAdminMode(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              currentTab === 'struktur' && !isAdminMode
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
-            }`}
-          >
-            <Users className="h-4 w-4" />
-            Struktur Komite
-          </button>
-          <button
-            id="nav-btn-acara"
-            onClick={() => { setCurrentTab('acara'); setIsAdminMode(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              currentTab === 'acara' && !isAdminMode
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
-            }`}
-          >
-            <Calendar className="h-4 w-4" />
-            Acara
-          </button>
-          <button
-            id="nav-btn-galeri"
-            onClick={() => { setCurrentTab('galeri'); setIsAdminMode(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              currentTab === 'galeri' && !isAdminMode
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
-            }`}
-          >
-            <Camera className="h-4 w-4" />
-            Galeri
-          </button>
-          <button
-            id="nav-btn-artikel"
-            onClick={() => { setCurrentTab('artikel'); setIsAdminMode(false); }}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
-              currentTab === 'artikel' && !isAdminMode
-                ? 'bg-blue-50 text-blue-600 shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
-            }`}
-          >
-            <FileText className="h-4 w-4" />
-            Artikel
-          </button>
+          {['beranda', 'struktur', 'acara', 'galeri', 'artikel'].map((tab) => {
+            const icons: Record<string, React.ReactNode> = {
+              struktur: <Users className="h-4 w-4" />,
+              acara: <Calendar className="h-4 w-4" />,
+              galeri: <Camera className="h-4 w-4" />,
+              artikel: <FileText className="h-4 w-4" />,
+            };
+            const labels: Record<string, string> = {
+              beranda: 'Beranda', struktur: 'Struktur Komite',
+              acara: 'Acara', galeri: 'Galeri', artikel: 'Artikel',
+            };
+            return (
+              <button
+                key={tab}
+                id={`nav-btn-${tab}`}
+                onClick={() => { setCurrentTab(tab); setIsAdminMode(false); }}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  currentTab === tab && !isAdminMode
+                    ? 'bg-blue-50 text-blue-600 shadow-sm'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
+                }`}
+              >
+                {icons[tab]}
+                {labels[tab]}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Secondary Actions / Admin Toggle */}
         <div className="flex items-center gap-2">
+          {/* Show logged-in user badge when authenticated */}
+          {user && !isAdminMode && (
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+              <span className="text-xs font-semibold text-slate-700">{user.username}</span>
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                user.role === 'superadmin' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                user.role === 'admin' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                'bg-slate-100 text-slate-600 border-slate-200'
+              }`}>
+                {ROLE_LABELS[user.role]}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="ml-1 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                title="Logout"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+
           <button
             id="admin-panel-toggle"
-            onClick={() => {
-              setIsAdminMode(!isAdminMode);
-              if (!isAdminMode) {
-                setCurrentTab('admin');
-              } else {
-                setCurrentTab('beranda');
-              }
-            }}
+            onClick={handleAdminToggle}
             className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer ${
               isAdminMode 
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'

@@ -8,9 +8,11 @@ import { Generation, Member, Event, Article, GalleryItem } from '../types';
 import { 
   Calendar, Users, History, Plus, Edit2, Trash2, Check, 
   RotateCcw, Sparkles, AlertTriangle, ShieldCheck, Mail, Link2, Info, Image as ImageIcon,
-  Download, Upload, FileSpreadsheet, Search
+  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog
 } from 'lucide-react';
 import ImageUploader from './ImageUploader';
+import UserManagement from './UserManagement';
+import { useAuth } from '../context/AuthContext';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -42,7 +44,8 @@ export default function AdminCMS({
   setCurrentTab
 }: AdminCMSProps) {
   // Navigation tabs inside CMS
-  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'gallery' | 'generations'>('events');
+  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'gallery' | 'generations' | 'users'>('events');
+  const { user: currentUser, logout, hasRole } = useAuth();
 
   // Success Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -657,6 +660,18 @@ export default function AdminCMS({
                 <span className="text-amber-600">Generasi Belum Aktif</span>
               )}
             </div>
+            {currentUser && (
+              <div className="pt-1 border-t border-slate-200 flex items-center justify-between">
+                <span className="text-[10px] text-slate-500 font-semibold truncate max-w-[60%]">{currentUser.username}</span>
+                <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                  currentUser.role === 'superadmin' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
+                  currentUser.role === 'admin' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                  'bg-slate-100 text-slate-600 border-slate-200'
+                }`}>
+                  {currentUser.role === 'superadmin' ? 'Super Admin' : currentUser.role === 'admin' ? 'Admin' : 'Editor'}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Nav Links */}
@@ -702,9 +717,9 @@ export default function AdminCMS({
                 {members.length}
               </span>
             </button>
+            )}
 
             <button
-              id="cms-tab-gallery-sidebar"
               onClick={() => setCmsTab('gallery')}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'gallery' 
@@ -742,13 +757,32 @@ export default function AdminCMS({
                 {generations.length}
               </span>
             </button>
+
+            {/* Users tab — superadmin only */}
+            {hasRole('superadmin') && (
+              <button
+                id="cms-tab-users-sidebar"
+                onClick={() => setCmsTab('users')}
+                className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                  cmsTab === 'users' 
+                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <UserCog className="h-4.5 w-4.5" />
+                  <span>Manajemen User</span>
+                </div>
+              </button>
+            )}
           </nav>
         </div>
 
         {/* Exit Control Panel at Bottom */}
         <div className="p-6 border-t border-slate-200 space-y-3 bg-white">
           <button
-            onClick={() => {
+            onClick={async () => {
+              await logout();
               if (setIsAdminMode && setCurrentTab) {
                 setIsAdminMode(false);
                 setCurrentTab('beranda');
@@ -756,9 +790,7 @@ export default function AdminCMS({
             }}
             className="w-full flex items-center justify-center gap-2 rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 py-3 text-xs font-bold transition-all border border-slate-200 cursor-pointer shadow-sm hover:shadow-md"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
+            <LogOut className="h-4 w-4" />
             <span>Keluar Portal Admin</span>
           </button>
           <div className="text-[10px] text-slate-400 text-center font-mono font-medium">
@@ -1602,6 +1634,11 @@ export default function AdminCMS({
           </div>
 
         </div>
+      )}
+
+      {/* --- RENDER 5: USER MANAGEMENT (superadmin only) --- */}
+      {cmsTab === 'users' && hasRole('superadmin') && (
+        <UserManagement />
       )}
 
         </div>

@@ -11,6 +11,8 @@ import EventsList from './components/EventsList';
 import ArticlesSection from './components/ArticlesSection';
 import AdminCMS from './components/AdminCMS';
 import GallerySection from './components/GallerySection';
+import LoginPage from './components/LoginPage';
+import { useAuth } from './context/AuthContext';
 
 import { 
   initialGenerations, 
@@ -28,6 +30,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  const { user, loading: authLoading } = useAuth();
   // Navigation tabs: 'beranda' | 'struktur' | 'acara' | 'artikel' | 'admin'
   const [currentTab, setCurrentTab] = useState<string>('beranda');
   const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
@@ -99,6 +102,20 @@ export default function App() {
   };
 
   if (isAdminMode && currentTab === 'admin') {
+    // Show loading while auth session is being verified
+    if (authLoading) {
+      return (
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+        </div>
+      );
+    }
+
+    // Require authentication to access admin
+    if (!user) {
+      return <LoginPage onSuccess={() => { /* AuthContext updates user state automatically */ }} />;
+    }
+
     return (
       <AdminCMS 
         generations={generations}

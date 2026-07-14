@@ -1,15 +1,19 @@
 import { db, schema } from './index';
 import { sql } from 'drizzle-orm';
+import bcrypt from 'bcrypt';
 
 async function seed() {
   console.log('🌱 Seeding database...');
 
   try {
-    // Clear existing data
+    // Clear existing data (order matters for FK constraints)
+    await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
     await db.execute(sql`TRUNCATE TABLE members`);
     await db.execute(sql`TRUNCATE TABLE events`);
     await db.execute(sql`TRUNCATE TABLE positions`);
     await db.execute(sql`TRUNCATE TABLE generations`);
+    await db.execute(sql`TRUNCATE TABLE users`);
+    await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
 
     // Insert generations
     await db.insert(schema.generations).values([
@@ -108,6 +112,19 @@ async function seed() {
 
     await db.insert(schema.members).values(memberData);
     console.log('✓ Members inserted');
+
+    // Seed default superadmin user
+    const defaultPassword = process.env.SUPERADMIN_PASSWORD || 'admin123';
+    const passwordHash = await bcrypt.hash(defaultPassword, 12);
+    await db.insert(schema.users).values({
+      username: 'superadmin',
+      passwordHash,
+      role: 'superadmin',
+    });
+    console.log(`✓ Superadmin created — username: superadmin / password: ${defaultPassword}`);
+    if (!process.env.SUPERADMIN_PASSWORD) {
+      console.log('⚠️  PERINGATAN: Gunakan env SUPERADMIN_PASSWORD untuk set password yang aman!');
+    }
 
     console.log('✅ Database seeded successfully!');
   } catch (error) {

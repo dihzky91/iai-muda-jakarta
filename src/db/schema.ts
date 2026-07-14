@@ -1,6 +1,15 @@
 import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
+export const users = mysqlTable('users', {
+  id: serial('id').primaryKey(),
+  username: varchar('username', { length: 100 }).notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  role: mysqlEnum('role', ['superadmin', 'admin', 'editor']).default('editor').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const generations = mysqlTable('generations', {
   id: serial('id').primaryKey(),
   slug: varchar('slug', { length: 100 }).notNull().unique(),
