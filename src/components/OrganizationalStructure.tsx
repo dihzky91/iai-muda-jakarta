@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Generation, Member } from '../types';
 import { Mail, Linkedin, Users, Filter, Award, History, Search } from 'lucide-react';
 
@@ -18,6 +18,13 @@ export default function OrganizationalStructure({ generations, members }: Organi
   
   // State for selected generation in view (defaults to current active generation)
   const [selectedGenId, setSelectedGenId] = useState<number>(activeGen.id);
+
+  // Sync selectedGenId when generations data loads from DB (replaces fallback negative IDs)
+  useEffect(() => {
+    if (activeGen && activeGen.id > 0) {
+      setSelectedGenId(activeGen.id);
+    }
+  }, [activeGen.id]);
   
   // State for division filter
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
