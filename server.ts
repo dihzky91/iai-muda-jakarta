@@ -226,6 +226,57 @@ async function startServer() {
 
   // ========== DATABASE API ENDPOINTS ==========
 
+  // Settings API
+  app.get('/api/settings', async (req, res) => {
+    try {
+      const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
+      const defaultSettings = {
+        id: 1,
+        contactTitle: 'Hubungi IAI Wilayah DKI Jakarta',
+        contactDescription: 'Punya pertanyaan mengenai kemitraan webinar, atau ingin bergabung dengan kepengurusan generasi berikutnya? Kami siap menyambut Anda.',
+        address: 'Jl. Menteng Raya No. 29, Menteng, Jakarta Pusat, DKI Jakarta 10310',
+        email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
+        phone: '(021) 3190-4232 ext. 202',
+        showPhone: true,
+      };
+      res.json({ success: true, data: rows[0] || defaultSettings });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch settings' });
+    }
+  });
+
+  app.put('/api/settings', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const { contactTitle, contactDescription, address, email, phone, showPhone } = req.body;
+      const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
+      
+      if (rows.length === 0) {
+        await db.insert(schema.settings).values({
+          id: 1,
+          contactTitle,
+          contactDescription,
+          address,
+          email,
+          phone,
+          showPhone,
+        });
+      } else {
+        await db.update(schema.settings).set({
+          contactTitle,
+          contactDescription,
+          address,
+          email,
+          phone,
+          showPhone,
+        }).where(eq(schema.settings.id, 1));
+      }
+      
+      res.json({ success: true, message: 'Settings updated successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to update settings' });
+    }
+  });
+
   // Events API
   app.get('/api/events', async (req, res) => {
     try {
@@ -281,6 +332,7 @@ async function startServer() {
           positionId: schema.members.positionId,
           name: schema.members.name,
           division: schema.members.division,
+          university: schema.members.university,
           email: schema.members.email,
           imageUrl: schema.members.imageUrl,
           linkedinUrl: schema.members.linkedinUrl,
@@ -317,6 +369,7 @@ async function startServer() {
           positionId: schema.members.positionId,
           name: schema.members.name,
           division: schema.members.division,
+          university: schema.members.university,
           email: schema.members.email,
           imageUrl: schema.members.imageUrl,
           linkedinUrl: schema.members.linkedinUrl,
@@ -419,7 +472,7 @@ async function startServer() {
   // Create Member
   app.post('/api/members', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
     try {
-      const { generationId, positionId, name, division, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
+      const { generationId, positionId, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
       
       if (!generationId || !name) {
         return res.status(400).json({ success: false, message: 'Missing required fields' });
@@ -430,6 +483,7 @@ async function startServer() {
         positionId: positionId || null,
         name,
         division: division || null,
+        university: university || null,
         email: email || null,
         imageUrl: imageUrl || null,
         linkedinUrl: linkedinUrl || null,
@@ -446,7 +500,7 @@ async function startServer() {
   // Update Member
   app.put('/api/members/:id', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
     try {
-      const { generationId, positionId, name, division, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
+      const { generationId, positionId, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = req.body;
       const memberId = parseInt(req.params.id);
 
       await db.update(schema.members).set({
@@ -454,6 +508,7 @@ async function startServer() {
         positionId: positionId || undefined,
         name: name || undefined,
         division: division || undefined,
+        university: university !== undefined ? university : undefined,
         email: email || undefined,
         imageUrl: imageUrl || undefined,
         linkedinUrl: linkedinUrl || undefined,

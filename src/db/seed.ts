@@ -13,6 +13,7 @@ async function seed() {
     await db.execute(sql`TRUNCATE TABLE positions`);
     await db.execute(sql`TRUNCATE TABLE generations`);
     await db.execute(sql`TRUNCATE TABLE users`);
+    await db.execute(sql`TRUNCATE TABLE settings`);
     await db.execute(sql`SET FOREIGN_KEY_CHECKS = 1`);
 
     // Insert generations
@@ -100,14 +101,14 @@ async function seed() {
 
     // Insert members for Gen 2
     const memberData = [
-      { generationId: 2, positionId: 1, name: 'Muhammad Farhan, S.Ak., CA', division: 'Badan Pengurus Harian (BPH)', email: 'farhan@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/farhan' },
-      { generationId: 2, positionId: 2, name: 'Annisa Larasati, S.Ak.', division: 'Badan Pengurus Harian (BPH)', email: 'annisa@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/annisa' },
-      { generationId: 2, positionId: 3, name: 'Reza Aditya, S.Ak.', division: 'Badan Pengurus Harian (BPH)', email: 'reza@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/reza' },
-      { generationId: 2, positionId: 4, name: 'Citra Dewi, S.Ak.', division: 'Badan Pengurus Harian (BPH)', email: 'citra@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/citra' },
-      { generationId: 2, positionId: 5, name: 'Devan Pramudya, S.Ak.', division: 'Bidang Edukasi & Sertifikasi', email: 'devan@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80' },
-      { generationId: 2, positionId: 6, name: 'Gita Amalia, S.Ak.', division: 'Bidang Hubungan Masyarakat', email: 'gita@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&fit=crop&q=80' },
-      { generationId: 2, positionId: 7, name: 'Faisal Riza, S.Ak.', division: 'Bidang Kewirausahaan & Kemitraan', email: 'faisal@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&fit=crop&q=80' },
-      { generationId: 2, positionId: 8, name: 'Arya Putra', division: 'Bidang Media & Desain Kreatif', email: 'arya@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=300&fit=crop&q=80' },
+      { generationId: 2, positionId: 1, name: 'Muhammad Farhan, S.Ak., CA', division: 'Badan Pengurus Harian (BPH)', university: 'Universitas Indonesia', email: 'farhan@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/farhan' },
+      { generationId: 2, positionId: 2, name: 'Annisa Larasati, S.Ak.', division: 'Badan Pengurus Harian (BPH)', university: 'Universitas Gadjah Mada', email: 'annisa@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/annisa' },
+      { generationId: 2, positionId: 3, name: 'Reza Aditya, S.Ak.', division: 'Badan Pengurus Harian (BPH)', university: 'Universitas Padjadjaran', email: 'reza@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/reza' },
+      { generationId: 2, positionId: 4, name: 'Citra Dewi, S.Ak.', division: 'Badan Pengurus Harian (BPH)', university: 'Binus University', email: 'citra@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/citra' },
+      { generationId: 2, positionId: 5, name: 'Devan Pramudya, S.Ak.', division: 'Bidang Edukasi & Sertifikasi', university: 'Universitas Trisakti', email: 'devan@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=300&fit=crop&q=80' },
+      { generationId: 2, positionId: 6, name: 'Gita Amalia, S.Ak.', division: 'Bidang Hubungan Masyarakat', university: 'Universitas Diponegoro', email: 'gita@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=300&fit=crop&q=80' },
+      { generationId: 2, positionId: 7, name: 'Faisal Riza, S.Ak.', division: 'Bidang Kewirausahaan & Kemitraan', university: 'Universitas Airlangga', email: 'faisal@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&fit=crop&q=80' },
+      { generationId: 2, positionId: 8, name: 'Arya Putra', division: 'Bidang Media & Desain Kreatif', university: 'Universitas Sebelas Maret', email: 'arya@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1513956589380-bad6acb9b9d4?w=300&fit=crop&q=80' },
     ];
 
     await db.insert(schema.members).values(memberData);
@@ -125,6 +126,18 @@ async function seed() {
     if (!process.env.SUPERADMIN_PASSWORD) {
       console.log('⚠️  PERINGATAN: Gunakan env SUPERADMIN_PASSWORD untuk set password yang aman!');
     }
+
+    // Insert default settings
+    await db.insert(schema.settings).values({
+      id: 1,
+      contactTitle: 'Hubungi IAI Wilayah DKI Jakarta',
+      contactDescription: 'Punya pertanyaan mengenai kemitraan webinar, atau ingin bergabung dengan kepengurusan generasi berikutnya? Kami siap menyambut Anda.',
+      address: 'Jl. Menteng Raya No. 29, Menteng, Jakarta Pusat, DKI Jakarta 10310',
+      email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
+      phone: '(021) 3190-4232 ext. 202',
+      showPhone: true,
+    });
+    console.log('✓ Default settings inserted');
 
     console.log('✅ Database seeded successfully!');
   } catch (error) {

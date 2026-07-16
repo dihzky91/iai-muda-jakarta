@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Generation, Member, Event } from '../types';
+import { Generation, Member, Event, Settings } from '../types';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -369,4 +369,65 @@ export function useDeleteMember() {
   };
 
   return { deleteMember, loading, error };
+}
+
+export function useSettings() {
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSettings = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/settings');
+      const result: ApiResponse<Settings> = await response.json();
+      
+      if (result.success) {
+        setSettings(Array.isArray(result.data) ? result.data[0] : result.data);
+        setError(null);
+      } else {
+        setError(result.message || 'Failed to fetch settings');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  return { settings, loading, error, refetch: fetchSettings };
+}
+
+export function useUpdateSettings() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const update = async (settingsData: Partial<Settings>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsData),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to update settings');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { update, loading, error };
 }

@@ -22,8 +22,8 @@ import {
   initialGallery
 } from './data';
 
-import { Generation, Member, Event, Article, GalleryItem } from './types';
-import { useGenerations, useEvents, useMembers } from './hooks/useApi';
+import { Generation, Member, Event, Article, GalleryItem, Settings } from './types';
+import { useGenerations, useEvents, useMembers, useSettings } from './hooks/useApi';
 import { 
   Award, Shield, Calendar, Landmark, Mail, Phone, MapPin, 
   Linkedin, Instagram, Youtube, ArrowRight, MessageSquare, BookOpen, Send, CheckCircle2
@@ -39,6 +39,17 @@ export default function App() {
   const { generations: dbGenerations, loading: genLoading, error: genError } = useGenerations();
   const { events: dbEvents, loading: eventsLoading, error: eventsError } = useEvents();
   const { members: dbMembers, loading: membersLoading, error: membersError } = useMembers();
+  const { settings: dbSettings, error: settingsError } = useSettings();
+
+  const defaultSettings: Settings = {
+    id: 1,
+    contactTitle: 'Hubungi IAI Wilayah DKI Jakarta',
+    contactDescription: 'Punya pertanyaan mengenai kemitraan webinar, atau ingin bergabung dengan kepengurusan generasi berikutnya? Kami siap menyambut Anda.',
+    address: 'Jl. Menteng Raya No. 29, Menteng, Jakarta Pusat, DKI Jakarta 10310',
+    email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
+    phone: '(021) 3190-4232 ext. 202',
+    showPhone: true,
+  };
 
   // Single source of truth: API database.
   // State is populated from API responses; fallback to static data only while loading.
@@ -47,6 +58,7 @@ export default function App() {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [gallery, setGallery] = useState<GalleryItem[]>(initialGallery);
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
 
   // Replace local state with DB data once loaded
   useEffect(() => {
@@ -66,6 +78,12 @@ export default function App() {
       setEvents(dbEvents);
     }
   }, [dbEvents, eventsLoading, eventsError]);
+
+  useEffect(() => {
+    if (!settingsError && dbSettings) {
+      setSettings(dbSettings);
+    }
+  }, [dbSettings, settingsError]);
 
   // Derived properties: Active Generation info
   const activeGen = useMemo(() => {
@@ -130,6 +148,8 @@ export default function App() {
         setGallery={setGallery}
         setIsAdminMode={setIsAdminMode}
         setCurrentTab={setCurrentTab}
+        settings={settings}
+        onSettingsUpdate={(updated) => setSettings(updated)}
       />
     );
   }
@@ -269,9 +289,9 @@ export default function App() {
                     
                     {/* Left info */}
                     <div className="lg:col-span-5 space-y-6">
-                      <h2 className="font-display text-3xl font-extrabold text-slate-900">Hubungi IAI Wilayah DKI Jakarta</h2>
+                      <h2 className="font-display text-3xl font-extrabold text-slate-900">{settings.contactTitle}</h2>
                       <p className="text-slate-600 text-sm sm:text-base leading-relaxed">
-                        Punya pertanyaan mengenai sertifikasi CA, kemitraan webinar, atau ingin bergabung dengan kepengurusan generasi berikutnya? Kami siap menyambut Anda.
+                        {settings.contactDescription}
                       </p>
 
                       <div className="space-y-4">
@@ -279,7 +299,7 @@ export default function App() {
                           <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
                           <div>
                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Alamat Grha Akuntan</h4>
-                            <p className="text-sm text-slate-600">Jl. Sindanglaya No. 1, Menteng, Jakarta Pusat, DKI Jakarta 10310</p>
+                            <p className="text-sm text-slate-600">{settings.address}</p>
                           </div>
                         </div>
 
@@ -287,17 +307,19 @@ export default function App() {
                           <Mail className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
                           <div>
                             <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Email Resmi</h4>
-                            <p className="text-sm text-slate-600 font-medium">iaimuda.dki@iai.or.id / dki@iaiglobal.or.id</p>
+                            <p className="text-sm text-slate-600 font-medium">{settings.email}</p>
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-3">
-                          <Phone className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
-                          <div>
-                            <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Hotline Hubungan Publik</h4>
-                            <p className="text-sm text-slate-600 font-medium">(021) 3190-4232 ext. 202</p>
+                        {settings.showPhone && settings.phone && (
+                          <div className="flex items-start gap-3 animate-fade-in">
+                            <Phone className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                            <div>
+                              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Hotline Hubungan Publik</h4>
+                              <p className="text-sm text-slate-600 font-medium">{settings.phone}</p>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 

@@ -16,6 +16,7 @@ export interface Member {
   name: string;
   position: string;     // e.g., "Ketua", "Wakil Ketua", "Kepala Bidang Edukasi", "Staf Humas"
   division: string | null; // e.g., "Badan Pengurus Harian (BPH)", "Bidang Edukasi & Sertifikasi"
+  university?: string | null;
   email?: string | null;
   imageUrl?: string | null;
   linkedinUrl?: string | null;
@@ -52,5 +53,16 @@ export interface GalleryItem {
   category?: string;
   photographer?: string;
   images?: string[];
+}
+
+export interface Settings {
+  id: number;
+  contactTitle: string;
+  contactDescription: string;
+  address: string;
+  email: string;
+  phone: string | null;
+  showPhone: boolean;
+  updatedAt?: string;
 }
 

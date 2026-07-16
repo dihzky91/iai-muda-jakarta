@@ -4,11 +4,11 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Generation, Member, Event, Article, GalleryItem } from '../types';
+import { Generation, Member, Event, Article, GalleryItem, Settings } from '../types';
 import { 
   Calendar, Users, History, Plus, Edit2, Trash2, Check, 
   RotateCcw, Sparkles, AlertTriangle, ShieldCheck, Mail, Link2, Info, Image as ImageIcon,
-  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog
+  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog, Settings as SettingsIcon
 } from 'lucide-react';
 import ImageUploader from './ImageUploader';
 import UserManagement from './UserManagement';
@@ -27,6 +27,8 @@ interface AdminCMSProps {
   setGallery?: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
   setIsAdminMode?: (val: boolean) => void;
   setCurrentTab?: (tab: string) => void;
+  settings: Settings;
+  onSettingsUpdate: (updated: Settings) => void;
 }
 
 export default function AdminCMS({
@@ -41,14 +43,40 @@ export default function AdminCMS({
   gallery = [],
   setGallery,
   setIsAdminMode,
-  setCurrentTab
+  setCurrentTab,
+  settings,
+  onSettingsUpdate
 }: AdminCMSProps) {
   // Navigation tabs inside CMS
-  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'gallery' | 'generations' | 'users'>('events');
+  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'gallery' | 'generations' | 'users' | 'settings'>('events');
   const { user: currentUser, logout, hasRole } = useAuth();
 
   // Success Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // --- SETTINGS CRUD STATE ---
+  const [settingsForm, setSettingsForm] = useState({
+    contactTitle: settings.contactTitle,
+    contactDescription: settings.contactDescription,
+    address: settings.address,
+    email: settings.email,
+    phone: settings.phone || '',
+    showPhone: settings.showPhone,
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
+
+  React.useEffect(() => {
+    if (settings) {
+      setSettingsForm({
+        contactTitle: settings.contactTitle,
+        contactDescription: settings.contactDescription,
+        address: settings.address,
+        email: settings.email,
+        phone: settings.phone || '',
+        showPhone: settings.showPhone,
+      });
+    }
+  }, [settings]);
 
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
@@ -85,6 +113,7 @@ export default function AdminCMS({
     name: '',
     position: '',
     division: 'Badan Pengurus Harian (BPH)',
+    university: '',
     generationId: '' as number | '',
     email: '',
     imageUrl: '',
@@ -109,8 +138,8 @@ export default function AdminCMS({
 
   // Download CSV Template
   const downloadCsvTemplate = () => {
-    const headers = "Nama,Jabatan,Divisi,Email,Foto,LinkedIn,Generasi\n";
-    const rows = "Budi Santoso,Kepala Bidang Humas,Bidang Hubungan Masyarakat,budi@iai-dki.or.id,https://images.unsplash.com/photo-1535713875002-d1d0cf377fde,https://linkedin.com/in/budi,Generasi ke-2\n";
+    const headers = "Nama,Jabatan,Divisi,Universitas,Email,Foto,LinkedIn,Generasi\n";
+    const rows = "Budi Santoso,Kepala Bidang Humas,Bidang Hubungan Masyarakat,Universitas Indonesia,budi@iai-dki.or.id,https://images.unsplash.com/photo-1535713875002-d1d0cf377fde,https://linkedin.com/in/budi,Generasi ke-2\n";
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -164,13 +193,22 @@ export default function AdminCMS({
       const rowData: any = {};
       headers.forEach((header, idx) => {
         const val = values[idx] || '';
-        if (header.includes('nama') || idx === 0) rowData.name = val;
-        else if (header.includes('jabatan') || idx === 1) rowData.position = val;
-        else if (header.includes('divisi') || idx === 2) rowData.division = val;
-        else if (header.includes('email') || idx === 3) rowData.email = val;
-        else if (header.includes('foto') || header.includes('image') || idx === 4) rowData.imageUrl = val;
-        else if (header.includes('linkedin') || idx === 5) rowData.linkedinUrl = val;
-        else if (header.includes('generasi') || idx === 6) rowData.generation = val;
+        if (header.includes('nama')) rowData.name = val;
+        else if (header.includes('jabatan')) rowData.position = val;
+        else if (header.includes('divisi')) rowData.division = val;
+        else if (header.includes('universitas') || header.includes('kampus')) rowData.university = val;
+        else if (header.includes('email')) rowData.email = val;
+        else if (header.includes('foto') || header.includes('image')) rowData.imageUrl = val;
+        else if (header.includes('linkedin')) rowData.linkedinUrl = val;
+        else if (header.includes('generasi')) rowData.generation = val;
+        // Fallback to indices for backward compatibility
+        else if (idx === 0) rowData.name = val;
+        else if (idx === 1) rowData.position = val;
+        else if (idx === 2) rowData.division = val;
+        else if (idx === 3) rowData.email = val;
+        else if (idx === 4) rowData.imageUrl = val;
+        else if (idx === 5) rowData.linkedinUrl = val;
+        else if (idx === 6) rowData.generation = val;
       });
 
       if (!rowData.name || !rowData.position) {
@@ -210,6 +248,7 @@ export default function AdminCMS({
         name: rowData.name,
         position: rowData.position,
         division: divisionMatched,
+        university: rowData.university || '',
         generationId: (matchedGenId as number) || 0,
         email: rowData.email || '',
         imageUrl: rowData.imageUrl || '',
@@ -232,6 +271,7 @@ export default function AdminCMS({
         body: JSON.stringify({
           name: m.name,
           division: m.division,
+          university: m.university || null,
           generationId: m.generationId || undefined,
           email: m.email || null,
           imageUrl: m.imageUrl || null,
@@ -505,6 +545,7 @@ export default function AdminCMS({
       name: '',
       position: '',
       division: 'Badan Pengurus Harian (BPH)',
+      university: '',
       generationId: '',
       email: '',
       imageUrl: '',
@@ -518,6 +559,7 @@ export default function AdminCMS({
       name: m.name,
       position: m.position,
       division: m.division,
+      university: m.university || '',
       generationId: m.generationId,
       email: m.email || '',
       imageUrl: m.imageUrl || '',
@@ -615,6 +657,33 @@ export default function AdminCMS({
       } else {
         triggerToast(`Transisi Berhasil! ${targetGen.name} kini ditetapkan sebagai kepengurusan Aktif.`);
       }
+    }
+  };
+
+  const handleSettingsSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingSettings(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settingsForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onSettingsUpdate({
+          ...settings,
+          ...settingsForm,
+        });
+        triggerToast('Pengaturan kontak berhasil diperbarui!');
+      } else {
+        triggerToast(data.message || 'Gagal menyimpan pengaturan.');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerToast('Terjadi kesalahan saat menyimpan pengaturan.');
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -757,6 +826,20 @@ export default function AdminCMS({
               </span>
             </button>
 
+            <button
+              onClick={() => setCmsTab('settings')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                cmsTab === 'settings' 
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <SettingsIcon className="h-4.5 w-4.5" />
+                <span>Pengaturan Kontak</span>
+              </div>
+            </button>
+
             {/* Users tab — superadmin only */}
             {hasRole('superadmin') && (
               <button
@@ -808,12 +891,16 @@ export default function AdminCMS({
             <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
               {cmsTab === 'events' ? 'Manajemen Agenda & Webinar' :
                cmsTab === 'members' ? 'Kepengurusan' :
-               cmsTab === 'gallery' ? 'Arsip Dokumentasi Galeri' : 'Transisi & Rollover Organisasi'}
+               cmsTab === 'gallery' ? 'Arsip Dokumentasi Galeri' :
+               cmsTab === 'settings' ? 'Pengaturan Informasi Kontak' :
+               cmsTab === 'users' ? 'Manajemen User' : 'Transisi & Rollover Organisasi'}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1">
               {cmsTab === 'events' ? 'Terbitkan webinar, kelola status pelaksanaan, dan pantau daftar hadir peserta.' :
                cmsTab === 'members' ? 'Kelola keanggotaan aktif divisi kerja, pendaftaran struktur baru, dan tautan sosial media.' :
-               cmsTab === 'gallery' ? 'Unggah foto-foto beresolusi tinggi dokumentasi kesuksesan IAI Muda DKI.' : 'Luncurkan generasi kepengurusan baru, serta arsipkan sejarah komite terdahulu.'}
+               cmsTab === 'gallery' ? 'Unggah foto-foto beresolusi tinggi dokumentasi kesuksesan IAI Muda DKI.' :
+               cmsTab === 'settings' ? 'Ubah informasi alamat, email, hotline, dan deskripsi hubungi kami di halaman beranda.' :
+               cmsTab === 'users' ? 'Kelola daftar pengguna sistem dan hak akses administrasi.' : 'Luncurkan generasi kepengurusan baru, serta arsipkan sejarah komite terdahulu.'}
             </p>
           </div>
 
@@ -1104,6 +1191,17 @@ export default function AdminCMS({
                   placeholder="Contoh: Kepala Bidang Hubungan Masyarakat"
                   value={memberForm.position}
                   onChange={(e) => setMemberForm(prev => ({ ...prev, position: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Asal Universitas</label>
+                <input
+                  type="text"
+                  placeholder="Contoh: Universitas Indonesia"
+                  value={memberForm.university}
+                  onChange={(e) => setMemberForm(prev => ({ ...prev, university: e.target.value }))}
                   className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                 />
               </div>
@@ -1638,6 +1736,105 @@ export default function AdminCMS({
       {/* --- RENDER 5: USER MANAGEMENT (superadmin only) --- */}
       {cmsTab === 'users' && hasRole('superadmin') && (
         <UserManagement />
+      )}
+
+      {/* --- RENDER 6: CONTACT SETTINGS CMS --- */}
+      {cmsTab === 'settings' && (
+        <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 space-y-6 shadow-sm max-w-3xl animate-scale-up" id="settings-crud-module">
+          <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+            <SettingsIcon className="h-5 w-5 text-blue-600" />
+            <span>Konfigurasi Informasi Hubungi Kami</span>
+          </h3>
+
+          <form onSubmit={handleSettingsSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">Judul Bagian Kontak</label>
+              <input 
+                type="text" 
+                required
+                value={settingsForm.contactTitle}
+                onChange={(e) => setSettingsForm(prev => ({ ...prev, contactTitle: e.target.value }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                placeholder="Hubungi IAI Wilayah DKI Jakarta..."
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">Deskripsi Bagian Kontak</label>
+              <textarea 
+                rows={3} 
+                required
+                value={settingsForm.contactDescription}
+                onChange={(e) => setSettingsForm(prev => ({ ...prev, contactDescription: e.target.value }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
+                placeholder="Masukkan deskripsi..."
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">Email Resmi</label>
+                <input 
+                  type="text" 
+                  required
+                  value={settingsForm.email}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, email: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                  placeholder="e.g. iaimuda.dki@iai.or.id"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-700 block">No. Telepon / WhatsApp (Hotline)</label>
+                <input 
+                  type="text"
+                  value={settingsForm.phone}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                  placeholder="e.g. (021) 3190-4232 ext. 202"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold text-slate-700 block">Alamat Kantor</label>
+              <textarea 
+                rows={2} 
+                required
+                value={settingsForm.address}
+                onChange={(e) => setSettingsForm(prev => ({ ...prev, address: e.target.value }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
+                placeholder="Masukkan alamat lengkap..."
+              />
+            </div>
+
+            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+              <div className="space-y-0.5 pr-4">
+                <h4 className="text-xs font-bold text-slate-800">Tampilkan No. Telepon / WhatsApp</h4>
+                <p className="text-[10px] text-slate-500 leading-normal">
+                  Jika dinonaktifkan, kontak telepon/hotline akan disembunyikan dari halaman depan.
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  checked={settingsForm.showPhone}
+                  onChange={(e) => setSettingsForm(prev => ({ ...prev, showPhone: e.target.checked }))}
+                  className="sr-only peer"
+                />
+                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+
+            <button
+              type="submit"
+              disabled={savingSettings}
+              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-6 py-3.5 text-xs shadow-md shadow-blue-500/10 hover:from-blue-500 hover:to-indigo-500 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {savingSettings ? 'Menyimpan...' : 'Simpan Perubahan'}
+            </button>
+          </form>
+        </div>
       )}
 
         </div>

@@ -36,6 +36,7 @@ export const members = mysqlTable('members', {
   positionId: int('position_id'),
   name: varchar('name', { length: 255 }).notNull(),
   division: varchar('division', { length: 255 }),
+  university: varchar('university', { length: 255 }),
   email: varchar('email', { length: 255 }),
   imageUrl: varchar('image_url', { length: 500 }),
   linkedinUrl: varchar('linkedin_url', { length: 500 }),
@@ -86,3 +87,14 @@ export const eventsRelations = relations(events, ({ one }) => ({
     references: [generations.id],
   }),
 }));
+
+export const settings = mysqlTable('settings', {
+  id: serial('id').primaryKey(),
+  contactTitle: varchar('contact_title', { length: 255 }).default('Hubungi IAI Wilayah DKI Jakarta').notNull(),
+  contactDescription: text('contact_description').notNull(),
+  address: text('address').notNull(),
+  email: varchar('email', { length: 255 }).notNull(),
+  phone: varchar('phone', { length: 100 }),
+  showPhone: boolean('show_phone').default(true).notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});

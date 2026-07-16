@@ -104,16 +104,16 @@ export default function Hero({ onExploreStructure, onExploreEvents, memberCount,
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-                      <TrendingUp className="h-4 w-4" />
+                      <Award className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800">Target Sertifikasi CA</h4>
-                      <p className="text-[10px] text-slate-500">Akuntan Muda Wilayah Jakarta</p>
+                      <h4 className="text-xs font-bold text-slate-800">Mentorship Ujian CA</h4>
+                      <p className="text-[10px] text-slate-500">Bimbingan Sertifikasi Profesional</p>
                     </div>
                   </div>
                   <div className="text-right">
                     <span className="text-sm font-bold text-emerald-600">+45%</span>
-                    <p className="text-[9px] text-slate-400 font-medium">YoY Growth</p>
+                    <p className="text-[9px] text-slate-400 font-medium">Kenaikan Kelulusan</p>
                   </div>
                 </div>
 
@@ -124,13 +124,13 @@ export default function Hero({ onExploreStructure, onExploreEvents, memberCount,
                       <GraduationCap className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800">Pendidikan & Edukasi</h4>
-                      <p className="text-[10px] text-slate-500">Implementasi PSAK & IFRS</p>
+                      <h4 className="text-xs font-bold text-slate-800">Webinar & Pelatihan</h4>
+                      <p className="text-[10px] text-slate-500">Implementasi PSAK & Teknologi</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-sm font-bold text-blue-600">800+</span>
-                    <p className="text-[9px] text-slate-400 font-medium">Partisipan Webinar</p>
+                    <span className="text-sm font-bold text-blue-600">1,000+</span>
+                    <p className="text-[9px] text-slate-400 font-medium">Peserta Edukasi</p>
                   </div>
                 </div>
 
@@ -138,15 +138,16 @@ export default function Hero({ onExploreStructure, onExploreEvents, memberCount,
                 <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                      <ShieldCheck className="h-4 w-4" />
+                      <Users className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="text-xs font-bold text-slate-800">Kode Etik Profesional</h4>
-                      <p className="text-[10px] text-slate-500">Integritas Standar Tinggi</p>
+                      <h4 className="text-xs font-bold text-slate-800">Literasi Keuangan UMKM</h4>
+                      <p className="text-[10px] text-slate-500">Program Pengabdian Masyarakat</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <span className="text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg">PASSED</span>
+                    <span className="text-sm font-bold text-indigo-600">15+</span>
+                    <p className="text-[9px] text-slate-400 font-medium">UMKM Binaan</p>
                   </div>
                 </div>
 

@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Generation, Member } from '../types';
-import { Mail, Linkedin, Users, Filter, Award, History, Search } from 'lucide-react';
+import { Mail, Linkedin, Users, Filter, Award, History, Search, X } from 'lucide-react';
 
 interface OrganizationalStructureProps {
   generations: Generation[];
@@ -31,6 +31,9 @@ export default function OrganizationalStructure({ generations, members }: Organi
 
   // Search filter
   const [searchQuery, setSearchQuery] = useState<string>('');
+
+  // Selected member for profile modal
+  const [selectedMember, setSelectedMember] = useState<Member | null>(null);
 
   // Selected Generation details
   const selectedGen = useMemo(() => {
@@ -60,6 +63,11 @@ export default function OrganizationalStructure({ generations, members }: Organi
       return matchDivision && matchSearch;
     });
   }, [filteredByGenMembers, selectedDivision, searchQuery]);
+
+  const selectedMemberGen = useMemo(() => {
+    if (!selectedMember) return null;
+    return generations.find(g => g.id === selectedMember.generationId);
+  }, [generations, selectedMember]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
@@ -215,7 +223,8 @@ export default function OrganizationalStructure({ generations, members }: Organi
                 <div 
                   key={m.id}
                   id={`member-card-${m.id}`}
-                  className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1 ${
+                  onClick={() => setSelectedMember(m)}
+                  className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 hover:-translate-y-1 cursor-pointer hover:shadow-md ${
                     isBPH 
                       ? 'bg-white border-blue-100 shadow-sm hover:border-blue-200'
                       : 'bg-white border-slate-100 hover:border-slate-200'
@@ -259,9 +268,14 @@ export default function OrganizationalStructure({ generations, members }: Organi
                       <p className="text-xs text-slate-500 font-medium mt-1">
                         {m.division ?? '—'}
                       </p>
+                      {m.university && (
+                        <p className="text-[11px] text-slate-400 mt-1 italic font-medium">
+                          {m.university}
+                        </p>
+                      )}
                     </div>
 
-                    {/* Email and LinkedIn handles */}
+                     {/* Email and LinkedIn handles */}
                     <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-slate-400">
                       <span className="text-[10px] font-mono font-semibold text-slate-400 max-w-[70%] truncate">
                         {m.email || 'komite@iai-dki.or.id'}
@@ -271,6 +285,7 @@ export default function OrganizationalStructure({ generations, members }: Organi
                           <a 
                             href={`mailto:${m.email}`} 
                             title="Kirim Email"
+                            onClick={(e) => e.stopPropagation()}
                             className="p-1 hover:text-blue-600 hover:bg-slate-50 rounded transition-all"
                           >
                             <Mail className="h-4 w-4" />
@@ -281,6 +296,7 @@ export default function OrganizationalStructure({ generations, members }: Organi
                           target="_blank" 
                           rel="noopener noreferrer"
                           title="Kunjungi LinkedIn"
+                          onClick={(e) => e.stopPropagation()}
                           className="p-1 hover:text-blue-600 hover:bg-slate-50 rounded transition-all"
                         >
                           <Linkedin className="h-4 w-4" />
@@ -301,6 +317,102 @@ export default function OrganizationalStructure({ generations, members }: Organi
           </div>
         )}
       </div>
+
+      {/* Profile Detail Modal */}
+      {selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in" onClick={() => setSelectedMember(null)}>
+          <div 
+            className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-100 transform transition-all duration-300 scale-100 animate-scale-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header/Banner */}
+            <div className="h-24 bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 relative">
+              <button 
+                onClick={() => setSelectedMember(null)}
+                className="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Profile Content */}
+            <div className="px-6 pb-8 relative">
+              {/* Photo offset */}
+              <div className="relative -mt-12 mb-4">
+                <div className="h-24 w-24 rounded-2xl border-4 border-white bg-slate-50 overflow-hidden shadow-md">
+                  {selectedMember.imageUrl ? (
+                    <img 
+                      src={selectedMember.imageUrl} 
+                      alt={selectedMember.name} 
+                      referrerPolicy="no-referrer"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-slate-100">
+                      <Users className="h-10 w-10 text-slate-400" />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Identity info */}
+              <div className="space-y-1">
+                <h3 className="font-display text-xl font-bold text-slate-900">{selectedMember.name}</h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 ring-1 ring-blue-100 ring-inset">
+                    {selectedMember.position}
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {selectedMember.division}
+                  </span>
+                </div>
+                {selectedMember.university && (
+                  <p className="text-xs font-bold text-indigo-600 mt-1.5 flex items-center gap-1.5">
+                    🎓 <span>{selectedMember.university}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Generation/Period info */}
+              <div className="mt-6 space-y-2">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Periode Kepengurusan</h4>
+                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <span className="text-sm font-semibold text-slate-700">
+                    {selectedMemberGen ? selectedMemberGen.name : '—'}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+                    {selectedMemberGen ? selectedMemberGen.years : '—'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Social/Contact buttons */}
+              <div className="mt-6 pt-5 border-t border-slate-100 flex flex-col sm:flex-row items-center gap-3">
+                {selectedMember.email && (
+                  <a 
+                    href={`mailto:${selectedMember.email}`} 
+                    className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-50 border border-slate-200 hover:bg-slate-100 px-4 py-3 text-xs sm:text-sm font-bold text-slate-700 transition-all"
+                  >
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    <span>Kirim Email</span>
+                  </a>
+                )}
+                <a 
+                  href={selectedMember.linkedinUrl || "https://linkedin.com"} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="w-full sm:flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-4 py-3 text-xs sm:text-sm shadow-md hover:from-blue-500 hover:to-indigo-500 transition-all"
+                >
+                  <Linkedin className="h-4 w-4" />
+                  <span>Kunjungi LinkedIn</span>
+                </a>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      )}
 
     </div>
   );
