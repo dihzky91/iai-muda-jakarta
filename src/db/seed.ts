@@ -10,6 +10,9 @@ async function seed() {
     await db.execute(sql`SET FOREIGN_KEY_CHECKS = 0`);
     await db.execute(sql`TRUNCATE TABLE members`);
     await db.execute(sql`TRUNCATE TABLE events`);
+    await db.execute(sql`TRUNCATE TABLE articles`);
+    await db.execute(sql`TRUNCATE TABLE galleries`);
+    await db.execute(sql`TRUNCATE TABLE pillars`);
     await db.execute(sql`TRUNCATE TABLE positions`);
     await db.execute(sql`TRUNCATE TABLE generations`);
     await db.execute(sql`TRUNCATE TABLE users`);
@@ -48,6 +51,31 @@ async function seed() {
 
     await db.insert(schema.positions).values(positions);
     console.log('✓ Positions inserted');
+
+    // Insert pillars
+    const pillars = [
+      {
+        title: 'Integritas Standar Tinggi',
+        description: 'Menjaga integritas profesional dan etika luhur sesuai dengan kode etik Ikatan Akuntan Indonesia (IAI) sejak dini sebagai fondasi utama berkarir.',
+        iconName: 'Shield',
+        sortOrder: 1,
+      },
+      {
+        title: 'Literasi Finansial & Teknologi',
+        description: 'Mendorong penguasaan alat analisis data cerdas (data analytics), kecerdasan buatan, dan teknologi audit terkini guna mendukung digitalisasi keuangan.',
+        iconName: 'Landmark',
+        sortOrder: 2,
+      },
+      {
+        title: 'Sinergi & Jaringan Karir',
+        description: 'Membangun jembatan networking kokoh antara universitas, akuntan korporasi, KAP Big 4, regulator keuangan, dan komunitas global.',
+        iconName: 'Award',
+        sortOrder: 3,
+      },
+    ];
+
+    await db.insert(schema.pillars).values(pillars);
+    console.log('✓ Pillars inserted');
 
     // Insert events
     const events = [
@@ -99,6 +127,74 @@ async function seed() {
     await db.insert(schema.events).values(events);
     console.log('✓ Events inserted');
 
+    // Insert articles
+    const articles = [
+      {
+        title: 'Menjawab Tantangan AI: Mengapa Akuntan Muda Tak Tergantikan?',
+        excerpt: 'Kecerdasan Buatan (AI) dapat mengotomatisasi pembukuan dasar, namun akuntabilitas, etika profesi, dan strategic judgment tetap menjadi keunggulan utama akuntan manusia.',
+        content: 'Perkembangan Artificial Intelligence (AI) seperti ChatGPT, Copilot, dan sistem otomasi cloud accounting seringkali memicu kekhawatiran di kalangan mahasiswa akuntansi. Apakah profesi akuntan akan punah?\n\nKenyataannya tidaklah demikian. Teknologi memang mengeliminasi entri data repetitif, namun justru membebaskan akuntan muda untuk fokus pada peran yang lebih bernilai tinggi: interpretasi data strategis, pengelolaan risiko, kepatuhan perpajakan yang kompleks, serta audit investigatif.\n\nAkuntan masa depan adalah akuntan hibrida yang menguasai konsep akuntansi dasar sekaligus melek teknologi analisis data (seperti SQL, Python, atau PowerBI). IAI Muda Wilayah DKI Jakarta berkomitmen penuh membekali anggotanya agar siap memimpin transformasi digital ini.',
+        date: '2026-06-28',
+        author: 'Muhammad Farhan',
+        imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&fit=crop&q=80',
+      },
+      {
+        title: 'Panduan Ujian Chartered Accountant (CA) untuk Mahasiswa dan Fresh Graduate',
+        excerpt: 'Langkah taktis mempersiapkan diri menghadapi ujian CA IAI mulai dari pemetaan materi, manajemen waktu belajar, hingga tips menjawab studi kasus.',
+        content: 'Gelar Chartered Accountant (CA) dari Ikatan Akuntan Indonesia merupakan standar kompetensi tertinggi bagi akuntan profesional di Indonesia. Memperoleh gelar ini di usia muda memberikan daya saing luar biasa di bursa kerja internasional.\n\nBagi rekan-rekan mahasiswa tingkat akhir atau fresh graduate, mempersiapkan ujian CA membutuhkan konsistensi tinggi. Berikut 3 pilar sukses lulus CA:\n1. Kuasai Standar Akuntansi Keuangan (SAK) terbaru yang berbasis IFRS.\n2. Latihan studi kasus terintegrasi, khususnya terkait Pelaporan Korporat dan Manajemen Keuangan Strategis.\n3. Ikuti program bimbingan belajar resmi yang diselenggarakan IAI Wilayah DKI Jakarta.\n\nMari jadikan tahun kepengurusan ini momentum emas untuk mengantongi gelar profesional Anda!',
+        date: '2026-05-14',
+        author: 'Devan Pramudya',
+        imageUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&fit=crop&q=80',
+      },
+    ];
+
+    await db.insert(schema.articles).values(articles);
+    console.log('✓ Articles inserted');
+
+    // Insert galleries
+    const galleries = [
+      {
+        title: 'Pelantikan & Rapat Kerja Gen-2',
+        description: 'Sesi foto bersama seluruh jajaran pengurus IAI Muda Wilayah DKI Jakarta Generasi ke-2 setelah proses pelantikan resmi di Jakarta.',
+        imageUrl: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=800&fit=crop&q=80',
+        date: '2025-11-22',
+        category: 'Rapat Kerja (Raker)',
+        photographer: 'Divisi Media',
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=800&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&fit=crop&q=80'
+        ]),
+      },
+      {
+        title: 'Webinar PSAK 74 Live Session',
+        description: 'Antusiasme peserta dalam menyimak penjelasan narasumber mengenai implementasi standar kontrak asuransi PSAK 74.',
+        imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&fit=crop&q=80',
+        date: '2026-07-15',
+        category: 'Webinar & Talkshow',
+        photographer: 'Humas IAI',
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1524178232363-1fb2b075b655?w=800&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&fit=crop&q=80'
+        ]),
+      },
+      {
+        title: 'Accounting Class Roadshow',
+        description: 'Kunjungan edukatif tim IAI Muda DKI ke universitas-universitas di Jakarta dalam rangka sosialisasi sertifikasi profesi CA.',
+        imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&fit=crop&q=80',
+        date: '2026-03-05',
+        category: 'Sosial & Pengabdian',
+      },
+      {
+        title: 'Networking & Coffee Morning',
+        description: 'Momen akrab diskusi santai antara pengurus IAI Muda DKI dengan para profesional senior KAP Big 4.',
+        imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&fit=crop&q=80',
+        date: '2026-01-18',
+        category: 'Kunjungan Industri',
+      },
+    ];
+
+    await db.insert(schema.galleries).values(galleries);
+    console.log('✓ Galleries inserted');
+
     // Insert members for Gen 2
     const memberData = [
       { generationId: 2, positionId: 1, name: 'Muhammad Farhan, S.Ak., CA', division: 'Badan Pengurus Harian (BPH)', university: 'Universitas Indonesia', email: 'farhan@iai-dki.or.id', imageUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&fit=crop&q=80', linkedinUrl: 'https://linkedin.com/in/farhan' },
@@ -136,6 +232,9 @@ async function seed() {
       email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
       phone: '(021) 3190-4232 ext. 202',
       showPhone: true,
+      instagramUrl: 'https://instagram.com/iai_muda_dki',
+      linkedinUrl: 'https://linkedin.com/company/iai-muda-dki',
+      youtubeUrl: 'https://youtube.com/@iai_muda_dki',
     });
     console.log('✓ Default settings inserted');
 

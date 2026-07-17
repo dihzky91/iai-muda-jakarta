@@ -35,7 +35,7 @@ export interface Event {
 }
 
 export interface Article {
-  id: string;
+  id: number;
   title: string;
   excerpt: string;
   content: string;
@@ -45,7 +45,7 @@ export interface Article {
 }
 
 export interface GalleryItem {
-  id: string;
+  id: number;
   title: string;
   description: string;
   imageUrl: string;
@@ -53,6 +53,14 @@ export interface GalleryItem {
   category?: string;
   photographer?: string;
   images?: string[];
+}
+
+export interface Pillar {
+  id: number;
+  title: string;
+  description: string;
+  iconName: string;
+  sortOrder: number;
 }
 
 export interface Settings {
@@ -63,6 +71,9 @@ export interface Settings {
   email: string;
   phone: string | null;
   showPhone: boolean;
+  instagramUrl?: string | null;
+  linkedinUrl?: string | null;
+  youtubeUrl?: string | null;
   updatedAt?: string;
 }
 

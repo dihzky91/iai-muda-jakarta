@@ -22,8 +22,8 @@ import {
   initialGallery
 } from './data';
 
-import { Generation, Member, Event, Article, GalleryItem, Settings } from './types';
-import { useGenerations, useEvents, useMembers, useSettings } from './hooks/useApi';
+import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from './types';
+import { useGenerations, useEvents, useMembers, useSettings, useArticles, useGalleries, usePillars } from './hooks/useApi';
 import { 
   Award, Shield, Calendar, Landmark, Mail, Phone, MapPin, 
   Linkedin, Instagram, Youtube, ArrowRight, MessageSquare, BookOpen, Send, CheckCircle2
@@ -40,6 +40,9 @@ export default function App() {
   const { events: dbEvents, loading: eventsLoading, error: eventsError } = useEvents();
   const { members: dbMembers, loading: membersLoading, error: membersError } = useMembers();
   const { settings: dbSettings, error: settingsError } = useSettings();
+  const { articles: dbArticles, loading: articlesLoading, error: articlesError } = useArticles();
+  const { galleries: dbGalleries, loading: galleriesLoading, error: galleriesError } = useGalleries();
+  const { pillars: dbPillars, loading: pillarsLoading, error: pillarsError } = usePillars();
 
   const defaultSettings: Settings = {
     id: 1,
@@ -49,6 +52,9 @@ export default function App() {
     email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
     phone: '(021) 3190-4232 ext. 202',
     showPhone: true,
+    instagramUrl: 'https://instagram.com/iai_muda_dki',
+    linkedinUrl: 'https://linkedin.com/company/iai-muda-dki',
+    youtubeUrl: 'https://youtube.com/@iai_muda_dki',
   };
 
   // Single source of truth: API database.
@@ -58,6 +64,7 @@ export default function App() {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [articles, setArticles] = useState<Article[]>(initialArticles);
   const [gallery, setGallery] = useState<GalleryItem[]>(initialGallery);
+  const [pillars, setPillars] = useState<Pillar[]>([]);
   const [settings, setSettings] = useState<Settings>(defaultSettings);
 
   // Replace local state with DB data once loaded
@@ -85,6 +92,24 @@ export default function App() {
     }
   }, [dbSettings, settingsError]);
 
+  useEffect(() => {
+    if (!articlesLoading && !articlesError && dbArticles && dbArticles.length > 0) {
+      setArticles(dbArticles);
+    }
+  }, [dbArticles, articlesLoading, articlesError]);
+
+  useEffect(() => {
+    if (!galleriesLoading && !galleriesError && dbGalleries && dbGalleries.length > 0) {
+      setGallery(dbGalleries);
+    }
+  }, [dbGalleries, galleriesLoading, galleriesError]);
+
+  useEffect(() => {
+    if (!pillarsLoading && !pillarsError && dbPillars && dbPillars.length > 0) {
+      setPillars(dbPillars);
+    }
+  }, [dbPillars, pillarsLoading, pillarsError]);
+
   // Derived properties: Active Generation info
   const activeGen = useMemo(() => {
     return generations.find(g => g.isActive) || generations[0];
@@ -104,6 +129,41 @@ export default function App() {
   const featuredEvent = useMemo(() => {
     return events.find(e => e.status === 'ongoing') || events.find(e => e.status === 'upcoming');
   }, [events]);
+
+  // Dynamic SEO: update page title & meta on tab change
+  useEffect(() => {
+    const titles: Record<string, string> = {
+      beranda: 'IAI Muda Wilayah DKI Jakarta',
+      struktur: 'Struktur Komite — IAI Muda DKI Jakarta',
+      acara: 'Agenda & Webinar — IAI Muda DKI Jakarta',
+      galeri: 'Galeri Kegiatan — IAI Muda DKI Jakarta',
+      artikel: 'Artikel & Opini — IAI Muda DKI Jakarta',
+    };
+    document.title = titles[currentTab] || 'IAI Muda Wilayah DKI Jakarta';
+
+    const descriptions: Record<string, string> = {
+      beranda: 'Website resmi IAI Muda Wilayah DKI Jakarta — Badan kelengkapan Ikatan Akuntan Indonesia yang menaungi mahasiswa akuntansi dan akuntan muda.',
+      struktur: 'Lihat struktur komite kepengurusan IAI Muda Wilayah DKI Jakarta.',
+      acara: 'Jadwal agenda, webinar, dan acara terbaru IAI Muda DKI Jakarta.',
+      galeri: 'Dokumentasi galeri kegiatan IAI Muda Wilayah DKI Jakarta.',
+      artikel: 'Artikel dan opini akuntansi terkini dari IAI Muda DKI Jakarta.',
+    };
+    const desc = descriptions[currentTab] || descriptions.beranda;
+
+    let metaDesc = document.querySelector('meta[name="description"]');
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    metaDesc.setAttribute('content', desc);
+
+    let ogTitle = document.querySelector('meta[property="og:title"]');
+    if (ogTitle) ogTitle.setAttribute('content', document.title);
+
+    let ogDesc = document.querySelector('meta[property="og:description"]');
+    if (ogDesc) ogDesc.setAttribute('content', desc);
+  }, [currentTab]);
 
   // Simulated email contact list subscription
   const [newsletterEmail, setNewsletterEmail] = useState('');
@@ -146,6 +206,8 @@ export default function App() {
         setArticles={setArticles}
         gallery={gallery}
         setGallery={setGallery}
+        pillars={pillars}
+        setPillars={setPillars}
         setIsAdminMode={setIsAdminMode}
         setCurrentTab={setCurrentTab}
         settings={settings}
@@ -158,7 +220,7 @@ export default function App() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-between" id="app-root-layout">
       
       {/* DB connection error banner */}
-      {(genError || eventsError || membersError) && (
+      {(genError || eventsError || membersError || articlesError || galleriesError) && (
         <div className="bg-amber-50 border-b border-amber-200 px-4 py-2 text-center text-xs font-semibold text-amber-800">
           ⚠️ Gagal terhubung ke database — menampilkan data bawaan.{' '}
           {genError || eventsError || membersError}
@@ -202,38 +264,52 @@ export default function App() {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
-                    {/* Pillar 1 */}
-                    <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
-                      <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-fit">
-                        <Shield className="h-6 w-6" />
-                      </div>
-                      <h3 className="font-display font-bold text-lg text-slate-900">Integritas Standar Tinggi</h3>
-                      <p className="text-slate-500 text-sm leading-relaxed">
-                        Menjaga integritas profesional dan etika luhur sesuai dengan kode etik Ikatan Akuntan Indonesia (IAI) sejak dini sebagai fondasi utama berkarir.
-                      </p>
-                    </div>
-
-                    {/* Pillar 2 */}
-                    <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit">
-                        <Landmark className="h-6 w-6" />
-                      </div>
-                      <h3 className="font-display font-bold text-lg text-slate-900">Literasi Finansial & Teknologi</h3>
-                      <p className="text-slate-500 text-sm leading-relaxed">
-                        Mendorong penguasaan alat analisis data cerdas (data analytics), kecerdasan buatan, dan teknologi audit terkini guna mendukung digitalisasi keuangan.
-                      </p>
-                    </div>
-
-                    {/* Pillar 3 */}
-                    <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
-                      <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl w-fit">
-                        <Award className="h-6 w-6" />
-                      </div>
-                      <h3 className="font-display font-bold text-lg text-slate-900">Sinergi & Jaringan Karir</h3>
-                      <p className="text-slate-500 text-sm leading-relaxed">
-                        Membangun jembatan networking kokoh antara universitas, akuntan korporasi, KAP Big 4, regulator keuangan, dan komunitas global.
-                      </p>
-                    </div>
+                    {pillars.length > 0 ? pillars.map((pillar, i) => {
+                      const iconColors = [
+                        { bg: 'bg-emerald-50', text: 'text-emerald-600' },
+                        { bg: 'bg-blue-50', text: 'text-blue-600' },
+                        { bg: 'bg-indigo-50', text: 'text-indigo-600' },
+                      ];
+                      const color = iconColors[i % iconColors.length];
+                      const IconMap: Record<string, React.ReactNode> = {
+                        Shield: <Shield className="h-6 w-6" />,
+                        Landmark: <Landmark className="h-6 w-6" />,
+                        Award: <Award className="h-6 w-6" />,
+                      };
+                      return (
+                        <div key={pillar.id} className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
+                          <div className={`p-3 ${color.bg} ${color.text} rounded-xl w-fit`}>
+                            {IconMap[pillar.iconName] || <Shield className="h-6 w-6" />}
+                          </div>
+                          <h3 className="font-display font-bold text-lg text-slate-900">{pillar.title}</h3>
+                          <p className="text-slate-500 text-sm leading-relaxed">{pillar.description}</p>
+                        </div>
+                      );
+                    }) : (
+                      <>
+                        <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
+                          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl w-fit">
+                            <Shield className="h-6 w-6" />
+                          </div>
+                          <h3 className="font-display font-bold text-lg text-slate-900">Integritas Standar Tinggi</h3>
+                          <p className="text-slate-500 text-sm leading-relaxed">Menjaga integritas profesional dan etika luhur sesuai dengan kode etik IAI sejak dini sebagai fondasi utama berkarir.</p>
+                        </div>
+                        <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl w-fit">
+                            <Landmark className="h-6 w-6" />
+                          </div>
+                          <h3 className="font-display font-bold text-lg text-slate-900">Literasi Finansial & Teknologi</h3>
+                          <p className="text-slate-500 text-sm leading-relaxed">Mendorong penguasaan alat analisis data cerdas dan teknologi audit terkini guna mendukung digitalisasi keuangan.</p>
+                        </div>
+                        <div className="p-8 rounded-3xl bg-white border border-slate-100 space-y-4 shadow-sm hover:shadow-md transition-all">
+                          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl w-fit">
+                            <Award className="h-6 w-6" />
+                          </div>
+                          <h3 className="font-display font-bold text-lg text-slate-900">Sinergi & Jaringan Karir</h3>
+                          <p className="text-slate-500 text-sm leading-relaxed">Membangun jembatan networking antara universitas, akuntan korporasi, KAP Big 4, dan regulator keuangan.</p>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </section>
 
@@ -470,13 +546,13 @@ export default function App() {
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Ikuti Kami (Sosial Media)</h4>
             <div className="flex items-center gap-3">
-              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-blue-600 rounded-xl transition-all shadow-sm" title="Instagram">
+              <a href={settings.instagramUrl || 'https://instagram.com'} target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-pink-600 rounded-xl transition-all shadow-sm" title="Instagram">
                 <Instagram className="h-4.5 w-4.5" />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-blue-600 rounded-xl transition-all shadow-sm" title="LinkedIn">
+              <a href={settings.linkedinUrl || 'https://linkedin.com'} target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-blue-600 rounded-xl transition-all shadow-sm" title="LinkedIn">
                 <Linkedin className="h-4.5 w-4.5" />
               </a>
-              <a href="https://youtube.com" target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-blue-600 rounded-xl transition-all shadow-sm" title="YouTube">
+              <a href={settings.youtubeUrl || 'https://youtube.com'} target="_blank" rel="noreferrer" className="p-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-red-600 rounded-xl transition-all shadow-sm" title="YouTube">
                 <Youtube className="h-4.5 w-4.5" />
               </a>
             </div>

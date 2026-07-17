@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Generation, Member, Event, Settings } from '../types';
+import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -430,4 +430,332 @@ export function useUpdateSettings() {
   };
 
   return { update, loading, error };
+}
+
+export function useArticles() {
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchArticles = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/articles');
+        const result: ApiResponse<Article> = await response.json();
+
+        if (result.success) {
+          setArticles(Array.isArray(result.data) ? result.data : [result.data]);
+          setError(null);
+        } else {
+          setError(result.message || 'Failed to fetch articles');
+          setArticles([]);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setArticles([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticles();
+  }, []);
+
+  return { articles, loading, error };
+}
+
+export function useGalleries() {
+  const [galleries, setGalleries] = useState<GalleryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchGalleries = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/galleries');
+        const result: ApiResponse<GalleryItem> = await response.json();
+
+        if (result.success) {
+          setGalleries(Array.isArray(result.data) ? result.data : [result.data]);
+          setError(null);
+        } else {
+          setError(result.message || 'Failed to fetch galleries');
+          setGalleries([]);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+        setGalleries([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGalleries();
+  }, []);
+
+  return { galleries, loading, error };
+}
+
+export function useCreateArticle() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const create = async (articleData: Partial<Article>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(articleData),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to create article');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { create, loading, error };
+}
+
+export function useUpdateArticle() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const update = async (id: number, articleData: Partial<Article>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/articles/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(articleData),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to update article');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { update, loading, error };
+}
+
+export function useDeleteArticle() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteArticle = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/articles/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to delete article');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteArticle, loading, error };
+}
+
+export function useCreateGallery() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const create = async (galleryData: Partial<GalleryItem>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch('/api/galleries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(galleryData),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to create gallery');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { create, loading, error };
+}
+
+export function useUpdateGallery() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const update = async (id: number, galleryData: Partial<GalleryItem>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/galleries/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(galleryData),
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to update gallery');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { update, loading, error };
+}
+
+export function useDeleteGallery() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteGallery = async (id: number) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await fetch(`/api/galleries/${id}`, {
+        method: 'DELETE',
+      });
+      const result = await response.json();
+      if (!result.success) {
+        setError(result.message || 'Failed to delete gallery');
+      }
+      return result;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
+      return { success: false, message };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteGallery, loading, error };
+}
+
+// ========== PILLARS HOOKS ==========
+
+export function usePillars() {
+  const [pillars, setPillars] = useState<Pillar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchPillars = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/pillars');
+      const result: ApiResponse<Pillar> = await response.json();
+      if (result.success) {
+        setPillars(Array.isArray(result.data) ? result.data : [result.data]);
+        setError(null);
+      } else {
+        setError(result.message || 'Failed to fetch pillars');
+        setPillars([]);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'An error occurred');
+      setPillars([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchPillars(); }, []);
+
+  return { pillars, loading, error, refetch: fetchPillars };
+}
+
+export function useCreatePillar() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const create = async (data: Partial<Pillar>) => {
+    try {
+      setLoading(true); setError(null);
+      const res = await fetch('/api/pillars', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (!result.success) setError(result.message || 'Failed to create pillar');
+      return result;
+    } catch (err) {
+      const m = err instanceof Error ? err.message : 'Error';
+      setError(m); return { success: false, message: m };
+    } finally { setLoading(false); }
+  };
+  return { create, loading, error };
+}
+
+export function useUpdatePillar() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const update = async (id: number, data: Partial<Pillar>) => {
+    try {
+      setLoading(true); setError(null);
+      const res = await fetch(`/api/pillars/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      const result = await res.json();
+      if (!result.success) setError(result.message || 'Failed to update pillar');
+      return result;
+    } catch (err) {
+      const m = err instanceof Error ? err.message : 'Error';
+      setError(m); return { success: false, message: m };
+    } finally { setLoading(false); }
+  };
+  return { update, loading, error };
+}
+
+export function useDeletePillar() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const deletePillar = async (id: number) => {
+    try {
+      setLoading(true); setError(null);
+      const res = await fetch(`/api/pillars/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (!result.success) setError(result.message || 'Failed to delete pillar');
+      return result;
+    } catch (err) {
+      const m = err instanceof Error ? err.message : 'Error';
+      setError(m); return { success: false, message: m };
+    } finally { setLoading(false); }
+  };
+  return { deletePillar, loading, error };
 }

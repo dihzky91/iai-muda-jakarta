@@ -5,6 +5,6 @@ export default defineConfig({
   out: './drizzle',
   dialect: 'mysql',
   dbCredentials: {
-    url: process.env.DATABASE_URL || 'mysql://root:@localhost:3306/iai_muda_jakarta',
+    url: process.env.DATABASE_URL || `mysql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}?ssl={}`,
   },
 });

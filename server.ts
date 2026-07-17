@@ -238,6 +238,9 @@ async function startServer() {
         email: 'iaimuda.dki@iai.or.id / dki@iaiglobal.or.id',
         phone: '(021) 3190-4232 ext. 202',
         showPhone: true,
+        instagramUrl: 'https://instagram.com/iai_muda_dki',
+        linkedinUrl: 'https://linkedin.com/company/iai-muda-dki',
+        youtubeUrl: 'https://youtube.com/@iai_muda_dki',
       };
       res.json({ success: true, data: rows[0] || defaultSettings });
     } catch (err: any) {
@@ -247,7 +250,7 @@ async function startServer() {
 
   app.put('/api/settings', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
     try {
-      const { contactTitle, contactDescription, address, email, phone, showPhone } = req.body;
+      const { contactTitle, contactDescription, address, email, phone, showPhone, instagramUrl, linkedinUrl, youtubeUrl } = req.body;
       const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
       
       if (rows.length === 0) {
@@ -259,6 +262,9 @@ async function startServer() {
           email,
           phone,
           showPhone,
+          instagramUrl,
+          linkedinUrl,
+          youtubeUrl,
         });
       } else {
         await db.update(schema.settings).set({
@@ -268,6 +274,9 @@ async function startServer() {
           email,
           phone,
           showPhone,
+          instagramUrl: instagramUrl || undefined,
+          linkedinUrl: linkedinUrl || undefined,
+          youtubeUrl: youtubeUrl || undefined,
         }).where(eq(schema.settings.id, 1));
       }
       
@@ -296,6 +305,55 @@ async function startServer() {
       res.json({ success: true, data: event[0] });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to fetch event' });
+    }
+  });
+
+  // Articles API
+  app.get('/api/articles', async (req, res) => {
+    try {
+      const articles = await db.select().from(schema.articles).orderBy(schema.articles.date);
+      res.json({ success: true, data: articles });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch articles' });
+    }
+  });
+
+  app.get('/api/articles/:id', async (req, res) => {
+    try {
+      const article = await db.select().from(schema.articles).where(eq(schema.articles.id, parseInt(req.params.id))).limit(1);
+      if (!article.length) {
+        return res.status(404).json({ success: false, message: 'Article not found' });
+      }
+      res.json({ success: true, data: article[0] });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch article' });
+    }
+  });
+
+  // Galleries API
+  app.get('/api/galleries', async (req, res) => {
+    try {
+      const rows = await db.select().from(schema.galleries).orderBy(schema.galleries.date);
+      const galleries = rows.map(g => ({
+        ...g,
+        images: g.images ? JSON.parse(g.images) : [],
+      }));
+      res.json({ success: true, data: galleries });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch galleries' });
+    }
+  });
+
+  app.get('/api/galleries/:id', async (req, res) => {
+    try {
+      const row = await db.select().from(schema.galleries).where(eq(schema.galleries.id, parseInt(req.params.id))).limit(1);
+      if (!row.length) {
+        return res.status(404).json({ success: false, message: 'Gallery not found' });
+      }
+      const gallery = { ...row[0], images: row[0].images ? JSON.parse(row[0].images) : [] };
+      res.json({ success: true, data: gallery });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch gallery' });
     }
   });
 
@@ -400,6 +458,28 @@ async function startServer() {
       res.json({ success: true, data: positions });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to fetch positions' });
+    }
+  });
+
+  // Pillars API (public read)
+  app.get('/api/pillars', async (req, res) => {
+    try {
+      const pillars = await db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder);
+      res.json({ success: true, data: pillars });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch pillars' });
+    }
+  });
+
+  app.get('/api/pillars/:id', async (req, res) => {
+    try {
+      const pillar = await db.select().from(schema.pillars).where(eq(schema.pillars.id, parseInt(req.params.id))).limit(1);
+      if (!pillar.length) {
+        return res.status(404).json({ success: false, message: 'Pillar not found' });
+      }
+      res.json({ success: true, data: pillar[0] });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to fetch pillar' });
     }
   });
 
@@ -532,6 +612,171 @@ async function startServer() {
       res.json({ success: true, message: 'Member deleted successfully' });
     } catch (err: any) {
       res.status(500).json({ success: false, message: err.message || 'Failed to delete member' });
+    }
+  });
+
+  // Create Pillar
+  app.post('/api/pillars', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
+    try {
+      const { title, description, iconName, sortOrder } = req.body;
+      if (!title || !description) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+      const result = await db.insert(schema.pillars).values({
+        title,
+        description,
+        iconName: iconName || 'Shield',
+        sortOrder: sortOrder || 0,
+      });
+      res.json({ success: true, message: 'Pillar created successfully', id: (result as any).insertId });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to create pillar' });
+    }
+  });
+
+  // Update Pillar
+  app.put('/api/pillars/:id', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
+    try {
+      const { title, description, iconName, sortOrder } = req.body;
+      const pillarId = parseInt(req.params.id);
+      await db.update(schema.pillars).set({
+        title: title || undefined,
+        description: description || undefined,
+        iconName: iconName || undefined,
+        sortOrder: sortOrder !== undefined ? sortOrder : undefined,
+      }).where(eq(schema.pillars.id, pillarId));
+      res.json({ success: true, message: 'Pillar updated successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to update pillar' });
+    }
+  });
+
+  // Delete Pillar
+  app.delete('/api/pillars/:id', authenticate, requireRole('superadmin', 'admin'), async (req, res) => {
+    try {
+      const pillarId = parseInt(req.params.id);
+      await db.delete(schema.pillars).where(eq(schema.pillars.id, pillarId));
+      res.json({ success: true, message: 'Pillar deleted successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to delete pillar' });
+    }
+  });
+
+  // Create Article
+  app.post('/api/articles', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const { title, excerpt, content, date, author, imageUrl } = req.body;
+
+      if (!title || !content || !date || !author) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+
+      const result = await db.insert(schema.articles).values({
+        title,
+        excerpt: excerpt || null,
+        content,
+        date,
+        author,
+        imageUrl: imageUrl || null,
+      });
+
+      res.json({ success: true, message: 'Article created successfully', id: (result as any).insertId });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to create article' });
+    }
+  });
+
+  // Update Article
+  app.put('/api/articles/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const { title, excerpt, content, date, author, imageUrl } = req.body;
+      const articleId = parseInt(req.params.id);
+
+      await db.update(schema.articles).set({
+        title: title || undefined,
+        excerpt: excerpt !== undefined ? excerpt : undefined,
+        content: content || undefined,
+        date: date || undefined,
+        author: author || undefined,
+        imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+      }).where(eq(schema.articles.id, articleId));
+
+      res.json({ success: true, message: 'Article updated successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to update article' });
+    }
+  });
+
+  // Delete Article
+  app.delete('/api/articles/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const articleId = parseInt(req.params.id);
+
+      await db.delete(schema.articles).where(eq(schema.articles.id, articleId));
+
+      res.json({ success: true, message: 'Article deleted successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to delete article' });
+    }
+  });
+
+  // Create Gallery
+  app.post('/api/galleries', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const { title, description, imageUrl, date, category, photographer, images } = req.body;
+
+      if (!title || !date) {
+        return res.status(400).json({ success: false, message: 'Missing required fields' });
+      }
+
+      const result = await db.insert(schema.galleries).values({
+        title,
+        description: description || null,
+        imageUrl: imageUrl || null,
+        date,
+        category: category || null,
+        photographer: photographer || null,
+        images: images ? JSON.stringify(images) : null,
+      });
+
+      res.json({ success: true, message: 'Gallery created successfully', id: (result as any).insertId });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to create gallery' });
+    }
+  });
+
+  // Update Gallery
+  app.put('/api/galleries/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const { title, description, imageUrl, date, category, photographer, images } = req.body;
+      const galleryId = parseInt(req.params.id);
+
+      await db.update(schema.galleries).set({
+        title: title || undefined,
+        description: description !== undefined ? description : undefined,
+        imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+        date: date || undefined,
+        category: category !== undefined ? category : undefined,
+        photographer: photographer !== undefined ? photographer : undefined,
+        images: images !== undefined ? JSON.stringify(images) : undefined,
+      }).where(eq(schema.galleries.id, galleryId));
+
+      res.json({ success: true, message: 'Gallery updated successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to update gallery' });
+    }
+  });
+
+  // Delete Gallery
+  app.delete('/api/galleries/:id', authenticate, requireRole('superadmin', 'admin', 'editor'), async (req, res) => {
+    try {
+      const galleryId = parseInt(req.params.id);
+
+      await db.delete(schema.galleries).where(eq(schema.galleries.id, galleryId));
+
+      res.json({ success: true, message: 'Gallery deleted successfully' });
+    } catch (err: any) {
+      res.status(500).json({ success: false, message: err.message || 'Failed to delete gallery' });
     }
   });
 

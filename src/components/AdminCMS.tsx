@@ -4,11 +4,12 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { Generation, Member, Event, Article, GalleryItem, Settings } from '../types';
+import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
 import { 
   Calendar, Users, History, Plus, Edit2, Trash2, Check, 
   RotateCcw, Sparkles, AlertTriangle, ShieldCheck, Mail, Link2, Info, Image as ImageIcon,
-  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog, Settings as SettingsIcon, Globe
+  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog, Settings as SettingsIcon, Globe,
+  BookOpen
 } from 'lucide-react';
 import ImageUploader from './ImageUploader';
 import UserManagement from './UserManagement';
@@ -25,6 +26,8 @@ interface AdminCMSProps {
   setArticles: React.Dispatch<React.SetStateAction<Article[]>>;
   gallery?: GalleryItem[];
   setGallery?: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
+  pillars: Pillar[];
+  setPillars: React.Dispatch<React.SetStateAction<Pillar[]>>;
   setIsAdminMode?: (val: boolean) => void;
   setCurrentTab?: (tab: string) => void;
   settings: Settings;
@@ -42,13 +45,15 @@ export default function AdminCMS({
   setArticles,
   gallery = [],
   setGallery,
+  pillars,
+  setPillars,
   setIsAdminMode,
   setCurrentTab,
   settings,
   onSettingsUpdate
 }: AdminCMSProps) {
   // Navigation tabs inside CMS
-  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'gallery' | 'generations' | 'users' | 'settings'>('events');
+  const [cmsTab, setCmsTab] = useState<'events' | 'members' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars'>('events');
   const { user: currentUser, logout, hasRole } = useAuth();
 
   // Success Notification
@@ -62,6 +67,9 @@ export default function AdminCMS({
     email: settings.email,
     phone: settings.phone || '',
     showPhone: settings.showPhone,
+    instagramUrl: settings.instagramUrl || '',
+    linkedinUrl: settings.linkedinUrl || '',
+    youtubeUrl: settings.youtubeUrl || '',
   });
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -74,6 +82,9 @@ export default function AdminCMS({
         email: settings.email,
         phone: settings.phone || '',
         showPhone: settings.showPhone,
+        instagramUrl: settings.instagramUrl || '',
+        linkedinUrl: settings.linkedinUrl || '',
+        youtubeUrl: settings.youtubeUrl || '',
       });
     }
   }, [settings]);
@@ -93,6 +104,26 @@ export default function AdminCMS({
     location: '',
     imageUrl: '',
     status: 'upcoming' as 'ongoing' | 'upcoming' | 'completed',
+  });
+
+  // --- ARTICLES CRUD STATE ---
+  const [editingArticle, setEditingArticle] = useState<Article | null>(null);
+  const [articleForm, setArticleForm] = useState({
+    title: '',
+    excerpt: '',
+    content: '',
+    date: '',
+    author: '',
+    imageUrl: '',
+  });
+
+  // --- PILLARS CRUD STATE ---
+  const [editingPillar, setEditingPillar] = useState<Pillar | null>(null);
+  const [pillarForm, setPillarForm] = useState({
+    title: '',
+    description: '',
+    iconName: 'Shield',
+    sortOrder: 0,
   });
 
   // --- GALLERY CRUD STATE ---
@@ -407,12 +438,141 @@ export default function AdminCMS({
     }
   };
 
+  // Handle Article submit (Add/Edit)
+  const handleArticleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingArticle) {
+      const res = await fetch(`/api/articles/${editingArticle.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(articleForm),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setArticles(prev => prev.map(art => art.id === editingArticle.id ? { ...art, ...articleForm } : art));
+        triggerToast('Artikel berhasil diperbarui!');
+        setEditingArticle(null);
+      } else {
+        triggerToast(`Gagal memperbarui: ${result.message}`);
+        return;
+      }
+    } else {
+      const res = await fetch('/api/articles', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(articleForm),
+      });
+      const result = await res.json();
+      if (result.success) {
+        const listRes = await fetch('/api/articles');
+        const listResult = await listRes.json();
+        if (listResult.success) {
+          setArticles(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
+        }
+        triggerToast('Artikel baru berhasil diterbitkan!');
+      } else {
+        triggerToast(`Gagal menambahkan: ${result.message}`);
+        return;
+      }
+    }
+    setArticleForm({
+      title: '',
+      excerpt: '',
+      content: '',
+      date: '',
+      author: '',
+      imageUrl: '',
+    });
+  };
+
+  const handleEditArticle = (art: Article) => {
+    setEditingArticle(art);
+    setArticleForm({
+      title: art.title,
+      excerpt: art.excerpt,
+      content: art.content,
+      date: art.date,
+      author: art.author,
+      imageUrl: art.imageUrl || '',
+    });
+  };
+
+  const handleDeleteArticle = async (id: number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus artikel ini?')) {
+      const res = await fetch(`/api/articles/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) {
+        setArticles(prev => prev.filter(art => art.id !== id));
+        triggerToast('Artikel berhasil dihapus.');
+      } else {
+        triggerToast(`Gagal menghapus: ${result.message}`);
+      }
+    }
+  };
+
+  // Handle Pillar submit (Add/Edit)
+  const handlePillarSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (editingPillar) {
+      const res = await fetch(`/api/pillars/${editingPillar.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(pillarForm),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setPillars(prev => prev.map(p => p.id === editingPillar.id ? { ...p, ...pillarForm } : p));
+        triggerToast('Pilar berhasil diperbarui!');
+        setEditingPillar(null);
+      } else {
+        triggerToast(`Gagal memperbarui: ${result.message}`);
+        return;
+      }
+    } else {
+      const res = await fetch('/api/pillars', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...pillarForm, sortOrder: pillars.length + 1 }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        const listRes = await fetch('/api/pillars');
+        const listResult = await listRes.json();
+        if (listResult.success) {
+          setPillars(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
+        }
+        triggerToast('Pilar baru berhasil ditambahkan!');
+      } else {
+        triggerToast(`Gagal menambahkan: ${result.message}`);
+        return;
+      }
+    }
+    setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+  };
+
+  const handleEditPillar = (p: Pillar) => {
+    setEditingPillar(p);
+    setPillarForm({ title: p.title, description: p.description, iconName: p.iconName, sortOrder: p.sortOrder });
+  };
+
+  const handleDeletePillar = async (id: number) => {
+    if (confirm('Apakah Anda yakin ingin menghapus pilar ini?')) {
+      const res = await fetch(`/api/pillars/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) {
+        setPillars(prev => prev.filter(p => p.id !== id));
+        triggerToast('Pilar berhasil dihapus.');
+      } else {
+        triggerToast(`Gagal menghapus: ${result.message}`);
+      }
+    }
+  };
+
   // Handle Gallery submit (Add/Edit)
-  const handleGallerySubmit = (e: React.FormEvent) => {
+  const handleGallerySubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!setGallery) return;
 
-    // Convert imagesText to array of clean URLs
     const additionalImages = galleryForm.imagesText
       ? galleryForm.imagesText.split('\n').map(line => line.trim()).filter(Boolean)
       : [];
@@ -424,21 +584,44 @@ export default function AdminCMS({
     };
 
     if (editingGalleryItem) {
-      // Edit
-      setGallery(prev => prev.map(item => item.id === editingGalleryItem.id ? { ...item, ...galleryItemData } : item));
-      triggerToast('Item galeri berhasil diperbarui!');
-      setEditingGalleryItem(null);
+      const res = await fetch(`/api/galleries/${editingGalleryItem.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(galleryItemData),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setGallery(prev => prev.map(item => item.id === editingGalleryItem.id ? { ...item, ...galleryItemData } : item));
+        triggerToast('Item galeri berhasil diperbarui!');
+        setEditingGalleryItem(null);
+      } else {
+        triggerToast(`Gagal memperbarui: ${result.message}`);
+        return;
+      }
     } else {
-      // Add
-      const newItem: GalleryItem = {
-        id: `gal-${Date.now()}`,
-        ...galleryItemData
-      };
-      setGallery(prev => [newItem, ...prev]);
-      triggerToast('Foto galeri baru berhasil ditambahkan!');
+      const res = await fetch('/api/galleries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(galleryItemData),
+      });
+      const result = await res.json();
+      if (result.success) {
+        const listRes = await fetch('/api/galleries');
+        const listResult = await listRes.json();
+        if (listResult.success) {
+          const mapped = (Array.isArray(listResult.data) ? listResult.data : [listResult.data]).map((g: any) => ({
+            ...g,
+            images: typeof g.images === 'string' ? JSON.parse(g.images) : g.images || [],
+          }));
+          setGallery(mapped);
+        }
+        triggerToast('Foto galeri baru berhasil ditambahkan!');
+      } else {
+        triggerToast(`Gagal menambahkan: ${result.message}`);
+        return;
+      }
     }
 
-    // reset form
     setGalleryForm({
       title: '',
       description: '',
@@ -463,11 +646,17 @@ export default function AdminCMS({
     });
   };
 
-  const handleDeleteGalleryItem = (id: string) => {
+  const handleDeleteGalleryItem = async (id: number) => {
     if (!setGallery) return;
     if (confirm('Apakah Anda yakin ingin menghapus foto galeri ini?')) {
-      setGallery(prev => prev.filter(item => item.id !== id));
-      triggerToast('Foto galeri berhasil dihapus.');
+      const res = await fetch(`/api/galleries/${id}`, { method: 'DELETE' });
+      const result = await res.json();
+      if (result.success) {
+        setGallery(prev => prev.filter(item => item.id !== id));
+        triggerToast('Foto galeri berhasil dihapus.');
+      } else {
+        triggerToast(`Gagal menghapus: ${result.message}`);
+      }
     }
   };
 
@@ -788,6 +977,25 @@ export default function AdminCMS({
             </button>
 
             <button
+              onClick={() => setCmsTab('articles')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                cmsTab === 'articles' 
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <BookOpen className="h-4.5 w-4.5" />
+                <span>Artikel & Berita</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+                cmsTab === 'articles' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
+              }`}>
+                {articles.length}
+              </span>
+            </button>
+
+            <button
               onClick={() => setCmsTab('gallery')}
               className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'gallery' 
@@ -823,6 +1031,25 @@ export default function AdminCMS({
                 cmsTab === 'generations' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {generations.length}
+              </span>
+            </button>
+
+            <button
+              onClick={() => setCmsTab('pillars')}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                cmsTab === 'pillars' 
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <ShieldCheck className="h-4.5 w-4.5" />
+                <span>Pilar Organisasi</span>
+              </div>
+              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+                cmsTab === 'pillars' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
+              }`}>
+                {pillars.length}
               </span>
             </button>
 
@@ -904,14 +1131,18 @@ export default function AdminCMS({
             <h2 className="font-display text-2xl sm:text-3xl font-extrabold text-slate-900">
               {cmsTab === 'events' ? 'Manajemen Agenda & Webinar' :
                cmsTab === 'members' ? 'Kepengurusan' :
+               cmsTab === 'articles' ? 'Artikel & Berita' :
                cmsTab === 'gallery' ? 'Arsip Dokumentasi Galeri' :
+               cmsTab === 'pillars' ? 'Pilar Organisasi' :
                cmsTab === 'settings' ? 'Pengaturan Informasi Kontak' :
                cmsTab === 'users' ? 'Manajemen User' : 'Transisi & Rollover Organisasi'}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1">
               {cmsTab === 'events' ? 'Terbitkan webinar, kelola status pelaksanaan, dan pantau daftar hadir peserta.' :
                cmsTab === 'members' ? 'Kelola keanggotaan aktif divisi kerja, pendaftaran struktur baru, dan tautan sosial media.' :
+               cmsTab === 'articles' ? 'Kelola artikel dan opini akuntansi terkini untuk dipublikasikan ke halaman beranda.' :
                cmsTab === 'gallery' ? 'Unggah foto-foto beresolusi tinggi dokumentasi kesuksesan IAI Muda DKI.' :
+               cmsTab === 'pillars' ? 'Kelola pilar utama organisasi yang ditampilkan di halaman beranda.' :
                cmsTab === 'settings' ? 'Ubah informasi alamat, email, hotline, dan deskripsi hubungi kami di halaman beranda.' :
                cmsTab === 'users' ? 'Kelola daftar pengguna sistem dan hak akses administrasi.' : 'Luncurkan generasi kepengurusan baru, serta arsipkan sejarah komite terdahulu.'}
             </p>
@@ -1425,7 +1656,158 @@ export default function AdminCMS({
         </div>
       )}
 
-      {/* --- RENDER 3: GALLERY CRUD CMS --- */}
+      {/* --- RENDER 3: ARTICLES CRUD CMS --- */}
+      {cmsTab === 'articles' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="articles-crud-module">
+
+          {/* Article Form Create/Edit */}
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
+            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <span>{editingArticle ? 'Ubah Artikel' : 'Tulis Artikel Baru'}</span>
+            </h3>
+
+            <form onSubmit={handleArticleSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Judul Artikel</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Contoh: Menjawab Tantangan AI..."
+                  value={articleForm.title}
+                  onChange={(e) => setArticleForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Penulis</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Nama penulis..."
+                  value={articleForm.author}
+                  onChange={(e) => setArticleForm(prev => ({ ...prev, author: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Ringkasan (Excerpt)</label>
+                <textarea
+                  rows={2}
+                  placeholder="Ringkasan singkat artikel..."
+                  value={articleForm.excerpt}
+                  onChange={(e) => setArticleForm(prev => ({ ...prev, excerpt: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Konten Artikel</label>
+                <textarea
+                  required
+                  rows={8}
+                  placeholder="Tulis konten artikel di sini... Gunakan baris kosong untuk paragraf baru."
+                  value={articleForm.content}
+                  onChange={(e) => setArticleForm(prev => ({ ...prev, content: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px] leading-relaxed"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Tanggal Publikasi</label>
+                <input
+                  type="date"
+                  required
+                  value={articleForm.date}
+                  onChange={(e) => setArticleForm(prev => ({ ...prev, date: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+              </div>
+
+              <ImageUploader
+                label="Gambar Sampul Artikel"
+                value={articleForm.imageUrl}
+                onChange={(url) => setArticleForm(prev => ({ ...prev, imageUrl: url }))}
+                placeholder="https://images.unsplash.com/photo-..."
+                helperText="Unggah gambar cover artikel atau tempel link gambar."
+              />
+
+              <div className="pt-4 flex items-center gap-2">
+                {editingArticle && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingArticle(null);
+                      setArticleForm({
+                        title: '',
+                        excerpt: '',
+                        content: '',
+                        date: '',
+                        author: '',
+                        imageUrl: '',
+                      });
+                    }}
+                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer"
+                  >
+                    Batal
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${
+                    editingArticle ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
+                  }`}
+                >
+                  {editingArticle ? 'Simpan Perubahan' : 'Terbitkan Artikel'}
+                </button>
+              </div>
+
+            </form>
+          </div>
+
+          {/* Articles List */}
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
+            <h3 className="font-display text-lg font-bold text-slate-900">Artikel Terbit ({articles.length})</h3>
+
+            <div className="divide-y divide-slate-100 overflow-y-auto max-h-[600px] pr-2 space-y-4">
+              {articles.map(art => (
+                <div key={art.id} className="pt-4 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-slate-500 font-semibold font-mono">{art.date}</span>
+                      <span className="text-[10px] text-blue-600 font-bold">Oleh: {art.author}</span>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-900 leading-tight">{art.title}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-2">{art.excerpt}</p>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      onClick={() => handleEditArticle(art)}
+                      className="p-2 hover:bg-slate-50 rounded-lg text-blue-600 hover:text-blue-700 transition-all cursor-pointer"
+                      title="Ubah Artikel"
+                    >
+                      <Edit2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteArticle(art.id)}
+                      className="p-2 hover:bg-red-50 rounded-lg text-red-600 hover:text-red-700 transition-all cursor-pointer"
+                      title="Hapus Artikel"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* --- RENDER 4: GALLERY CRUD CMS --- */}
       {cmsTab === 'gallery' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="gallery-crud-module">
           
@@ -1616,6 +1998,75 @@ export default function AdminCMS({
             </div>
           </div>
 
+        </div>
+      )}
+
+      {/* --- PILLARS CRUD CMS --- */}
+      {cmsTab === 'pillars' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="pillars-crud-module">
+          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
+            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-blue-600" />
+              <span>{editingPillar ? 'Ubah Pilar' : 'Tambah Pilar Baru'}</span>
+            </h3>
+            <form onSubmit={handlePillarSubmit} className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Judul Pilar</label>
+                <input type="text" required placeholder="Contoh: Integritas Standar Tinggi"
+                  value={pillarForm.title}
+                  onChange={(e) => setPillarForm(prev => ({ ...prev, title: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Deskripsi</label>
+                <textarea required rows={4} placeholder="Deskripsi pilar organisasi..."
+                  value={pillarForm.description}
+                  onChange={(e) => setPillarForm(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700">Ikon</label>
+                <select value={pillarForm.iconName}
+                  onChange={(e) => setPillarForm(prev => ({ ...prev, iconName: e.target.value }))}
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all">
+                  <option value="Shield">Shield — Integritas</option>
+                  <option value="Landmark">Landmark — Literasi</option>
+                  <option value="Award">Award — Sinergi</option>
+                </select>
+              </div>
+              <div className="pt-4 flex items-center gap-2">
+                {editingPillar && (
+                  <button type="button" onClick={() => { setEditingPillar(null); setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 }); }}
+                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer">Batal</button>
+                )}
+                <button type="submit"
+                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${editingPillar ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500'}`}>
+                  {editingPillar ? 'Simpan Perubahan' : 'Tambah Pilar'}
+                </button>
+              </div>
+            </form>
+          </div>
+          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
+            <h3 className="font-display text-lg font-bold text-slate-900">Daftar Pilar ({pillars.length})</h3>
+            <div className="divide-y divide-slate-100 overflow-y-auto max-h-[600px] pr-2 space-y-4">
+              {pillars.map((p, i) => (
+                <div key={p.id} className="pt-4 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="bg-slate-100 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded font-mono">#{i + 1}</span>
+                      <span className="text-[10px] text-blue-600 font-semibold">{p.iconName}</span>
+                    </div>
+                    <h4 className="text-sm font-semibold text-slate-900">{p.title}</h4>
+                    <p className="text-xs text-slate-500 line-clamp-2">{p.description}</p>
+                  </div>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button onClick={() => handleEditPillar(p)} className="p-2 hover:bg-slate-50 rounded-lg text-blue-600 hover:text-blue-700 transition-all cursor-pointer" title="Ubah"><Edit2 className="h-4 w-4" /></button>
+                    <button onClick={() => handleDeletePillar(p.id)} className="p-2 hover:bg-red-50 rounded-lg text-red-600 hover:text-red-700 transition-all cursor-pointer" title="Hapus"><Trash2 className="h-4 w-4" /></button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -1819,6 +2270,46 @@ export default function AdminCMS({
                 className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
                 placeholder="Masukkan alamat lengkap..."
               />
+            </div>
+
+            {/* Social Media Links */}
+            <div className="border-t border-slate-100 pt-6">
+              <h4 className="text-xs font-bold text-slate-800 mb-4">Tautan Media Sosial</h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">Instagram</label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-slate-400 text-xs">@</span>
+                    <input
+                      type="text"
+                      placeholder="username"
+                      value={(settingsForm.instagramUrl || '').replace('https://instagram.com/', '')}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, instagramUrl: e.target.value ? `https://instagram.com/${e.target.value}` : '' }))}
+                      className="flex-1 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">LinkedIn</label>
+                  <input
+                    type="text"
+                    placeholder="https://linkedin.com/company/..."
+                    value={settingsForm.linkedinUrl || ''}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">YouTube</label>
+                  <input
+                    type="text"
+                    placeholder="https://youtube.com/@channel"
+                    value={settingsForm.youtubeUrl || ''}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, youtubeUrl: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">

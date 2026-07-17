@@ -88,6 +88,41 @@ export const eventsRelations = relations(events, ({ one }) => ({
   }),
 }));
 
+export const pillars = mysqlTable('pillars', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  iconName: varchar('icon_name', { length: 50 }).default('Shield').notNull(),
+  sortOrder: int('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const articles = mysqlTable('articles', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  excerpt: text('excerpt'),
+  content: text('content').notNull(),
+  date: varchar('date', { length: 20 }).notNull(),
+  author: varchar('author', { length: 255 }).notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const galleries = mysqlTable('galleries', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  imageUrl: varchar('image_url', { length: 500 }),
+  date: varchar('date', { length: 20 }).notNull(),
+  category: varchar('category', { length: 255 }),
+  photographer: varchar('photographer', { length: 255 }),
+  images: text('images'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const settings = mysqlTable('settings', {
   id: serial('id').primaryKey(),
   contactTitle: varchar('contact_title', { length: 255 }).default('Hubungi IAI Wilayah DKI Jakarta').notNull(),
@@ -96,5 +131,8 @@ export const settings = mysqlTable('settings', {
   email: varchar('email', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 100 }),
   showPhone: boolean('show_phone').default(true).notNull(),
+  instagramUrl: varchar('instagram_url', { length: 500 }),
+  linkedinUrl: varchar('linkedin_url', { length: 500 }),
+  youtubeUrl: varchar('youtube_url', { length: 500 }),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

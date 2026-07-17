@@ -55,7 +55,7 @@ export const initialEvents: Event[] = [
 
 export const initialArticles: Article[] = [
   {
-    id: 'art-1',
+    id: -1,
     title: 'Menjawab Tantangan AI: Mengapa Akuntan Muda Tak Tergantikan?',
     excerpt: 'Kecerdasan Buatan (AI) dapat mengotomatisasi pembukuan dasar, namun akuntabilitas, etika profesi, dan strategic judgment tetap menjadi keunggulan utama akuntan manusia.',
     content: `Perkembangan Artificial Intelligence (AI) seperti ChatGPT, Copilot, dan sistem otomasi cloud accounting seringkali memicu kekhawatiran di kalangan mahasiswa akuntansi. Apakah profesi akuntan akan punah?\n\nKenyataannya tidaklah demikian. Teknologi memang mengeliminasi entri data repetitif, namun justru membebaskan akuntan muda untuk fokus pada peran yang lebih bernilai tinggi: interpretasi data strategis, pengelolaan risiko, kepatuhan perpajakan yang kompleks, serta audit investigatif.\n\nAkuntan masa depan adalah akuntan hibrida yang menguasai konsep akuntansi dasar sekaligus melek teknologi analisis data (seperti SQL, Python, atau PowerBI). IAI Muda Wilayah DKI Jakarta berkomitmen penuh membekali anggotanya agar siap memimpin transformasi digital ini.`,
@@ -64,7 +64,7 @@ export const initialArticles: Article[] = [
     imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&fit=crop&q=80'
   },
   {
-    id: 'art-2',
+    id: -2,
     title: 'Panduan Ujian Chartered Accountant (CA) untuk Mahasiswa dan Fresh Graduate',
     excerpt: 'Langkah taktis mempersiapkan diri menghadapi ujian CA IAI mulai dari pemetaan materi, manajemen waktu belajar, hingga tips menjawab studi kasus.',
     content: `Gelar Chartered Accountant (CA) dari Ikatan Akuntan Indonesia merupakan standar kompetensi tertinggi bagi akuntan profesional di Indonesia. Memperoleh gelar ini di usia muda memberikan daya saing luar biasa di bursa kerja internasional.\n\nBagi rekan-rekan mahasiswa tingkat akhir atau fresh graduate, mempersiapkan ujian CA membutuhkan konsistensi tinggi. Berikut 3 pilar sukses lulus CA:\n1. Kuasai Standar Akuntansi Keuangan (SAK) terbaru yang berbasis IFRS.\n2. Latihan studi kasus terintegrasi, khususnya terkait Pelaporan Korporat dan Manajemen Keuangan Strategis.\n3. Ikuti program bimbingan belajar resmi yang diselenggarakan IAI Wilayah DKI Jakarta.\n\nMari jadikan tahun kepengurusan ini momentum emas untuk mengantongi gelar profesional Anda!`,
@@ -76,7 +76,7 @@ export const initialArticles: Article[] = [
 
 export const initialGallery: GalleryItem[] = [
   {
-    id: 'gal-1',
+    id: -1,
     title: 'Pelantikan & Rapat Kerja Gen-2',
     description: 'Sesi foto bersama seluruh jajaran pengurus IAI Muda Wilayah DKI Jakarta Generasi ke-2 setelah proses pelantikan resmi di Jakarta.',
     imageUrl: 'https://images.unsplash.com/photo-1511556532299-8f662fc26c06?w=800&fit=crop&q=80',
@@ -89,7 +89,7 @@ export const initialGallery: GalleryItem[] = [
     ]
   },
   {
-    id: 'gal-2',
+    id: -2,
     title: 'Webinar PSAK 74 Live Session',
     description: 'Antusiasme peserta dalam menyimak penjelasan narasumber mengenai implementasi standar kontrak asuransi PSAK 74.',
     imageUrl: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?w=800&fit=crop&q=80',
@@ -102,7 +102,7 @@ export const initialGallery: GalleryItem[] = [
     ]
   },
   {
-    id: 'gal-3',
+    id: -3,
     title: 'Accounting Class Roadshow',
     description: 'Kunjungan edukatif tim IAI Muda DKI ke universitas-universitas di Jakarta dalam rangka sosialisasi sertifikasi profesi CA.',
     imageUrl: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=800&fit=crop&q=80',
@@ -110,7 +110,7 @@ export const initialGallery: GalleryItem[] = [
     category: 'Sosial & Pengabdian'
   },
   {
-    id: 'gal-4',
+    id: -4,
     title: 'Networking & Coffee Morning',
     description: 'Momen akrab diskusi santai antara pengurus IAI Muda DKI dengan para profesional senior KAP Big 4.',
     imageUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&fit=crop&q=80',
