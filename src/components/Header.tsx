@@ -44,34 +44,34 @@ export default function Header({
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
-      <div className="mx-auto flex max-w-7xl h-18 items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-7xl h-18 items-center justify-between px-4 sm:px-6 lg:px-8 gap-4 flex-nowrap">
         
         {/* Brand Logo & Name */}
         <div 
-          className="flex items-center gap-3 cursor-pointer group"
+          className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
           onClick={() => { setCurrentTab('beranda'); setIsAdminMode(false); }}
           id="brand-logo-container"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform flex-shrink-0">
             <Landmark className="h-5 w-5" />
           </div>
-          <div>
+          <div className="flex-shrink-0">
             <div className="flex items-center gap-2">
-              <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950">
+              <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950 whitespace-nowrap">
                 IAI Muda <span className="text-blue-600">DKI Jakarta</span>
               </span>
-              <span className="hidden sm:inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-mono font-medium text-blue-600 ring-1 ring-inset ring-blue-500/20">
+              <span className="hidden sm:inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-mono font-medium text-blue-600 ring-1 ring-inset ring-blue-500/20 whitespace-nowrap">
                 {currentGenName}
               </span>
             </div>
-            <p className="text-[10px] sm:text-xs text-slate-500 font-sans font-medium tracking-wide">
+            <p className="text-[10px] sm:text-xs text-slate-500 font-sans font-medium tracking-wide whitespace-nowrap">
               Ikatan Akuntan Indonesia Muda
             </p>
           </div>
         </div>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1" id="desktop-navigation">
+        <nav className="hidden md:flex items-center gap-1 flex-shrink-0" id="desktop-navigation">
           {['beranda', 'struktur', 'acara', 'galeri', 'artikel'].map((tab) => {
             const icons: Record<string, React.ReactNode> = {
               struktur: <Users className="h-4 w-4" />,
@@ -88,7 +88,7 @@ export default function Header({
                 key={tab}
                 id={`nav-btn-${tab}`}
                 onClick={() => { setCurrentTab(tab); setIsAdminMode(false); }}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex-shrink-0 whitespace-nowrap ${
                   currentTab === tab && !isAdminMode
                     ? 'bg-blue-50 text-blue-600 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
@@ -102,12 +102,12 @@ export default function Header({
         </nav>
 
         {/* Secondary Actions / Admin Toggle */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-shrink-0">
           {/* Show logged-in user badge when authenticated */}
           {user && !isAdminMode && (
-            <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
-              <span className="text-xs font-semibold text-slate-700">{user.username}</span>
-              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+            <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex-shrink-0">
+              <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">{user.username}</span>
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${
                 user.role === 'superadmin' ? 'bg-indigo-50 text-indigo-700 border-indigo-100' :
                 user.role === 'admin' ? 'bg-blue-50 text-blue-700 border-blue-100' :
                 'bg-slate-100 text-slate-600 border-slate-200'
@@ -116,7 +116,7 @@ export default function Header({
               </span>
               <button
                 onClick={handleLogout}
-                className="ml-1 text-slate-400 hover:text-red-500 transition-colors cursor-pointer"
+                className="ml-1 text-slate-400 hover:text-red-500 transition-colors cursor-pointer flex-shrink-0"
                 title="Logout"
               >
                 <LogOut className="h-3.5 w-3.5" />
@@ -127,14 +127,14 @@ export default function Header({
           <button
             id="admin-panel-toggle"
             onClick={handleAdminToggle}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer ${
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer flex-shrink-0 ${
               isAdminMode 
                 ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
                 : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
             }`}
           >
-            <ShieldAlert className={`h-4 w-4 ${isAdminMode ? 'animate-pulse' : ''}`} />
-            <span>{isAdminMode ? 'Portal Publik' : 'Akses CMS Admin'}</span>
+            <ShieldAlert className={`h-4 w-4 flex-shrink-0 ${isAdminMode ? 'animate-pulse' : ''}`} />
+            <span className="whitespace-nowrap">{isAdminMode ? 'Portal Publik' : 'Akses CMS Admin'}</span>
           </button>
         </div>
 

@@ -8,7 +8,7 @@ import { Generation, Member, Event, Article, GalleryItem, Settings } from '../ty
 import { 
   Calendar, Users, History, Plus, Edit2, Trash2, Check, 
   RotateCcw, Sparkles, AlertTriangle, ShieldCheck, Mail, Link2, Info, Image as ImageIcon,
-  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog, Settings as SettingsIcon
+  Download, Upload, FileSpreadsheet, Search, LogOut, UserCog, Settings as SettingsIcon, Globe
 } from 'lucide-react';
 import ImageUploader from './ImageUploader';
 import UserManagement from './UserManagement';
@@ -862,6 +862,19 @@ export default function AdminCMS({
 
         {/* Exit Control Panel at Bottom */}
         <div className="p-6 border-t border-slate-200 space-y-3 bg-white">
+          <button
+            id="view-frontend-btn"
+            onClick={() => {
+              if (setIsAdminMode && setCurrentTab) {
+                setIsAdminMode(false);
+                setCurrentTab('beranda');
+              }
+            }}
+            className="w-full flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-600/10 hover:shadow-lg"
+          >
+            <Globe className="h-4 w-4" />
+            <span>Lihat Halaman Depan</span>
+          </button>
           <button
             onClick={async () => {
               await logout();
