@@ -1,6 +1,7 @@
 node_modules/
 build/
 dist/
+.next/
 coverage/
 .DS_Store
 *.log
@@ -8,4 +9,4 @@ coverage/
 !.env.example
 .vscode/
 metadata.json
-uploads/
+/uploads/

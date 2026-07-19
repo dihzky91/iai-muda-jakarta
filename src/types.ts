@@ -74,6 +74,11 @@ export interface Settings {
   instagramUrl?: string | null;
   linkedinUrl?: string | null;
   youtubeUrl?: string | null;
+  divisionPhotos?: string | null;
+  divisions?: string | null; // JSON array of division name strings
+  footerDescription?: string | null;
+  logoUrl?: string | null;
+  faviconUrl?: string | null;
   updatedAt?: string;
 }
 

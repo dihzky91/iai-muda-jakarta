@@ -1,3 +1,4 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { UserRole, useAuth } from '../context/AuthContext';
 import { Plus, Edit2, Trash2, Check, ShieldCheck, Shield, Pencil } from 'lucide-react';

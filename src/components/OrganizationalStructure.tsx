@@ -1,18 +1,21 @@
+'use client';
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Generation, Member } from '../types';
-import { Mail, Linkedin, Users, Filter, Award, History, Search, X } from 'lucide-react';
+import { Generation, Member, Settings } from '../types';
+import { Mail, Linkedin, Users, Filter, Award, History, Search, X, Clock, ImageOff, Camera } from 'lucide-react';
 
 interface OrganizationalStructureProps {
   generations: Generation[];
   members: Member[];
+  settings?: Settings;
 }
 
-export default function OrganizationalStructure({ generations, members }: OrganizationalStructureProps) {
+export default function OrganizationalStructure({ generations, members, settings }: OrganizationalStructureProps) {
   // Find current active generation
   const activeGen = useMemo(() => generations.find(g => g.isActive) || generations[0], [generations]);
   
@@ -34,6 +37,34 @@ export default function OrganizationalStructure({ generations, members }: Organi
 
   // Selected member for profile modal
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
+
+  // Banner dismiss state — reset when division changes
+  const [bannerDismissed, setBannerDismissed] = useState<boolean>(false);
+
+  // ── Division group photo mapping ─────────────────────────────────────────
+  // Parsing dari settings jika ada, fallback ke default map
+  const divisionPhotoMap: Record<string, string> = useMemo(() => {
+    try {
+      if (settings?.divisionPhotos) {
+        return JSON.parse(settings.divisionPhotos);
+      }
+    } catch (e) {
+      console.error('Failed to parse divisionPhotos:', e);
+    }
+    return {
+      'Badan Pengurus Harian (BPH)': '',
+      'Bidang Edukasi & Sertifikasi': '',
+      'Bidang Hubungan Masyarakat': '',
+      'Bidang Kewirausahaan & Kemitraan': '',
+      'Bidang Media & Desain Kreatif': '',
+    };
+  }, [settings?.divisionPhotos]);
+
+  // Current division photo URL (empty string if not mapped or 'all')
+  const divisionPhoto = selectedDivision !== 'all' ? (divisionPhotoMap[selectedDivision] ?? '') : '';
+
+  // Show banner only when a specific division is selected and not dismissed
+  const showBanner = selectedDivision !== 'all' && !bannerDismissed;
 
   // Selected Generation details
   const selectedGen = useMemo(() => {
@@ -64,10 +95,33 @@ export default function OrganizationalStructure({ generations, members }: Organi
     });
   }, [filteredByGenMembers, selectedDivision, searchQuery]);
 
+  // Count members in selected division (placed after finalMembersList)
+  const divisionMemberCount = finalMembersList.length;
+
   const selectedMemberGen = useMemo(() => {
     if (!selectedMember) return null;
     return generations.find(g => g.id === selectedMember.generationId);
   }, [generations, selectedMember]);
+
+  // Detect if this person has served in multiple generations (same name across records)
+  const memberHistory = useMemo(() => {
+    if (!selectedMember) return [];
+    const normalizedName = (selectedMember.name ?? '').trim().toLowerCase();
+    // Find all records matching this name across ALL generations
+    const allRecords = members.filter(
+      m => (m.name ?? '').trim().toLowerCase() === normalizedName
+    );
+    // Map each record to its generation details, sorted by generation id ascending
+    return allRecords
+      .map(m => ({
+        memberId: m.id,
+        position: m.position,
+        division: m.division,
+        gen: generations.find(g => g.id === m.generationId),
+      }))
+      .filter(r => r.gen != null)
+      .sort((a, b) => (a.gen!.id ?? 0) - (b.gen!.id ?? 0));
+  }, [selectedMember, members, generations]);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const dragState = useRef({ isDown: false, startX: 0, scrollLeft: 0, moved: false });
@@ -187,7 +241,10 @@ export default function OrganizationalStructure({ generations, members }: Organi
             {divisions.map((div) => (
               <button
                 key={div}
-                onClick={() => setSelectedDivision(div)}
+                onClick={() => {
+                  setSelectedDivision(div);
+                  setBannerDismissed(false); // reset banner on division change
+                }}
                 className={`snap-start shrink-0 rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap transition-all cursor-pointer border ${
                   selectedDivision === div
                     ? 'bg-blue-50 text-blue-600 border-blue-200'
@@ -212,6 +269,80 @@ export default function OrganizationalStructure({ generations, members }: Organi
           </div>
 
         </div>
+
+        {/* ── Division Hero Banner ──────────────────────────────────────── */}
+        {showBanner && (
+          <div
+            className="relative w-full overflow-hidden rounded-3xl border border-slate-200 shadow-md"
+            style={{ animation: 'divisionBannerIn 0.35s cubic-bezier(0.22,1,0.36,1) both' }}
+          >
+            {divisionPhoto ? (
+              /* Foto asli divisi */
+              <div className="relative h-52 sm:h-64">
+                <img
+                  src={divisionPhoto}
+                  alt={`Foto group ${selectedDivision}`}
+                  referrerPolicy="no-referrer"
+                  className="h-full w-full object-cover object-top"
+                />
+                {/* Gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent" />
+
+                {/* Info overlay */}
+                <div className="absolute bottom-0 left-0 right-0 p-5 flex items-end justify-between">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Camera className="h-4 w-4 text-white/70" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-white/70">Foto Divisi</span>
+                    </div>
+                    <h3 className="font-display text-lg sm:text-xl font-extrabold text-white leading-tight">
+                      {selectedDivision}
+                    </h3>
+                    <p className="text-xs font-semibold text-white/80">
+                      {divisionMemberCount} Anggota Pengurus
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => setBannerDismissed(true)}
+                    className="flex-shrink-0 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all"
+                    title="Tutup banner"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              /* Placeholder — foto belum diisi */
+              <div className="relative h-40 sm:h-48 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-50 flex flex-col items-center justify-center gap-3">
+                {/* Decorative pattern */}
+                <div className="absolute inset-0 opacity-30"
+                  style={{ backgroundImage: 'radial-gradient(circle at 25% 50%, #6366f1 0%, transparent 50%), radial-gradient(circle at 75% 50%, #3b82f6 0%, transparent 50%)' }}
+                />
+                <div className="relative z-10 flex flex-col items-center gap-2 text-center px-6">
+                  <div className="h-12 w-12 rounded-2xl bg-white/80 border border-slate-200 flex items-center justify-center shadow-sm">
+                    <ImageOff className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-700">{selectedDivision}</p>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      Foto group belum tersedia · {divisionMemberCount} Anggota
+                    </p>
+                    <p className="text-[11px] text-blue-600 font-semibold mt-1">
+                      Tambahkan URL foto via Admin CMS → Pengaturan
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setBannerDismissed(true)}
+                  className="absolute top-3 right-3 p-1.5 rounded-full bg-white/60 hover:bg-white text-slate-500 hover:text-slate-700 transition-all"
+                  title="Tutup banner"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Members grid layout */}
         {finalMembersList.length > 0 ? (
@@ -325,11 +456,14 @@ export default function OrganizationalStructure({ generations, members }: Organi
             className="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl border border-slate-100 transform transition-all duration-300 scale-100 animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header/Banner */}
-            <div className="h-24 bg-gradient-to-r from-blue-600 via-indigo-600 to-indigo-700 relative">
+            {/* Modal Header/Banner — taller with decorative circles */}
+            <div className="h-36 bg-gradient-to-br from-blue-600 via-indigo-600 to-violet-700 relative overflow-hidden">
+              <div className="absolute -top-8 -left-8 h-40 w-40 rounded-full bg-white/5" />
+              <div className="absolute -bottom-12 -right-8 h-48 w-48 rounded-full bg-white/5" />
+              <div className="absolute top-4 right-14 h-16 w-16 rounded-full bg-white/5" />
               <button 
                 onClick={() => setSelectedMember(null)}
-                className="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all"
+                className="absolute top-4 right-4 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition-all z-10"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -337,9 +471,9 @@ export default function OrganizationalStructure({ generations, members }: Organi
 
             {/* Profile Content */}
             <div className="px-6 pb-8 relative">
-              {/* Photo offset */}
-              <div className="relative -mt-12 mb-4">
-                <div className="h-24 w-24 rounded-2xl border-4 border-white bg-slate-50 overflow-hidden shadow-md">
+              {/* Photo — centered, large, overlapping header */}
+              <div className="flex justify-center -mt-16 mb-4">
+                <div className="h-32 w-32 rounded-2xl border-4 border-white bg-slate-50 overflow-hidden shadow-xl ring-4 ring-blue-100">
                   {selectedMember.imageUrl ? (
                     <img 
                       src={selectedMember.imageUrl} 
@@ -348,18 +482,18 @@ export default function OrganizationalStructure({ generations, members }: Organi
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-slate-100">
-                      <Users className="h-10 w-10 text-slate-400" />
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
+                      <Users className="h-14 w-14 text-blue-300" />
                     </div>
                   )}
                 </div>
               </div>
 
-              {/* Identity info */}
-              <div className="space-y-1">
+              {/* Identity info — centered */}
+              <div className="text-center space-y-2">
                 <h3 className="font-display text-xl font-bold text-slate-900">{selectedMember.name}</h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-xs font-mono font-bold text-blue-700 ring-1 ring-blue-100 ring-inset">
+                <div className="flex flex-wrap items-center justify-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2.5 py-1 text-xs font-mono font-bold text-blue-700 ring-1 ring-blue-100 ring-inset">
                     {selectedMember.position}
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
@@ -367,22 +501,67 @@ export default function OrganizationalStructure({ generations, members }: Organi
                   </span>
                 </div>
                 {selectedMember.university && (
-                  <p className="text-xs font-bold text-indigo-600 mt-1.5 flex items-center gap-1.5">
+                  <p className="text-xs font-bold text-indigo-600 flex items-center justify-center gap-1.5">
                     🎓 <span>{selectedMember.university}</span>
                   </p>
                 )}
               </div>
 
-              {/* Generation/Period info */}
+              {/* Generation/Period history */}
               <div className="mt-6 space-y-2">
-                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Periode Kepengurusan</h4>
-                <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
-                  <span className="text-sm font-semibold text-slate-700">
-                    {selectedMemberGen ? selectedMemberGen.name : '—'}
-                  </span>
-                  <span className="text-xs font-mono font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
-                    {selectedMemberGen ? selectedMemberGen.years : '—'}
-                  </span>
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" />
+                    Riwayat Kepengurusan
+                  </h4>
+                  {memberHistory.length > 1 && (
+                    <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">
+                      {memberHistory.length} Periode
+                    </span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {memberHistory.length > 0 ? memberHistory.map((rec) => {
+                    const isCurrentRecord = rec.memberId === selectedMember.id;
+                    const isActiveGen = rec.gen?.isActive ?? false;
+                    return (
+                      <div
+                        key={rec.memberId}
+                        className={`p-3.5 rounded-2xl border flex items-start justify-between gap-3 transition-all ${
+                          isCurrentRecord
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-slate-50 border-slate-100'
+                        }`}
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm font-bold text-slate-800">
+                              {rec.gen?.name}
+                            </span>
+                            {isActiveGen ? (
+                              <span className="text-[9px] font-bold uppercase bg-emerald-500 text-white px-1.5 py-0.5 rounded animate-pulse">
+                                Aktif
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-bold uppercase bg-slate-200 text-slate-500 px-1.5 py-0.5 rounded">
+                                Arsip
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-slate-500 font-medium">
+                            {rec.position}{rec.division ? ` · ${rec.division}` : ''}
+                          </p>
+                        </div>
+                        <span className="text-[11px] font-mono font-bold text-blue-600 bg-white border border-blue-100 px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                          {rec.gen?.years}
+                        </span>
+                      </div>
+                    );
+                  }) : (
+                    <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-slate-700">—</span>
+                    </div>
+                  )}
                 </div>
               </div>
 

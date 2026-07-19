@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Landmark, Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -70,8 +72,14 @@ export default function AdminCMS({
     instagramUrl: settings.instagramUrl || '',
     linkedinUrl: settings.linkedinUrl || '',
     youtubeUrl: settings.youtubeUrl || '',
+    divisionPhotos: settings.divisionPhotos || '{}',
+    divisions: settings.divisions || JSON.stringify(['Badan Pengurus Harian (BPH)','Bidang Edukasi & Sertifikasi','Bidang Hubungan Masyarakat','Bidang Kewirausahaan & Kemitraan','Bidang Media & Desain Kreatif']),
+    footerDescription: settings.footerDescription || '',
+    logoUrl: settings.logoUrl || '',
+    faviconUrl: settings.faviconUrl || '',
   });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsSubTab, setSettingsSubTab] = useState<'contact' | 'social' | 'divisions' | 'photos' | 'branding'>('contact');
 
   React.useEffect(() => {
     if (settings) {
@@ -85,6 +93,11 @@ export default function AdminCMS({
         instagramUrl: settings.instagramUrl || '',
         linkedinUrl: settings.linkedinUrl || '',
         youtubeUrl: settings.youtubeUrl || '',
+        divisionPhotos: settings.divisionPhotos || '{}',
+        divisions: settings.divisions || JSON.stringify(['Badan Pengurus Harian (BPH)','Bidang Edukasi & Sertifikasi','Bidang Hubungan Masyarakat','Bidang Kewirausahaan & Kemitraan','Bidang Media & Desain Kreatif']),
+        footerDescription: settings.footerDescription || '',
+        logoUrl: settings.logoUrl || '',
+        faviconUrl: settings.faviconUrl || '',
       });
     }
   }, [settings]);
@@ -150,6 +163,14 @@ export default function AdminCMS({
     imageUrl: '',
     linkedinUrl: '',
   });
+
+  // Riwayat kepengurusan di generasi sebelumnya
+  // Setiap entri akan disimpan sebagai member record terpisah (nama sama, generasi berbeda)
+  const [previousHistory, setPreviousHistory] = useState<Array<{
+    generationId: number | '';
+    position: string;
+    division: string;
+  }>>([]); 
 
   // --- TRANSITION ROLLOVERS STATE ---
   const [newGenName, setNewGenName] = useState('');
@@ -247,19 +268,18 @@ export default function AdminCMS({
       }
 
       // Fallback division list matching options
-      const allowedDivisions = [
-        "Badan Pengurus Harian (BPH)",
-        "Bidang Edukasi & Sertifikasi",
-        "Bidang Hubungan Masyarakat",
-        "Bidang Kewirausahaan & Kemitraan",
-        "Bidang Media & Desain Kreatif"
-      ];
+      let allowedDivisions: string[];
+      try {
+        allowedDivisions = JSON.parse(settingsForm.divisions || '[]');
+      } catch {
+        allowedDivisions = ['Badan Pengurus Harian (BPH)','Bidang Edukasi & Sertifikasi','Bidang Hubungan Masyarakat','Bidang Kewirausahaan & Kemitraan','Bidang Media & Desain Kreatif'];
+      }
       let divisionMatched = allowedDivisions.find(d => 
         d.toLowerCase().includes((rowData.division || '').toLowerCase()) || 
         (rowData.division || '').toLowerCase().includes(d.toLowerCase())
       );
       if (!divisionMatched) {
-        divisionMatched = "Badan Pengurus Harian (BPH)"; // default
+        divisionMatched = allowedDivisions[0] || 'Badan Pengurus Harian (BPH)'; // default
       }
 
       // Detect Generation ID
@@ -301,7 +321,7 @@ export default function AdminCMS({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: m.name,
-          division: m.division,
+      division: m.division || 'Badan Pengurus Harian (BPH)',
           university: m.university || null,
           generationId: m.generationId || undefined,
           email: m.email || null,
@@ -354,7 +374,7 @@ export default function AdminCMS({
         return (
           m.name.toLowerCase().includes(term) ||
           m.position.toLowerCase().includes(term) ||
-          m.division.toLowerCase().includes(term) ||
+          (m.division || '').toLowerCase().includes(term) ||
           (m.email && m.email.toLowerCase().includes(term))
         );
       }
@@ -694,7 +714,9 @@ export default function AdminCMS({
     e.preventDefault();
     const genId = memberForm.generationId || activeGen?.id || generations[0]?.id;
     if (!genId) return;
+
     if (editingMember) {
+      // === MODE EDIT: Perbarui data utama ===
       const res = await fetch(`/api/members/${editingMember.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -702,7 +724,43 @@ export default function AdminCMS({
       });
       const result = await res.json();
       if (result.success) {
-        setMembers(prev => prev.map(m => m.id === editingMember.id ? { ...m, ...memberForm, generationId: genId } : m));
+        // Cek apakah ada riwayat historis yang perlu dikelola
+        const normalizedName = memberForm.name.trim().toLowerCase();
+        const existingHistoryRecords = members.filter(
+          m => m.id !== editingMember.id &&
+               (m.name ?? '').trim().toLowerCase() === normalizedName
+        );
+
+        // Hapus semua record historis lama, lalu buat ulang dari previousHistory
+        for (const oldRec of existingHistoryRecords) {
+          await fetch(`/api/members/${oldRec.id}`, { method: 'DELETE' });
+        }
+
+        // Buat ulang record historis sesuai data baru di form
+        for (const hist of previousHistory) {
+          if (!hist.generationId || !hist.position) continue;
+          await fetch('/api/members', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: memberForm.name,
+              position: hist.position,
+              division: hist.division || 'Badan Pengurus Harian (BPH)',
+              generationId: hist.generationId,
+              university: memberForm.university || null,
+              email: memberForm.email || null,
+              imageUrl: memberForm.imageUrl || null,
+              linkedinUrl: memberForm.linkedinUrl || null,
+            }),
+          });
+        }
+
+        // Re-fetch full list
+        const listRes = await fetch('/api/members');
+        const listResult = await listRes.json();
+        if (listResult.success) {
+          setMembers(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
+        }
         triggerToast('Data pengurus berhasil diperbarui!');
         setEditingMember(null);
       } else {
@@ -710,26 +768,51 @@ export default function AdminCMS({
         return;
       }
     } else {
+      // === MODE TAMBAH: Buat record baru untuk generasi aktif/dipilih ===
       const res = await fetch('/api/members', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...memberForm, generationId: genId }),
       });
       const result = await res.json();
-      if (result.success) {
-        // Re-fetch so we get real DB id
-        const listRes = await fetch('/api/members');
-        const listResult = await listRes.json();
-        if (listResult.success) {
-          setMembers(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
-        }
-        triggerToast('Pengurus baru berhasil didaftarkan!');
-      } else {
+      if (!result.success) {
         triggerToast(`Gagal mendaftarkan: ${result.message}`);
         return;
       }
+
+      // Buat juga record terpisah untuk setiap riwayat generasi sebelumnya
+      let histCount = 0;
+      for (const hist of previousHistory) {
+        if (!hist.generationId || !hist.position) continue;
+        const histRes = await fetch('/api/members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: memberForm.name,
+            position: hist.position,
+            division: hist.division || 'Badan Pengurus Harian (BPH)',
+            generationId: hist.generationId,
+            university: memberForm.university || null,
+            email: memberForm.email || null,
+            imageUrl: memberForm.imageUrl || null,
+            linkedinUrl: memberForm.linkedinUrl || null,
+          }),
+        });
+        const histResult = await histRes.json();
+        if (histResult.success) histCount++;
+      }
+
+      // Re-fetch so we get real DB ids
+      const listRes = await fetch('/api/members');
+      const listResult = await listRes.json();
+      if (listResult.success) {
+        setMembers(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
+      }
+      const histMsg = histCount > 0 ? ` + ${histCount} riwayat historis` : '';
+      triggerToast(`Pengurus baru berhasil didaftarkan${histMsg}!`);
     }
-    // reset form
+
+    // Reset semua form
     setMemberForm({
       name: '',
       position: '',
@@ -740,6 +823,7 @@ export default function AdminCMS({
       imageUrl: '',
       linkedinUrl: '',
     });
+    setPreviousHistory([]);
   };
 
   const handleEditMember = (m: Member) => {
@@ -747,13 +831,27 @@ export default function AdminCMS({
     setMemberForm({
       name: m.name,
       position: m.position,
-      division: m.division,
+      division: m.division || 'Badan Pengurus Harian (BPH)',
       university: m.university || '',
       generationId: m.generationId,
       email: m.email || '',
       imageUrl: m.imageUrl || '',
       linkedinUrl: m.linkedinUrl || '',
     });
+
+    // Auto-deteksi riwayat historis: cari semua record dengan nama yang sama di generasi berbeda
+    const normalizedName = (m.name ?? '').trim().toLowerCase();
+    const historyRecords = members.filter(
+      rec =>
+        rec.id !== m.id &&
+        (rec.name ?? '').trim().toLowerCase() === normalizedName
+    );
+    const autoHistory = historyRecords.map(rec => ({
+      generationId: rec.generationId as number | '',
+      position: rec.position || '',
+      division: rec.division || 'Badan Pengurus Harian (BPH)',
+    }));
+    setPreviousHistory(autoHistory);
   };
 
   const handleDeleteMember = async (id: number) => {
@@ -849,6 +947,56 @@ export default function AdminCMS({
     }
   };
 
+  // ── Derive dynamic divisions list from settings ──────────────────────────
+  const divisionList = useMemo((): string[] => {
+    try {
+      const parsed = JSON.parse(settingsForm.divisions || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    } catch { /* fall through */ }
+    return ['Badan Pengurus Harian (BPH)','Bidang Edukasi & Sertifikasi','Bidang Hubungan Masyarakat','Bidang Kewirausahaan & Kemitraan','Bidang Media & Desain Kreatif'];
+  }, [settingsForm.divisions]);
+
+  // ── Division CRUD helpers (mutate settingsForm.divisions) ─────────────────
+  const handleAddDivision = () => {
+    const name = prompt('Nama bidang baru:')?.trim();
+    if (!name) return;
+    const updated = [...divisionList, name];
+    setSettingsForm(prev => ({ ...prev, divisions: JSON.stringify(updated) }));
+  };
+
+  const handleRenameDivision = (idx: number) => {
+    const current = divisionList[idx];
+    const next = prompt('Ubah nama bidang:', current)?.trim();
+    if (!next || next === current) return;
+    const updated = divisionList.map((d, i) => (i === idx ? next : d));
+    setSettingsForm(prev => ({ ...prev, divisions: JSON.stringify(updated) }));
+  };
+
+  const handleDeleteDivision = (idx: number) => {
+    if (!confirm(`Hapus bidang "${divisionList[idx]}"? Anggota yang sudah terdaftar di bidang ini tidak akan otomatis dipindahkan.`)) return;
+    const updated = divisionList.filter((_, i) => i !== idx);
+    setSettingsForm(prev => ({ ...prev, divisions: JSON.stringify(updated) }));
+  };
+
+  const parsedDivisionPhotos = (() => {
+    try {
+      return JSON.parse(settingsForm.divisionPhotos || '{}');
+    } catch (e) {
+      return {};
+    }
+  })();
+
+  const handleDivisionPhotoChange = (divisionName: string, url: string) => {
+    const updatedPhotos = {
+      ...parsedDivisionPhotos,
+      [divisionName]: url
+    };
+    setSettingsForm(prev => ({
+      ...prev,
+      divisionPhotos: JSON.stringify(updatedPhotos)
+    }));
+  };
+
   const handleSettingsSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSavingSettings(true);
@@ -939,7 +1087,7 @@ export default function AdminCMS({
             <button
               id="cms-tab-events-sidebar"
               onClick={() => setCmsTab('events')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'events' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -949,7 +1097,7 @@ export default function AdminCMS({
                 <Calendar className="h-4.5 w-4.5" />
                 <span>Agenda Acara</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'events' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {events.length}
@@ -959,7 +1107,7 @@ export default function AdminCMS({
             <button
               id="cms-tab-members-sidebar"
               onClick={() => setCmsTab('members')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'members' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -969,7 +1117,7 @@ export default function AdminCMS({
                 <Users className="h-4.5 w-4.5" />
                 <span>Kepengurusan</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'members' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {members.length}
@@ -978,7 +1126,7 @@ export default function AdminCMS({
 
             <button
               onClick={() => setCmsTab('articles')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'articles' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -988,7 +1136,7 @@ export default function AdminCMS({
                 <BookOpen className="h-4.5 w-4.5" />
                 <span>Artikel & Berita</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'articles' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {articles.length}
@@ -997,7 +1145,7 @@ export default function AdminCMS({
 
             <button
               onClick={() => setCmsTab('gallery')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'gallery' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -1007,7 +1155,7 @@ export default function AdminCMS({
                 <ImageIcon className="h-4.5 w-4.5" />
                 <span>Galeri Kegiatan</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'gallery' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {gallery.length}
@@ -1017,7 +1165,7 @@ export default function AdminCMS({
             <button
               id="cms-tab-generations-sidebar"
               onClick={() => setCmsTab('generations')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'generations' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -1027,7 +1175,7 @@ export default function AdminCMS({
                 <History className="h-4.5 w-4.5" />
                 <span>Masa Transisi</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'generations' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {generations.length}
@@ -1036,7 +1184,7 @@ export default function AdminCMS({
 
             <button
               onClick={() => setCmsTab('pillars')}
-              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
+              className={`group w-full flex items-center justify-between px-3.5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer ${
                 cmsTab === 'pillars' 
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-600/10' 
                   : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -1046,7 +1194,7 @@ export default function AdminCMS({
                 <ShieldCheck className="h-4.5 w-4.5" />
                 <span>Pilar Organisasi</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
+              <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                 cmsTab === 'pillars' ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-600'
               }`}>
                 {pillars.length}
@@ -1063,7 +1211,7 @@ export default function AdminCMS({
             >
               <div className="flex items-center gap-3">
                 <SettingsIcon className="h-4.5 w-4.5" />
-                <span>Pengaturan Kontak</span>
+                <span>Pengaturan</span>
               </div>
             </button>
 
@@ -1134,7 +1282,7 @@ export default function AdminCMS({
                cmsTab === 'articles' ? 'Artikel & Berita' :
                cmsTab === 'gallery' ? 'Arsip Dokumentasi Galeri' :
                cmsTab === 'pillars' ? 'Pilar Organisasi' :
-               cmsTab === 'settings' ? 'Pengaturan Informasi Kontak' :
+               cmsTab === 'settings' ? 'Pengaturan Aplikasi' :
                cmsTab === 'users' ? 'Manajemen User' : 'Transisi & Rollover Organisasi'}
             </h2>
             <p className="text-slate-500 text-xs sm:text-sm mt-1">
@@ -1143,7 +1291,7 @@ export default function AdminCMS({
                cmsTab === 'articles' ? 'Kelola artikel dan opini akuntansi terkini untuk dipublikasikan ke halaman beranda.' :
                cmsTab === 'gallery' ? 'Unggah foto-foto beresolusi tinggi dokumentasi kesuksesan IAI Muda DKI.' :
                cmsTab === 'pillars' ? 'Kelola pilar utama organisasi yang ditampilkan di halaman beranda.' :
-               cmsTab === 'settings' ? 'Ubah informasi alamat, email, hotline, dan deskripsi hubungi kami di halaman beranda.' :
+               cmsTab === 'settings' ? 'Kelola informasi kontak, media sosial, bidang/divisi, dan foto grup komite.' :
                cmsTab === 'users' ? 'Kelola daftar pengguna sistem dan hak akses administrasi.' : 'Luncurkan generasi kepengurusan baru, serta arsipkan sejarah komite terdahulu.'}
             </p>
           </div>
@@ -1452,24 +1600,27 @@ export default function AdminCMS({
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">Bidang / Divisi Kerja</label>
-                <select
+                <input
+                  type="text"
+                  list="member-division-list"
+                  required
+                  placeholder="Ketik atau pilih nama bidang..."
                   value={memberForm.division}
                   onChange={(e) => setMemberForm(prev => ({ ...prev, division: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                >
-                  <option value="Badan Pengurus Harian (BPH)">Badan Pengurus Harian (BPH)</option>
-                  <option value="Bidang Edukasi & Sertifikasi">Bidang Edukasi & Sertifikasi</option>
-                  <option value="Bidang Hubungan Masyarakat">Bidang Hubungan Masyarakat</option>
-                  <option value="Bidang Kewirausahaan & Kemitraan">Bidang Kewirausahaan & Kemitraan</option>
-                  <option value="Bidang Media & Desain Kreatif">Bidang Media & Desain Kreatif</option>
-                </select>
+                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                />
+                <datalist id="member-division-list">
+                  {divisionList.map(div => (
+                    <option key={div} value={div} />
+                  ))}
+                </datalist>
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-700">Periode Generasi</label>
                 <select
                   value={memberForm.generationId}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, generationId: e.target.value }))}
+                  onChange={(e) => setMemberForm(prev => ({ ...prev, generationId: e.target.value ? parseInt(e.target.value) : '' }))}
                   className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
                 >
                   <option value="">-- Gunakan Generasi Aktif --</option>
@@ -1510,16 +1661,144 @@ export default function AdminCMS({
                 helperText="Unggah pasfoto resmi pengurus atau tempel link Unsplash."
               />
 
+              {/* ── Riwayat Kepengurusan Sebelumnya ─────────────────────────── */}
+              <div className="pt-2 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <History className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="text-xs font-bold text-slate-700">Riwayat Generasi Sebelumnya</span>
+                    {previousHistory.length > 0 && (
+                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                        {previousHistory.length} periode
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setPreviousHistory(prev => [
+                        ...prev,
+                        { generationId: '', position: '', division: divisionList[0] || '' },
+                      ])
+                    }
+                    className="flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
+                  >
+                    <Plus className="h-3 w-3" />
+                    Tambah Riwayat
+                  </button>
+                </div>
+
+                {previousHistory.length === 0 && (
+                  <p className="text-[11px] text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5">
+                    Jika pengurus ini pernah menjabat di generasi sebelumnya, tambahkan riwayatnya di sini. Riwayat akan otomatis tampil di profil anggota.
+                  </p>
+                )}
+
+                {previousHistory.map((hist, idx) => (
+                  <div
+                    key={idx}
+                    className="relative bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2.5"
+                  >
+                    {/* Header row */}
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                        <History className="h-3 w-3" />
+                        Periode #{idx + 1}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPreviousHistory(prev => prev.filter((_, i) => i !== idx))
+                        }
+                        className="p-1 rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
+                        title="Hapus riwayat ini"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Generasi select */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-amber-700">Generasi</label>
+                      <select
+                        value={hist.generationId}
+                        onChange={e =>
+                          setPreviousHistory(prev =>
+                            prev.map((h, i) =>
+                              i === idx ? { ...h, generationId: e.target.value === '' ? '' : Number(e.target.value) } : h
+                            )
+                          )
+                        }
+                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
+                      >
+                        <option value="">-- Pilih Generasi --</option>
+                        {generations
+                          .filter(g => g.id !== (memberForm.generationId || activeGen?.id))
+                          .map(g => (
+                            <option key={g.id} value={g.id}>
+                              {g.name} ({g.years})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    {/* Jabatan input */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-amber-700">Jabatan di Periode Tersebut</label>
+                      <input
+                        type="text"
+                        placeholder="Contoh: Staf Bidang Edukasi"
+                        value={hist.position}
+                        onChange={e =>
+                          setPreviousHistory(prev =>
+                            prev.map((h, i) =>
+                              i === idx ? { ...h, position: e.target.value } : h
+                            )
+                          )
+                        }
+                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
+                      />
+                    </div>
+
+                    {/* Divisi — input bebas agar generasi lama bisa punya nama bidang berbeda */}
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold text-amber-700">Bidang / Divisi</label>
+                      <input
+                        type="text"
+                        list={`hist-division-list-${idx}`}
+                        placeholder="Ketik nama bidang/divisi..."
+                        value={hist.division}
+                        onChange={e =>
+                          setPreviousHistory(prev =>
+                            prev.map((h, i) =>
+                              i === idx ? { ...h, division: e.target.value } : h
+                            )
+                          )
+                        }
+                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
+                      />
+                      <datalist id={`hist-division-list-${idx}`}>
+                        {divisionList.map(div => (
+                          <option key={div} value={div} />
+                        ))}
+                      </datalist>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <div className="pt-4 flex items-center gap-2">
                 {editingMember && (
                   <button
                     type="button"
                     onClick={() => {
                       setEditingMember(null);
+                      setPreviousHistory([]);
                       setMemberForm({
                         name: '',
                         position: '',
                         division: 'Badan Pengurus Harian (BPH)',
+                        university: '',
                         generationId: '',
                         email: '',
                         imageUrl: '',
@@ -2202,141 +2481,257 @@ export default function AdminCMS({
         <UserManagement />
       )}
 
-      {/* --- RENDER 6: CONTACT SETTINGS CMS --- */}
+      {/* --- RENDER 6: SETTINGS CMS (with sub-tabs) --- */}
       {cmsTab === 'settings' && (
-        <div className="bg-white rounded-3xl border border-slate-100 p-6 sm:p-8 space-y-6 shadow-sm max-w-3xl animate-scale-up" id="settings-crud-module">
-          <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-            <SettingsIcon className="h-5 w-5 text-blue-600" />
-            <span>Konfigurasi Informasi Hubungi Kami</span>
-          </h3>
+        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm max-w-3xl animate-scale-up" id="settings-crud-module">
 
-          <form onSubmit={handleSettingsSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">Judul Bagian Kontak</label>
-              <input 
-                type="text" 
-                required
-                value={settingsForm.contactTitle}
-                onChange={(e) => setSettingsForm(prev => ({ ...prev, contactTitle: e.target.value }))}
-                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                placeholder="Hubungi IAI Wilayah DKI Jakarta..."
-              />
-            </div>
+          {/* Sub-tab navigation */}
+          <div className="flex items-center gap-1 p-2 border-b border-slate-100 overflow-x-auto">
+            {([
+              { key: 'contact',   label: 'Informasi Kontak', icon: '📋' },
+              { key: 'social',    label: 'Media Sosial',     icon: '🔗' },
+              { key: 'divisions', label: 'Kelola Bidang',    icon: '🏷️' },
+              { key: 'photos',    label: 'Foto Divisi',      icon: '🖼️' },
+              { key: 'branding',  label: 'Logo & Favicon',   icon: '🎨' },
+            ] as const).map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setSettingsSubTab(tab.key)}
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
+                  settingsSubTab === tab.key
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50'
+                }`}
+              >
+                <span>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            ))}
+          </div>
 
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">Deskripsi Bagian Kontak</label>
-              <textarea 
-                rows={3} 
-                required
-                value={settingsForm.contactDescription}
-                onChange={(e) => setSettingsForm(prev => ({ ...prev, contactDescription: e.target.value }))}
-                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
-                placeholder="Masukkan deskripsi..."
-              />
-            </div>
+          <form onSubmit={handleSettingsSubmit} className="p-6 sm:p-8 space-y-6">
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 block">Email Resmi</label>
-                <input 
-                  type="text" 
-                  required
-                  value={settingsForm.email}
-                  onChange={(e) => setSettingsForm(prev => ({ ...prev, email: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                  placeholder="e.g. iaimuda.dki@iai.or.id"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-700 block">No. Telepon / WhatsApp (Hotline)</label>
-                <input 
-                  type="text"
-                  value={settingsForm.phone}
-                  onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
-                  placeholder="e.g. (021) 3190-4232 ext. 202"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700 block">Alamat Kantor</label>
-              <textarea 
-                rows={2} 
-                required
-                value={settingsForm.address}
-                onChange={(e) => setSettingsForm(prev => ({ ...prev, address: e.target.value }))}
-                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
-                placeholder="Masukkan alamat lengkap..."
-              />
-            </div>
-
-            {/* Social Media Links */}
-            <div className="border-t border-slate-100 pt-6">
-              <h4 className="text-xs font-bold text-slate-800 mb-4">Tautan Media Sosial</h4>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">Instagram</label>
-                  <div className="flex items-center gap-2">
-                    <span className="text-slate-400 text-xs">@</span>
-                    <input
-                      type="text"
-                      placeholder="username"
-                      value={(settingsForm.instagramUrl || '').replace('https://instagram.com/', '')}
-                      onChange={(e) => setSettingsForm(prev => ({ ...prev, instagramUrl: e.target.value ? `https://instagram.com/${e.target.value}` : '' }))}
-                      className="flex-1 rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+            {/* ── SUB-TAB 1: Informasi Kontak ────────────────────────────── */}
+            {settingsSubTab === 'contact' && (
+              <div className="space-y-5">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Informasi Kontak Organisasi</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Tampil di bagian "Hubungi Kami" pada halaman beranda.</p>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Judul Bagian Kontak</label>
+                  <input type="text" required value={settingsForm.contactTitle}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, contactTitle: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                    placeholder="Hubungi IAI Wilayah DKI Jakarta..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Deskripsi Bagian Kontak</label>
+                  <textarea rows={3} required value={settingsForm.contactDescription}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, contactDescription: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
+                    placeholder="Masukkan deskripsi..."
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 block">Email Resmi</label>
+                    <input type="text" required value={settingsForm.email}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                      placeholder="iaimuda.dki@iai.or.id"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold text-slate-700 block">No. Telepon / WhatsApp</label>
+                    <input type="text" value={settingsForm.phone}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                      placeholder="(021) 3190-4232 ext. 202"
                     />
                   </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">LinkedIn</label>
-                  <input
-                    type="text"
-                    placeholder="https://linkedin.com/company/..."
-                    value={settingsForm.linkedinUrl || ''}
-                    onChange={(e) => setSettingsForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Alamat Kantor</label>
+                  <textarea rows={2} required value={settingsForm.address}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, address: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
+                    placeholder="Masukkan alamat lengkap..."
                   />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-600 flex items-center gap-1">YouTube</label>
-                  <input
-                    type="text"
-                    placeholder="https://youtube.com/@channel"
-                    value={settingsForm.youtubeUrl || ''}
-                    onChange={(e) => setSettingsForm(prev => ({ ...prev, youtubeUrl: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-3 py-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+                  <div className="space-y-0.5 pr-4">
+                    <h4 className="text-xs font-bold text-slate-800">Tampilkan No. Telepon / WhatsApp</h4>
+                    <p className="text-[10px] text-slate-500 leading-normal">Jika dinonaktifkan, kontak telepon akan disembunyikan dari halaman depan.</p>
+                  </div>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" checked={settingsForm.showPhone}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, showPhone: e.target.checked }))}
+                      className="sr-only peer"
+                    />
+                    <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600" />
+                  </label>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-bold text-slate-700 block">Deskripsi Footer Website</label>
+                  <textarea rows={3} value={settingsForm.footerDescription}
+                    onChange={(e) => setSettingsForm(prev => ({ ...prev, footerDescription: e.target.value }))}
+                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all leading-relaxed font-medium"
+                    placeholder="IAI Muda Wilayah DKI Jakarta merupakan badan kelengkapan..."
                   />
+                  <p className="text-[10px] text-slate-400">Teks deskripsi singkat organisasi yang tampil di bagian footer website.</p>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
-              <div className="space-y-0.5 pr-4">
-                <h4 className="text-xs font-bold text-slate-800">Tampilkan No. Telepon / WhatsApp</h4>
-                <p className="text-[10px] text-slate-500 leading-normal">
-                  Jika dinonaktifkan, kontak telepon/hotline akan disembunyikan dari halaman depan.
+            {/* ── SUB-TAB 2: Media Sosial ─────────────────────────────────── */}
+            {settingsSubTab === 'social' && (
+              <div className="space-y-5">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Tautan Media Sosial</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">Ikon media sosial akan tampil di footer dan halaman kontak.</p>
+                </div>
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-2">📸 Instagram</label>
+                    <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all">
+                      <span className="text-slate-400 text-xs font-mono">instagram.com/</span>
+                      <input type="text" placeholder="username"
+                        value={(settingsForm.instagramUrl || '').replace('https://instagram.com/', '')}
+                        onChange={(e) => setSettingsForm(prev => ({ ...prev, instagramUrl: e.target.value ? `https://instagram.com/${e.target.value}` : '' }))}
+                        className="flex-1 bg-transparent text-xs text-slate-900 placeholder-slate-400 focus:outline-none font-medium"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-2">💼 LinkedIn</label>
+                    <input type="text" placeholder="https://linkedin.com/company/..."
+                      value={settingsForm.linkedinUrl || ''}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700 flex items-center gap-2">▶️ YouTube</label>
+                    <input type="text" placeholder="https://youtube.com/@channel"
+                      value={settingsForm.youtubeUrl || ''}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, youtubeUrl: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── SUB-TAB 3: Kelola Bidang ────────────────────────────────── */}
+            {settingsSubTab === 'divisions' && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-800">Kelola Bidang / Divisi</h4>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Tambah, ubah nama, atau hapus bidang. Berlaku langsung di semua dropdown anggota.</p>
+                  </div>
+                  <button type="button" onClick={handleAddDivision}
+                    className="flex items-center gap-1.5 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 hover:bg-blue-100 px-3 py-2 text-xs font-bold transition-all cursor-pointer"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    Tambah Bidang
+                  </button>
+                </div>
+                <div className="space-y-2">
+                  {divisionList.map((div, idx) => (
+                    <div key={div} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 group hover:border-blue-200 hover:bg-blue-50/40 transition-all">
+                      <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">{idx + 1}</span>
+                      <span className="flex-1 text-xs font-semibold text-slate-800">{div}</span>
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button type="button" onClick={() => handleRenameDivision(idx)} title="Ubah nama"
+                          className="p-1.5 rounded-lg hover:bg-white text-slate-400 hover:text-blue-600 transition-all cursor-pointer">
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        {divisionList.length > 1 && (
+                          <button type="button" onClick={() => handleDeleteDivision(idx)} title="Hapus"
+                            className="p-1.5 rounded-lg hover:bg-white text-slate-400 hover:text-red-500 transition-all cursor-pointer">
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2.5">
+                  ⚠️ Klik <strong>Simpan Perubahan</strong> di bawah agar perubahan bidang tersimpan permanen ke database.
                 </p>
               </div>
-              <label className="relative inline-flex items-center cursor-pointer">
-                <input 
-                  type="checkbox" 
-                  checked={settingsForm.showPhone}
-                  onChange={(e) => setSettingsForm(prev => ({ ...prev, showPhone: e.target.checked }))}
-                  className="sr-only peer"
-                />
-                <div className="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-              </label>
+            )}
+
+            {/* ── SUB-TAB 4: Foto Divisi ──────────────────────────────────── */}
+            {settingsSubTab === 'branding' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-5">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">URL Logo Organisasi</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/logo.png"
+                      value={settingsForm.logoUrl}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, logoUrl: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                    <p className="text-[10px] text-slate-400">Ditampilkan di pojok kiri header (mengganti ikon default). Kosongkan untuk menggunakan ikon default.</p>
+                    {settingsForm.logoUrl && (
+                      <div className="mt-2">
+                        <p className="text-[10px] font-semibold text-slate-500 mb-1">Pratinjau:</p>
+                        <img src={settingsForm.logoUrl} alt="Preview logo" className="h-12 w-12 rounded-xl border border-slate-200 object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                      </div>
+                    )}
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">URL Favicon</label>
+                    <input
+                      type="url"
+                      placeholder="https://example.com/favicon.ico"
+                      value={settingsForm.faviconUrl}
+                      onChange={(e) => setSettingsForm(prev => ({ ...prev, faviconUrl: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                    <p className="text-[10px] text-slate-400">Ikon tab browser. Biarkan kosong untuk tidak menggunakan favicon kustom.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {settingsSubTab === 'photos' && (
+              <div className="space-y-5">
+                <div>
+                  <h4 className="text-sm font-bold text-slate-800">Foto Group Bidang / Komite</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">URL foto group resmi per divisi. Menjadi banner di halaman Struktur Komite.</p>
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  {divisionList.map((divName) => (
+                    <div key={divName} className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700 block">{divName}</label>
+                      <input type="text" placeholder="https://... atau URL foto group"
+                        value={parsedDivisionPhotos[divName] || ''}
+                        onChange={(e) => handleDivisionPhotoChange(divName, e.target.value)}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-3 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-medium"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Save button — always visible */}
+            <div className="pt-2 border-t border-slate-100">
+              <button type="submit" disabled={savingSettings}
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-6 py-3.5 text-xs shadow-md shadow-blue-500/10 hover:from-blue-500 hover:to-indigo-500 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingSettings ? 'Menyimpan...' : 'Simpan Perubahan'}
+              </button>
             </div>
 
-            <button
-              type="submit"
-              disabled={savingSettings}
-              className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold px-6 py-3.5 text-xs shadow-md shadow-blue-500/10 hover:from-blue-500 hover:to-indigo-500 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {savingSettings ? 'Menyimpan...' : 'Simpan Perubahan'}
-            </button>
           </form>
         </div>
       )}

@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
@@ -13,6 +15,7 @@ interface HeaderProps {
   isAdminMode: boolean;
   setIsAdminMode: (mode: boolean) => void;
   currentGenName: string;
+  logoUrl?: string | null;
 }
 
 const ROLE_LABELS = { superadmin: 'Super Admin', admin: 'Admin', editor: 'Editor' };
@@ -22,7 +25,8 @@ export default function Header({
   setCurrentTab, 
   isAdminMode, 
   setIsAdminMode,
-  currentGenName
+  currentGenName,
+  logoUrl
 }: HeaderProps) {
   const { user, logout } = useAuth();
 
@@ -52,9 +56,13 @@ export default function Header({
           onClick={() => { setCurrentTab('beranda'); setIsAdminMode(false); }}
           id="brand-logo-container"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform flex-shrink-0">
-            <Landmark className="h-5 w-5" />
-          </div>
+          {logoUrl ? (
+            <img src={logoUrl} alt="Logo IAI Muda DKI" className="h-10 w-10 rounded-xl object-contain group-hover:scale-105 transition-transform flex-shrink-0" />
+          ) : (
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform flex-shrink-0">
+              <Landmark className="h-5 w-5" />
+            </div>
+          )}
           <div className="flex-shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950 whitespace-nowrap">

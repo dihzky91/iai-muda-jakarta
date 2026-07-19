@@ -1,19 +1,24 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# IAI Muda Wilayah DKI Jakarta
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/4a90f8f9-417e-442c-82ad-b2821298e779
+Website resmi IAI Muda Wilayah DKI Jakarta — Next.js + Drizzle ORM + TiDB MySQL.
 
 ## Run Locally
 
-**Prerequisites:** Node.js
-
 1. Install dependencies:
    `npm install`
-2. If needed, copy [.env.example](.env.example) to [.env.local](.env.local) and adjust values. No Gemini API key is required to run this project locally.
-3. Run the app:
+2. Copy `.env.example` to `.env` and adjust values.
+3. Run database seed:
+   `npm run seed`
+4. Start development server:
    `npm run dev`
+
+## Scripts
+
+| Script | Description |
+|---|---|
+| `npm run dev` | Start Next.js dev server |
+| `npm run build` | Build for production |
+| `npm start` | Start production server |
+| `npm run seed` | Seed database |
+| `npm run db:generate` | Generate Drizzle migrations |
+| `npm run db:push` | Push Drizzle schema to database |
