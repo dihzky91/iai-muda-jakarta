@@ -60,6 +60,7 @@ export default function AdminCMS({
 
   // Success Notification
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   // --- SETTINGS CRUD STATE ---
   const [settingsForm, setSettingsForm] = useState({
@@ -430,6 +431,7 @@ export default function AdminCMS({
       imageUrl: '',
       status: 'upcoming',
     });
+    setIsDrawerOpen(false);
   };
 
   const handleEditEvent = (evt: Event) => {
@@ -443,6 +445,7 @@ export default function AdminCMS({
       imageUrl: evt.imageUrl || '',
       status: evt.status,
     });
+    setIsDrawerOpen(true);
   };
 
   const handleDeleteEvent = async (id: number) => {
@@ -503,6 +506,7 @@ export default function AdminCMS({
       author: '',
       imageUrl: '',
     });
+    setIsDrawerOpen(false);
   };
 
   const handleEditArticle = (art: Article) => {
@@ -515,6 +519,7 @@ export default function AdminCMS({
       author: art.author,
       imageUrl: art.imageUrl || '',
     });
+    setIsDrawerOpen(true);
   };
 
   const handleDeleteArticle = async (id: number) => {
@@ -568,11 +573,13 @@ export default function AdminCMS({
       }
     }
     setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+    setIsDrawerOpen(false);
   };
 
   const handleEditPillar = (p: Pillar) => {
     setEditingPillar(p);
     setPillarForm({ title: p.title, description: p.description, iconName: p.iconName, sortOrder: p.sortOrder });
+    setIsDrawerOpen(true);
   };
 
   const handleDeletePillar = async (id: number) => {
@@ -651,6 +658,7 @@ export default function AdminCMS({
       photographer: '',
       imagesText: ''
     });
+    setIsDrawerOpen(false);
   };
 
   const handleEditGalleryItem = (item: GalleryItem) => {
@@ -664,6 +672,7 @@ export default function AdminCMS({
       photographer: item.photographer || '',
       imagesText: item.images ? item.images.join('\n') : ''
     });
+    setIsDrawerOpen(true);
   };
 
   const handleDeleteGalleryItem = async (id: number) => {
@@ -824,6 +833,7 @@ export default function AdminCMS({
       linkedinUrl: '',
     });
     setPreviousHistory([]);
+    setIsDrawerOpen(false);
   };
 
   const handleEditMember = (m: Member) => {
@@ -852,6 +862,7 @@ export default function AdminCMS({
       division: rec.division || 'Badan Pengurus Harian (BPH)',
     }));
     setPreviousHistory(autoHistory);
+    setIsDrawerOpen(true);
   };
 
   const handleDeleteMember = async (id: number) => {
@@ -1313,133 +1324,34 @@ export default function AdminCMS({
 
       {/* --- RENDER 1: EVENTS CRUD CMS --- */}
       {cmsTab === 'events' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="events-crud-module">
-          
-          {/* Form Create/Edit on Left */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <span>{editingEvent ? 'Ubah Informasi Acara' : 'Buat Agenda Acara Baru'}</span>
-            </h3>
-
-            <form onSubmit={handleEventSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Judul Kegiatan / Tema Webinar</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Webinar Pelaporan Keuangan ESG..."
-                  value={eventForm.title}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
+        <div className="space-y-6" id="events-crud-module">
+          {/* List Events Full-width */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 space-y-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900">Daftar Agenda Aktif</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">Total {events.length} agenda/webinar terdaftar</p>
               </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Deskripsi Lengkap</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Deskripsikan garis besar materi, sasaran peserta, dan benefit..."
-                  value={eventForm.description}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Tanggal Pelaksanaan</label>
-                  <input
-                    type="date"
-                    required
-                    value={eventForm.date}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Waktu Mulai</label>
-                  <input
-                    type="time"
-                    required
-                    value={eventForm.time}
-                    onChange={(e) => setEventForm(prev => ({ ...prev, time: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Lokasi / Media Pertemuan</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Media Zoom / Aula Grha Akuntan"
-                  value={eventForm.location}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <ImageUploader
-                label="Gambar Sampul Acara"
-                value={eventForm.imageUrl}
-                onChange={(url) => setEventForm(prev => ({ ...prev, imageUrl: url }))}
-                placeholder="https://images.unsplash.com/photo-..."
-                helperText="Unggah gambar poster atau pamflet webinar, atau tempel link gambar."
-              />
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Status Publikasi</label>
-                <select
-                  value={eventForm.status}
-                  onChange={(e) => setEventForm(prev => ({ ...prev, status: e.target.value as any }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                >
-                  <option value="upcoming">Akan Datang (Upcoming)</option>
-                  <option value="ongoing">Berlangsung (Ongoing)</option>
-                  <option value="completed">Telah Selesai (Completed)</option>
-                </select>
-              </div>
-
-              <div className="pt-4 flex items-center gap-2">
-                {editingEvent && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingEvent(null);
-                      setEventForm({
-                        title: '',
-                        description: '',
-                        date: '',
-                        time: '',
-                        location: '',
-                        imageUrl: '',
-                        status: 'upcoming',
-                      });
-                    }}
-                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${
-                    editingEvent ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
-                  }`}
-                >
-                  {editingEvent ? 'Simpan Perubahan' : 'Terbitkan Agenda'}
-                </button>
-              </div>
-
-            </form>
-          </div>
-
-          {/* List Events on Right */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900">Daftar Agenda Aktif ({events.length})</h3>
+              <button
+                onClick={() => {
+                  setEditingEvent(null);
+                  setEventForm({
+                    title: '',
+                    description: '',
+                    date: '',
+                    time: '',
+                    location: '',
+                    imageUrl: '',
+                    status: 'upcoming',
+                  });
+                  setIsDrawerOpen(true);
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-md shadow-blue-500/10 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tambah Agenda</span>
+              </button>
+            </div>
             
             <div className="divide-y divide-slate-100 overflow-y-auto max-h-[600px] pr-2 space-y-4">
               {events.map(evt => (
@@ -1479,22 +1391,69 @@ export default function AdminCMS({
               ))}
             </div>
           </div>
-
         </div>
       )}
 
       {/* --- RENDER 2: MEMBERS CRUD CMS --- */}
       {cmsTab === 'members' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="members-crud-module">
+        <div className="space-y-6" id="members-crud-module">
           
-          {/* Member input form on left */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <span>{editingMember ? 'Ubah Profil Pengurus' : 'Daftarkan Pengurus Baru'}</span>
-            </h3>
+          {/* Members list Full-width */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 space-y-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900">Daftar Pengurus</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
+                  Menampilkan {filteredMembers.length} dari {members.length} total pengurus
+                </p>
+              </div>
+              
+              <div className="flex flex-wrap items-center gap-2">
+                {/* Dynamic Filter Select */}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Filter Generasi:</span>
+                  <select
+                    value={selectedGenFilter}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSelectedGenFilter(val === 'all' ? 'all' : Number(val));
+                    }}
+                    className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  >
+                    <option value="all">Semua Generasi</option>
+                    {generations.map(g => (
+                      <option key={g.id} value={g.id}>
+                        {g.name} {g.isActive ? '(Aktif)' : ''}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* CSV/Excel Mass Registration Accordion */}
+                <button
+                  onClick={() => {
+                    setEditingMember(null);
+                    setPreviousHistory([]);
+                    setMemberForm({
+                      name: '',
+                      position: '',
+                      division: 'Badan Pengurus Harian (BPH)',
+                      university: '',
+                      generationId: '',
+                      email: '',
+                      imageUrl: '',
+                      linkedinUrl: '',
+                    });
+                    setIsDrawerOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-md shadow-blue-500/10 cursor-pointer animate-fade-in"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>Tambah Pengurus</span>
+                </button>
+              </div>
+            </div>
+
+            {/* CSV/Excel Mass Registration Accordion - Placed above search for easy access */}
             <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -1560,298 +1519,6 @@ export default function AdminCMS({
                   </button>
                 </div>
               )}
-            </div>
-
-            <form onSubmit={handleMemberSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Nama Lengkap & Gelar</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Budi Santoso, S.Ak., CA"
-                  value={memberForm.name}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Jabatan Komite</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Kepala Bidang Hubungan Masyarakat"
-                  value={memberForm.position}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, position: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Asal Universitas</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Universitas Indonesia"
-                  value={memberForm.university}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, university: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Bidang / Divisi Kerja</label>
-                <input
-                  type="text"
-                  list="member-division-list"
-                  required
-                  placeholder="Ketik atau pilih nama bidang..."
-                  value={memberForm.division}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, division: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-                <datalist id="member-division-list">
-                  {divisionList.map(div => (
-                    <option key={div} value={div} />
-                  ))}
-                </datalist>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Periode Generasi</label>
-                <select
-                  value={memberForm.generationId}
-                  onChange={(e) => setMemberForm(prev => ({ ...prev, generationId: e.target.value ? parseInt(e.target.value) : '' }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                >
-                  <option value="">-- Gunakan Generasi Aktif --</option>
-                  {generations.map(g => (
-                    <option key={g.id} value={g.id}>{g.name} ({g.years})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Email Resmi</label>
-                  <input
-                    type="email"
-                    placeholder="nama@iai-dki.or.id"
-                    value={memberForm.email}
-                    onChange={(e) => setMemberForm(prev => ({ ...prev, email: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">Tautan LinkedIn</label>
-                  <input
-                    type="text"
-                    placeholder="https://linkedin.com/in/..."
-                    value={memberForm.linkedinUrl}
-                    onChange={(e) => setMemberForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  />
-                </div>
-              </div>
-
-              <ImageUploader
-                label="Foto Profil"
-                value={memberForm.imageUrl}
-                onChange={(url) => setMemberForm(prev => ({ ...prev, imageUrl: url }))}
-                placeholder="https://images.unsplash.com/photo-..."
-                helperText="Unggah pasfoto resmi pengurus atau tempel link Unsplash."
-              />
-
-              {/* ── Riwayat Kepengurusan Sebelumnya ─────────────────────────── */}
-              <div className="pt-2 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <History className="h-3.5 w-3.5 text-amber-500" />
-                    <span className="text-xs font-bold text-slate-700">Riwayat Generasi Sebelumnya</span>
-                    {previousHistory.length > 0 && (
-                      <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200">
-                        {previousHistory.length} periode
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setPreviousHistory(prev => [
-                        ...prev,
-                        { generationId: '', position: '', division: divisionList[0] || '' },
-                      ])
-                    }
-                    className="flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
-                  >
-                    <Plus className="h-3 w-3" />
-                    Tambah Riwayat
-                  </button>
-                </div>
-
-                {previousHistory.length === 0 && (
-                  <p className="text-[11px] text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5">
-                    Jika pengurus ini pernah menjabat di generasi sebelumnya, tambahkan riwayatnya di sini. Riwayat akan otomatis tampil di profil anggota.
-                  </p>
-                )}
-
-                {previousHistory.map((hist, idx) => (
-                  <div
-                    key={idx}
-                    className="relative bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2.5"
-                  >
-                    {/* Header row */}
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
-                        <History className="h-3 w-3" />
-                        Periode #{idx + 1}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setPreviousHistory(prev => prev.filter((_, i) => i !== idx))
-                        }
-                        className="p-1 rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
-                        title="Hapus riwayat ini"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    </div>
-
-                    {/* Generasi select */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-amber-700">Generasi</label>
-                      <select
-                        value={hist.generationId}
-                        onChange={e =>
-                          setPreviousHistory(prev =>
-                            prev.map((h, i) =>
-                              i === idx ? { ...h, generationId: e.target.value === '' ? '' : Number(e.target.value) } : h
-                            )
-                          )
-                        }
-                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
-                      >
-                        <option value="">-- Pilih Generasi --</option>
-                        {generations
-                          .filter(g => g.id !== (memberForm.generationId || activeGen?.id))
-                          .map(g => (
-                            <option key={g.id} value={g.id}>
-                              {g.name} ({g.years})
-                            </option>
-                          ))}
-                      </select>
-                    </div>
-
-                    {/* Jabatan input */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-amber-700">Jabatan di Periode Tersebut</label>
-                      <input
-                        type="text"
-                        placeholder="Contoh: Staf Bidang Edukasi"
-                        value={hist.position}
-                        onChange={e =>
-                          setPreviousHistory(prev =>
-                            prev.map((h, i) =>
-                              i === idx ? { ...h, position: e.target.value } : h
-                            )
-                          )
-                        }
-                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
-                      />
-                    </div>
-
-                    {/* Divisi — input bebas agar generasi lama bisa punya nama bidang berbeda */}
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-bold text-amber-700">Bidang / Divisi</label>
-                      <input
-                        type="text"
-                        list={`hist-division-list-${idx}`}
-                        placeholder="Ketik nama bidang/divisi..."
-                        value={hist.division}
-                        onChange={e =>
-                          setPreviousHistory(prev =>
-                            prev.map((h, i) =>
-                              i === idx ? { ...h, division: e.target.value } : h
-                            )
-                          )
-                        }
-                        className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-400/30 focus:border-amber-400 transition-all"
-                      />
-                      <datalist id={`hist-division-list-${idx}`}>
-                        {divisionList.map(div => (
-                          <option key={div} value={div} />
-                        ))}
-                      </datalist>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="pt-4 flex items-center gap-2">
-                {editingMember && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingMember(null);
-                      setPreviousHistory([]);
-                      setMemberForm({
-                        name: '',
-                        position: '',
-                        division: 'Badan Pengurus Harian (BPH)',
-                        university: '',
-                        generationId: '',
-                        email: '',
-                        imageUrl: '',
-                        linkedinUrl: '',
-                      });
-                    }}
-                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${
-                    editingMember ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500'
-                  }`}
-                >
-                  {editingMember ? 'Simpan Perubahan' : 'Daftarkan Pengurus'}
-                </button>
-              </div>
-
-            </form>
-          </div>
-
-          {/* Members list on right */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
-              <div>
-                <h3 className="font-display text-lg font-bold text-slate-900">Daftar Pengurus</h3>
-                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">
-                  Menampilkan {filteredMembers.length} dari {members.length} total pengurus
-                </p>
-              </div>
-              
-              {/* Dynamic Filter Select */}
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-slate-500 whitespace-nowrap">Filter Generasi:</span>
-                <select
-                  value={selectedGenFilter}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setSelectedGenFilter(val === 'all' ? 'all' : Number(val));
-                  }}
-                  className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-1.5 text-xs text-slate-700 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                >
-                  <option value="all">Semua Generasi</option>
-                  {generations.map(g => (
-                    <option key={g.id} value={g.id}>
-                      {g.name} {g.isActive ? '(Aktif)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
             </div>
 
             {/* Search Input for Members */}
@@ -1931,124 +1598,38 @@ export default function AdminCMS({
               )}
             </div>
           </div>
-
         </div>
       )}
 
       {/* --- RENDER 3: ARTICLES CRUD CMS --- */}
       {cmsTab === 'articles' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="articles-crud-module">
-
-          {/* Article Form Create/Edit */}
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <span>{editingArticle ? 'Ubah Artikel' : 'Tulis Artikel Baru'}</span>
-            </h3>
-
-            <form onSubmit={handleArticleSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Judul Artikel</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Contoh: Menjawab Tantangan AI..."
-                  value={articleForm.title}
-                  onChange={(e) => setArticleForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
+        <div className="space-y-6" id="articles-crud-module">
+          {/* Articles List Full-width */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 space-y-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900">Artikel Terbit</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">Total {articles.length} artikel terpublikasi</p>
               </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Penulis</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="Nama penulis..."
-                  value={articleForm.author}
-                  onChange={(e) => setArticleForm(prev => ({ ...prev, author: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Ringkasan (Excerpt)</label>
-                <textarea
-                  rows={2}
-                  placeholder="Ringkasan singkat artikel..."
-                  value={articleForm.excerpt}
-                  onChange={(e) => setArticleForm(prev => ({ ...prev, excerpt: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Konten Artikel</label>
-                <textarea
-                  required
-                  rows={8}
-                  placeholder="Tulis konten artikel di sini... Gunakan baris kosong untuk paragraf baru."
-                  value={articleForm.content}
-                  onChange={(e) => setArticleForm(prev => ({ ...prev, content: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px] leading-relaxed"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Tanggal Publikasi</label>
-                <input
-                  type="date"
-                  required
-                  value={articleForm.date}
-                  onChange={(e) => setArticleForm(prev => ({ ...prev, date: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                />
-              </div>
-
-              <ImageUploader
-                label="Gambar Sampul Artikel"
-                value={articleForm.imageUrl}
-                onChange={(url) => setArticleForm(prev => ({ ...prev, imageUrl: url }))}
-                placeholder="https://images.unsplash.com/photo-..."
-                helperText="Unggah gambar cover artikel atau tempel link gambar."
-              />
-
-              <div className="pt-4 flex items-center gap-2">
-                {editingArticle && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingArticle(null);
-                      setArticleForm({
-                        title: '',
-                        excerpt: '',
-                        content: '',
-                        date: '',
-                        author: '',
-                        imageUrl: '',
-                      });
-                    }}
-                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer"
-                  >
-                    Batal
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${
-                    editingArticle ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
-                  }`}
-                >
-                  {editingArticle ? 'Simpan Perubahan' : 'Terbitkan Artikel'}
-                </button>
-              </div>
-
-            </form>
-          </div>
-
-          {/* Articles List */}
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900">Artikel Terbit ({articles.length})</h3>
+              <button
+                onClick={() => {
+                  setEditingArticle(null);
+                  setArticleForm({
+                    title: '',
+                    excerpt: '',
+                    content: '',
+                    date: '',
+                    author: '',
+                    imageUrl: '',
+                  });
+                  setIsDrawerOpen(true);
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-md shadow-blue-500/10 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tulis Artikel</span>
+              </button>
+            </div>
 
             <div className="divide-y divide-slate-100 overflow-y-auto max-h-[600px] pr-2 space-y-4">
               {articles.map(art => (
@@ -2082,7 +1663,6 @@ export default function AdminCMS({
               ))}
             </div>
           </div>
-
         </div>
       )}
 
@@ -2282,51 +1862,27 @@ export default function AdminCMS({
 
       {/* --- PILLARS CRUD CMS --- */}
       {cmsTab === 'pillars' && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8" id="pillars-crud-module">
-          <div className="lg:col-span-5 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
-              <span>{editingPillar ? 'Ubah Pilar' : 'Tambah Pilar Baru'}</span>
-            </h3>
-            <form onSubmit={handlePillarSubmit} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Judul Pilar</label>
-                <input type="text" required placeholder="Contoh: Integritas Standar Tinggi"
-                  value={pillarForm.title}
-                  onChange={(e) => setPillarForm(prev => ({ ...prev, title: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all" />
+        <div className="space-y-6" id="pillars-crud-module">
+          {/* Pillars List Full-width */}
+          <div className="bg-white rounded-3xl border border-slate-100 p-6 space-y-6 shadow-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold text-slate-900">Daftar Pilar Visi & Misi</h3>
+                <p className="text-[11px] text-slate-400 mt-0.5 font-medium">Total {pillars.length} pilar utama terdaftar</p>
               </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Deskripsi</label>
-                <textarea required rows={4} placeholder="Deskripsi pilar organisasi..."
-                  value={pillarForm.description}
-                  onChange={(e) => setPillarForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold text-slate-700">Ikon</label>
-                <select value={pillarForm.iconName}
-                  onChange={(e) => setPillarForm(prev => ({ ...prev, iconName: e.target.value }))}
-                  className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all">
-                  <option value="Shield">Shield — Integritas</option>
-                  <option value="Landmark">Landmark — Literasi</option>
-                  <option value="Award">Award — Sinergi</option>
-                </select>
-              </div>
-              <div className="pt-4 flex items-center gap-2">
-                {editingPillar && (
-                  <button type="button" onClick={() => { setEditingPillar(null); setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 }); }}
-                    className="w-1/3 rounded-xl bg-slate-100 text-slate-600 py-2.5 text-xs font-semibold hover:bg-slate-200 transition-all cursor-pointer">Batal</button>
-                )}
-                <button type="submit"
-                  className={`rounded-xl font-bold py-2.5 text-xs text-white shadow-md cursor-pointer transition-all ${editingPillar ? 'w-2/3 bg-emerald-600 hover:bg-emerald-500' : 'w-full bg-blue-600 hover:bg-blue-500'}`}>
-                  {editingPillar ? 'Simpan Perubahan' : 'Tambah Pilar'}
-                </button>
-              </div>
-            </form>
-          </div>
-          <div className="lg:col-span-7 bg-white rounded-3xl border border-slate-100 p-6 space-y-4 shadow-sm">
-            <h3 className="font-display text-lg font-bold text-slate-900">Daftar Pilar ({pillars.length})</h3>
+              <button
+                onClick={() => {
+                  setEditingPillar(null);
+                  setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+                  setIsDrawerOpen(true);
+                }}
+                className="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 text-xs font-bold transition-all shadow-md shadow-blue-500/10 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Tambah Pilar</span>
+              </button>
+            </div>
+
             <div className="divide-y divide-slate-100 overflow-y-auto max-h-[600px] pr-2 space-y-4">
               {pillars.map((p, i) => (
                 <div key={p.id} className="pt-4 flex items-start justify-between gap-4">
@@ -2738,6 +2294,717 @@ export default function AdminCMS({
 
         </div>
       </main>
+
+      {/* --- SLIDE-OVER DRAWER FOR CRUD FORMS --- */}
+      {isDrawerOpen && (
+        <>
+          {/* Backdrop Overlay */}
+          <div 
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 transition-opacity animate-fade-in"
+            onClick={() => {
+              setIsDrawerOpen(false);
+              if (cmsTab === 'events') {
+                setEditingEvent(null);
+                setEventForm({ title: '', description: '', date: '', time: '', location: '', imageUrl: '', status: 'upcoming' });
+              } else if (cmsTab === 'members') {
+                setEditingMember(null);
+                setPreviousHistory([]);
+                setMemberForm({ name: '', position: '', division: 'Badan Pengurus Harian (BPH)', university: '', generationId: '', email: '', imageUrl: '', linkedinUrl: '' });
+              } else if (cmsTab === 'articles') {
+                setEditingArticle(null);
+                setArticleForm({ title: '', excerpt: '', content: '', date: '', author: '', imageUrl: '' });
+              } else if (cmsTab === 'gallery') {
+                setEditingGalleryItem(null);
+                setGalleryForm({ title: '', description: '', category: 'Webinar & Talkshow', date: '', imageUrl: '', photographer: '', imagesText: '' });
+              } else if (cmsTab === 'pillars') {
+                setEditingPillar(null);
+                setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+              }
+            }}
+          />
+          
+          {/* Drawer Panel Container */}
+          <div 
+            className="fixed top-0 right-0 h-full w-full sm:w-[540px] md:w-[620px] bg-white shadow-2xl z-50 transform transition-transform duration-300 ease-in-out overflow-y-auto animate-slide-in-right flex flex-col"
+          >
+            {/* Drawer Header */}
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md">
+              <div>
+                <h3 className="font-display text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <Sparkles className="h-5 w-5 text-blue-600" />
+                  <span>
+                    {cmsTab === 'events' ? (editingEvent ? 'Ubah Informasi Acara' : 'Buat Agenda Acara Baru') :
+                     cmsTab === 'members' ? (editingMember ? 'Ubah Profil Pengurus' : 'Daftarkan Pengurus Baru') :
+                     cmsTab === 'articles' ? (editingArticle ? 'Ubah Informasi Artikel' : 'Tulis Artikel Baru') :
+                     cmsTab === 'gallery' ? (editingGalleryItem ? 'Ubah Informasi Galeri' : 'Tambah Foto Galeri Baru') :
+                     cmsTab === 'pillars' ? (editingPillar ? 'Ubah Pilar' : 'Tambah Pilar Baru') : ''}
+                  </span>
+                </h3>
+                <p className="text-[11px] text-slate-500 mt-0.5">
+                  Silakan isi dan lengkapi data formulir di bawah ini.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  if (cmsTab === 'events') {
+                    setEditingEvent(null);
+                    setEventForm({ title: '', description: '', date: '', time: '', location: '', imageUrl: '', status: 'upcoming' });
+                  } else if (cmsTab === 'members') {
+                    setEditingMember(null);
+                    setPreviousHistory([]);
+                    setMemberForm({ name: '', position: '', division: 'Badan Pengurus Harian (BPH)', university: '', generationId: '', email: '', imageUrl: '', linkedinUrl: '' });
+                  } else if (cmsTab === 'articles') {
+                    setEditingArticle(null);
+                    setArticleForm({ title: '', excerpt: '', content: '', date: '', author: '', imageUrl: '' });
+                  } else if (cmsTab === 'gallery') {
+                    setEditingGalleryItem(null);
+                    setGalleryForm({ title: '', description: '', category: 'Webinar & Talkshow', date: '', imageUrl: '', photographer: '', imagesText: '' });
+                  } else if (cmsTab === 'pillars') {
+                    setEditingPillar(null);
+                    setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+                  }
+                }}
+                className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-650 transition-all cursor-pointer text-sm font-semibold"
+              >
+                ✕ Close
+              </button>
+            </div>
+
+            {/* Scrollable Body Content */}
+            <div className="flex-1 p-6 sm:p-8 overflow-y-auto space-y-6">
+              {cmsTab === 'events' && (
+                <form onSubmit={handleEventSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Judul Kegiatan / Tema Webinar</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Webinar Pelaporan Keuangan ESG..."
+                      value={eventForm.title}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Deskripsi Lengkap</label>
+                    <textarea
+                      required
+                      rows={6}
+                      placeholder="Deskripsikan garis besar materi, sasaran peserta, dan benefit..."
+                      value={eventForm.description}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Tanggal Pelaksanaan</label>
+                      <input
+                        type="date"
+                        required
+                        value={eventForm.date}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Waktu Mulai</label>
+                      <input
+                        type="time"
+                        required
+                        value={eventForm.time}
+                        onChange={(e) => setEventForm(prev => ({ ...prev, time: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Lokasi / Media Pertemuan</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Media Zoom / Aula Grha Akuntan"
+                      value={eventForm.location}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, location: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <ImageUploader
+                    label="Gambar Sampul Acara"
+                    value={eventForm.imageUrl}
+                    onChange={(url) => setEventForm(prev => ({ ...prev, imageUrl: url }))}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    helperText="Unggah gambar poster atau pamflet webinar, atau tempel link gambar."
+                  />
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Status Publikasi</label>
+                    <select
+                      value={eventForm.status}
+                      onChange={(e) => setEventForm(prev => ({ ...prev, status: e.target.value as any }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    >
+                      <option value="upcoming">Akan Datang (Upcoming)</option>
+                      <option value="ongoing">Berlangsung (Ongoing)</option>
+                      <option value="completed">Telah Selesai (Completed)</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingEvent(null);
+                        setEventForm({ title: '', description: '', date: '', time: '', location: '', imageUrl: '', status: 'upcoming' });
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 text-slate-600 py-3 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer text-center"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all ${
+                        editingEvent ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
+                      }`}
+                    >
+                      {editingEvent ? 'Simpan Perubahan' : 'Terbitkan Agenda'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {cmsTab === 'members' && (
+                <form onSubmit={handleMemberSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Nama Lengkap & Gelar</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Budi Santoso, S.Ak., CA"
+                      value={memberForm.name}
+                      onChange={(e) => setMemberForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Jabatan Komite</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Kepala Bidang Hubungan Masyarakat"
+                      value={memberForm.position}
+                      onChange={(e) => setMemberForm(prev => ({ ...prev, position: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Asal Universitas</label>
+                    <input
+                      type="text"
+                      placeholder="Contoh: Universitas Indonesia"
+                      value={memberForm.university}
+                      onChange={(e) => setMemberForm(prev => ({ ...prev, university: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Bidang / Divisi Kerja</label>
+                    <input
+                      type="text"
+                      list="member-division-list"
+                      required
+                      placeholder="Ketik atau pilih nama bidang..."
+                      value={memberForm.division}
+                      onChange={(e) => setMemberForm(prev => ({ ...prev, division: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                    <datalist id="member-division-list">
+                      {divisionList.map(div => (
+                        <option key={div} value={div} />
+                      ))}
+                    </datalist>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Periode Generasi</label>
+                    <select
+                      value={memberForm.generationId}
+                      onChange={(e) => setMemberForm(prev => ({ ...prev, generationId: e.target.value ? parseInt(e.target.value) : '' }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    >
+                      <option value="">-- Gunakan Generasi Aktif --</option>
+                      {generations.map(g => (
+                        <option key={g.id} value={g.id}>{g.name} ({g.years})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Email Resmi</label>
+                      <input
+                        type="email"
+                        placeholder="nama@iai-dki.or.id"
+                        value={memberForm.email}
+                        onChange={(e) => setMemberForm(prev => ({ ...prev, email: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Tautan LinkedIn</label>
+                      <input
+                        type="text"
+                        placeholder="https://linkedin.com/in/..."
+                        value={memberForm.linkedinUrl}
+                        onChange={(e) => setMemberForm(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <ImageUploader
+                    label="Foto Profil"
+                    value={memberForm.imageUrl}
+                    onChange={(url) => setMemberForm(prev => ({ ...prev, imageUrl: url }))}
+                    placeholder="https://images.unsplash.com/photo-..."
+                    helperText="Unggah pasfoto resmi pengurus atau tempel link Unsplash."
+                  />
+
+                  {/* Riwayat Kepengurusan */}
+                  <div className="pt-2 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <History className="h-3.5 w-3.5 text-amber-500" />
+                        <span className="text-xs font-bold text-slate-700">Riwayat Generasi Sebelumnya</span>
+                        {previousHistory.length > 0 && (
+                          <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200">
+                            {previousHistory.length} periode
+                          </span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setPreviousHistory(prev => [
+                            ...prev,
+                            { generationId: '', position: '', division: divisionList[0] || '' },
+                          ])
+                        }
+                        className="flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
+                      >
+                        <Plus className="h-3 w-3" />
+                        Tambah Riwayat
+                      </button>
+                    </div>
+
+                    {previousHistory.length === 0 && (
+                      <p className="text-[11px] text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5">
+                        Jika pengurus ini pernah menjabat di generasi sebelumnya, tambahkan riwayatnya di sini.
+                      </p>
+                    )}
+
+                    {previousHistory.map((hist, idx) => (
+                      <div
+                        key={idx}
+                        className="relative bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2.5"
+                      >
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
+                            <History className="h-3 w-3" />
+                            Periode #{idx + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setPreviousHistory(prev => prev.filter((_, i) => i !== idx))
+                            }
+                            className="p-1 rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-amber-700">Generasi</label>
+                          <select
+                            value={hist.generationId}
+                            onChange={e =>
+                              setPreviousHistory(prev =>
+                                prev.map((h, i) =>
+                                  i === idx ? { ...h, generationId: e.target.value === '' ? '' : Number(e.target.value) } : h
+                                )
+                              )
+                            }
+                            className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none"
+                          >
+                            <option value="">-- Pilih Generasi --</option>
+                            {generations
+                              .filter(g => g.id !== (memberForm.generationId || activeGen?.id))
+                              .map(g => (
+                                <option key={g.id} value={g.id}>
+                                  {g.name} ({g.years})
+                                </option>
+                              ))}
+                          </select>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-amber-700">Jabatan di Periode Tersebut</label>
+                          <input
+                            type="text"
+                            placeholder="Contoh: Staf Bidang Edukasi"
+                            value={hist.position}
+                            onChange={e =>
+                              setPreviousHistory(prev =>
+                                prev.map((h, i) =>
+                                  i === idx ? { ...h, position: e.target.value } : h
+                                )
+                              )
+                            }
+                            className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400"
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-bold text-amber-700">Bidang / Divisi</label>
+                          <input
+                            type="text"
+                            list={`hist-division-list-${idx}`}
+                            placeholder="Ketik nama bidang/divisi..."
+                            value={hist.division}
+                            onChange={e =>
+                              setPreviousHistory(prev =>
+                                prev.map((h, i) =>
+                                  i === idx ? { ...h, division: e.target.value } : h
+                                )
+                              )
+                            }
+                            className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingMember(null);
+                        setPreviousHistory([]);
+                        setMemberForm({ name: '', position: '', division: 'Badan Pengurus Harian (BPH)', university: '', generationId: '', email: '', imageUrl: '', linkedinUrl: '' });
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 text-slate-600 py-3 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer text-center"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all ${
+                        editingMember ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500'
+                      }`}
+                    >
+                      {editingMember ? 'Simpan Perubahan' : 'Daftarkan Pengurus'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {cmsTab === 'articles' && (
+                <form onSubmit={handleArticleSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Judul Artikel</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Menjawab Tantangan AI..."
+                      value={articleForm.title}
+                      onChange={(e) => setArticleForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Penulis</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Nama penulis..."
+                      value={articleForm.author}
+                      onChange={(e) => setArticleForm(prev => ({ ...prev, author: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Ringkasan (Excerpt)</label>
+                    <textarea
+                      rows={2}
+                      placeholder="Ringkasan singkat artikel..."
+                      value={articleForm.excerpt}
+                      onChange={(e) => setArticleForm(prev => ({ ...prev, excerpt: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Konten Artikel</label>
+                    <textarea
+                      required
+                      rows={12}
+                      placeholder="Tulis konten artikel di sini..."
+                      value={articleForm.content}
+                      onChange={(e) => setArticleForm(prev => ({ ...prev, content: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px] leading-relaxed"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Tanggal Publikasi</label>
+                    <input
+                      type="date"
+                      required
+                      value={articleForm.date}
+                      onChange={(e) => setArticleForm(prev => ({ ...prev, date: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <ImageUploader
+                    label="Gambar Sampul Artikel"
+                    value={articleForm.imageUrl}
+                    onChange={(url) => setArticleForm(prev => ({ ...prev, imageUrl: url }))}
+                    placeholder="https://images.unsplash.com/photo-..."
+                  />
+
+                  <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingArticle(null);
+                        setArticleForm({ title: '', excerpt: '', content: '', date: '', author: '', imageUrl: '' });
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 text-slate-600 py-3 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer text-center"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all ${
+                        editingArticle ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
+                      }`}
+                    >
+                      {editingArticle ? 'Simpan Perubahan' : 'Terbitkan Artikel'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {cmsTab === 'gallery' && (
+                <form onSubmit={handleGallerySubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Judul Dokumentasi</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Contoh: Rakerda IAI DKI Jakarta 2025"
+                      value={galleryForm.title}
+                      onChange={(e) => setGalleryForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Deskripsi Singkat</label>
+                    <textarea
+                      rows={3}
+                      placeholder="Ceritakan singkat mengenai dokumentasi foto..."
+                      value={galleryForm.description}
+                      onChange={(e) => setGalleryForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Kategori Galeri</label>
+                      <select
+                        value={galleryForm.category}
+                        onChange={(e) => setGalleryForm(prev => ({ ...prev, category: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850"
+                      >
+                        <option value="Webinar & Talkshow">Webinar & Talkshow</option>
+                        <option value="Rapat Kerja & Internal">Rapat Kerja & Internal</option>
+                        <option value="Sosial & Pengabdian">Sosial & Pengabdian</option>
+                        <option value="Eksternal & Kolaborasi">Eksternal & Kolaborasi</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-bold text-slate-700">Tanggal Dokumentasi</label>
+                      <input
+                        type="date"
+                        required
+                        value={galleryForm.date}
+                        onChange={(e) => setGalleryForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Fotografer / Kredit</label>
+                    <input
+                      type="text"
+                      placeholder="Kredit foto..."
+                      value={galleryForm.photographer}
+                      onChange={(e) => setGalleryForm(prev => ({ ...prev, photographer: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900"
+                    />
+                  </div>
+
+                  <ImageUploader
+                    label="Foto Sampul Galeri"
+                    value={galleryForm.imageUrl}
+                    onChange={(url) => setGalleryForm(prev => ({ ...prev, imageUrl: url }))}
+                    placeholder="https://images.unsplash.com/photo-..."
+                  />
+
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-slate-700">Foto Tambahan (Slide Gallery)</label>
+                      <label className="flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 px-2 py-1 text-[9px] font-bold transition-all cursor-pointer border border-slate-200 shadow-sm">
+                        <Upload className="h-3 w-3" /> Unggah Banyak Foto
+                        <input type="file" multiple accept="image/*" className="hidden"
+                          onChange={async (e) => {
+                            const files = e.target.files;
+                            if (!files || files.length === 0) return;
+                            triggerToast(`Sedang mengunggah ${files.length} foto...`);
+                            const uploadedUrls: string[] = [];
+                            for (let i = 0; i < files.length; i++) {
+                              const file = files[i];
+                              const formData = new FormData();
+                              formData.append('image', file);
+                              try {
+                                const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                if (res.ok) {
+                                  const data = await res.json();
+                                  if (data.success && data.url) {
+                                    uploadedUrls.push(data.url);
+                                  }
+                                }
+                              } catch (err) { console.error(err); }
+                            }
+                            if (uploadedUrls.length > 0) {
+                              setGalleryForm(prev => ({
+                                ...prev,
+                                imagesText: prev.imagesText ? prev.imagesText + '\n' + uploadedUrls.join('\n') : uploadedUrls.join('\n')
+                              }));
+                              triggerToast(`${uploadedUrls.length} foto berhasil diunggah!`);
+                            } else {
+                              triggerToast('Gagal mengunggah foto tambahan.');
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <textarea
+                      rows={4}
+                      placeholder="URL foto tambahan (satu per baris)..."
+                      value={galleryForm.imagesText}
+                      onChange={(e) => setGalleryForm(prev => ({ ...prev, imagesText: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 font-mono text-[11px]"
+                    />
+                  </div>
+
+                  <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingGalleryItem(null);
+                        setGalleryForm({ title: '', description: '', category: 'Webinar & Talkshow', date: '', imageUrl: '', photographer: '', imagesText: '' });
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 text-slate-600 py-3 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer text-center"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all ${
+                        editingGalleryItem ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500'
+                      }`}
+                    >
+                      {editingGalleryItem ? 'Simpan Perubahan' : 'Unggah Foto'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {cmsTab === 'pillars' && (
+                <form onSubmit={handlePillarSubmit} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Judul Pilar</label>
+                    <input type="text" required placeholder="Contoh: Integritas Standar Tinggi"
+                      value={pillarForm.title}
+                      onChange={(e) => setPillarForm(prev => ({ ...prev, title: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Deskripsi</label>
+                    <textarea required rows={5} placeholder="Deskripsi pilar organisasi..."
+                      value={pillarForm.description}
+                      onChange={(e) => setPillarForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-bold text-slate-700">Ikon</label>
+                    <select value={pillarForm.iconName}
+                      onChange={(e) => setPillarForm(prev => ({ ...prev, iconName: e.target.value }))}
+                      className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850">
+                      <option value="Shield">Shield — Integritas</option>
+                      <option value="Landmark">Landmark — Literasi</option>
+                      <option value="Award">Award — Sinergi</option>
+                    </select>
+                  </div>
+
+                  <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsDrawerOpen(false);
+                        setEditingPillar(null);
+                        setPillarForm({ title: '', description: '', iconName: 'Shield', sortOrder: 0 });
+                      }}
+                      className="flex-1 rounded-xl bg-slate-100 text-slate-600 py-3 text-xs font-bold hover:bg-slate-200 transition-all cursor-pointer text-center"
+                    >
+                      Batal
+                    </button>
+                    <button
+                      type="submit"
+                      className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all ${
+                        editingPillar ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500'
+                      }`}
+                    >
+                      {editingPillar ? 'Simpan Perubahan' : 'Tambah Pilar'}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   );

@@ -17,17 +17,17 @@ interface OrganizationalStructureProps {
 
 export default function OrganizationalStructure({ generations, members, settings }: OrganizationalStructureProps) {
   // Find current active generation
-  const activeGen = useMemo(() => generations.find(g => g.isActive) || generations[0], [generations]);
+  const activeGen = useMemo(() => generations.find(g => g.isActive) || generations[0] || null, [generations]);
   
   // State for selected generation in view (defaults to current active generation)
-  const [selectedGenId, setSelectedGenId] = useState<number>(activeGen.id);
+  const [selectedGenId, setSelectedGenId] = useState<number>(activeGen?.id || 0);
 
   // Sync selectedGenId when generations data loads from DB (replaces fallback negative IDs)
   useEffect(() => {
     if (activeGen && activeGen.id > 0) {
       setSelectedGenId(activeGen.id);
     }
-  }, [activeGen.id]);
+  }, [activeGen?.id]);
   
   // State for division filter
   const [selectedDivision, setSelectedDivision] = useState<string>('all');
@@ -68,7 +68,7 @@ export default function OrganizationalStructure({ generations, members, settings
 
   // Selected Generation details
   const selectedGen = useMemo(() => {
-    return generations.find(g => g.id === selectedGenId) || activeGen;
+    return generations.find(g => g.id === selectedGenId) || activeGen || generations[0] || null;
   }, [generations, selectedGenId, activeGen]);
 
   // Filter members of selected generation
@@ -215,7 +215,7 @@ export default function OrganizationalStructure({ generations, members, settings
               {filteredByGenMembers.length} Orang
             </div>
             <p className="text-[11px] text-slate-500 font-semibold font-sans">
-              Total Pengurus {selectedGen.name}
+                    Total Pengurus {selectedGen?.name || '-'}
             </p>
           </div>
         </div>
