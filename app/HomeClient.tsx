@@ -11,9 +11,6 @@ import OrganizationalStructure from '@/src/components/OrganizationalStructure';
 import EventsList from '@/src/components/EventsList';
 import ArticlesSection from '@/src/components/ArticlesSection';
 import GallerySection from '@/src/components/GallerySection';
-import AdminCMS from '@/src/components/AdminCMS';
-import LoginPage from '@/src/components/LoginPage';
-import { useAuth } from '@/src/context/AuthContext';
 import { SkeletonBanner, SkeletonCardGrid, SkeletonPillars, SkeletonStructure } from '@/src/components/SkeletonLoader';
 import type { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '@/src/types';
 
@@ -28,9 +25,7 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ settings: serverSettings, pillars: serverPillars, events: serverEvents, members: serverMembers, generations: serverGenerations, articles: serverArticles, galleries: serverGalleries }: HomeClientProps) {
-  const { user, loading: authLoading } = useAuth();
   const [currentTab, setCurrentTab] = useState<string>('beranda');
-  const [isAdminMode, setIsAdminMode] = useState<boolean>(false);
 
   const defaultSettings: Settings = { id: 1, contactTitle: 'Hubungi IAI Wilayah DKI Jakarta', contactDescription: 'Kami siap mendengar aspirasi dan pertanyaan Anda seputar program IAI Muda DKI Jakarta.', address: 'Grha Akuntan, Jl. Sindanglaya No. 7, Menteng, Jakarta Pusat 10310', email: 'imud@iaijakarta.or.id', phone: null, showPhone: false, instagramUrl: null, linkedinUrl: null, youtubeUrl: null, divisionPhotos: null, divisions: null, footerDescription: null };
 
@@ -168,41 +163,6 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
     }
   };
 
-  if (isAdminMode && currentTab === 'admin') {
-    if (authLoading) {
-      return (
-        <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-          <div className="h-8 w-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-        </div>
-      );
-    }
-
-    if (!user) {
-      return <LoginPage onSuccess={() => {}} />;
-    }
-
-    return (
-      <AdminCMS
-        generations={generations}
-        setGenerations={setGenerations}
-        members={members}
-        setMembers={setMembers}
-        events={events}
-        setEvents={setEvents}
-        articles={articles}
-        setArticles={setArticles}
-        gallery={gallery}
-        setGallery={setGallery}
-        pillars={pillars}
-        setPillars={setPillars}
-        setIsAdminMode={setIsAdminMode}
-        setCurrentTab={setCurrentTab}
-        settings={settings}
-        onSettingsUpdate={(updated) => setSettings(updated)}
-      />
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 flex flex-col justify-between" id="app-root-layout">
 
@@ -215,8 +175,6 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       <Header
         currentTab={currentTab}
         setCurrentTab={setCurrentTab}
-        isAdminMode={isAdminMode}
-        setIsAdminMode={setIsAdminMode}
         currentGenName={activeGen?.name || 'Generasi ke-2'}
         logoUrl={settings.logoUrl}
       />
@@ -540,19 +498,19 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
             <h4 className="text-xs font-bold text-slate-800 uppercase tracking-wider">Tautan Cepat</h4>
             <ul className="space-y-1.5 text-xs">
               <li>
-                <button onClick={() => { setCurrentTab('beranda'); setIsAdminMode(false); }} className="hover:text-blue-600 transition-colors font-medium">Beranda Utama</button>
+                <button onClick={() => { setCurrentTab('beranda'); }} className="hover:text-blue-600 transition-colors font-medium">Beranda Utama</button>
               </li>
               <li>
-                <button onClick={() => { setCurrentTab('struktur'); setIsAdminMode(false); }} className="hover:text-blue-600 transition-colors font-medium">Struktur Komite</button>
+                <button onClick={() => { setCurrentTab('struktur'); }} className="hover:text-blue-600 transition-colors font-medium">Struktur Komite</button>
               </li>
               <li>
-                <button onClick={() => { setCurrentTab('acara'); setIsAdminMode(false); }} className="hover:text-blue-600 transition-colors font-medium">Agenda Webinar</button>
+                <button onClick={() => { setCurrentTab('acara'); }} className="hover:text-blue-600 transition-colors font-medium">Agenda Webinar</button>
               </li>
               <li>
-                <button onClick={() => { setCurrentTab('galeri'); setIsAdminMode(false); }} className="hover:text-blue-600 transition-colors font-medium">Galeri Kegiatan</button>
+                <button onClick={() => { setCurrentTab('galeri'); }} className="hover:text-blue-600 transition-colors font-medium">Galeri Kegiatan</button>
               </li>
               <li>
-                <button onClick={() => { setCurrentTab('artikel'); setIsAdminMode(false); }} className="hover:text-blue-600 transition-colors font-medium">Artikel & Opini</button>
+                <button onClick={() => { setCurrentTab('artikel'); }} className="hover:text-blue-600 transition-colors font-medium">Artikel & Opini</button>
               </li>
             </ul>
           </div>

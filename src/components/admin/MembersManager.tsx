@@ -101,6 +101,7 @@ export default function MembersManager({ members, setMembers, generations, divis
   const [submitting, setSubmitting] = useState(false);
 
   const [step, setStep] = useState(0);
+  const [isStepTransitioning, setIsStepTransitioning] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<Record<string, string | null>>({});
 
@@ -213,8 +214,10 @@ export default function MembersManager({ members, setMembers, generations, divis
     setForm({ ...emptyForm, division: divisionList[0] || '' });
     setPreviousHistory([]);
     setStep(0);
+    setIsStepTransitioning(false);
     setTouched({});
     setErrors({});
+    setSubmitting(false);
   };
 
   const handleOpenAdd = () => {
@@ -414,6 +417,11 @@ export default function MembersManager({ members, setMembers, generations, divis
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Guard: hanya boleh submit di step terakhir
+    if (step !== STEPS.length - 1) {
+      nextStep();
+      return;
+    }
     if (!validateStep(step)) return;
 
     setSubmitting(true);
@@ -619,12 +627,23 @@ export default function MembersManager({ members, setMembers, generations, divis
   };
 
   const nextStep = () => {
+    if (isStepTransitioning) return;
     if (!validateStep(step)) return;
-    if (step < STEPS.length - 1) setStep(s => s + 1);
+    if (step < STEPS.length - 1) {
+      setIsStepTransitioning(true);
+      setStep(s => s + 1);
+      // Beri jeda 300ms agar pointer event tidak tembus ke tombol submit
+      setTimeout(() => setIsStepTransitioning(false), 300);
+    }
   };
 
   const prevStep = () => {
-    if (step > 0) setStep(s => s - 1);
+    if (isStepTransitioning) return;
+    if (step > 0) {
+      setIsStepTransitioning(true);
+      setStep(s => s - 1);
+      setTimeout(() => setIsStepTransitioning(false), 300);
+    }
   };
 
   const renderStepContent = () => {
@@ -864,17 +883,16 @@ export default function MembersManager({ members, setMembers, generations, divis
 
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-amber-700">Bidang / Divisi</label>
-              <input
-                type="text"
-                list={`hist-division-list-${idx}`}
-                placeholder="Ketik nama bidang/divisi..."
+              <select
                 value={hist.division}
                 onChange={e => setPreviousHistory(prev => prev.map((h, i) => i === idx ? { ...h, division: e.target.value } : h))}
-                className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400"
-              />
-              <datalist id={`hist-division-list-${idx}`}>
-                {divisionList.map(div => <option key={div} value={div} />)}
-              </datalist>
+                className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 transition-all"
+              >
+                <option value="">-- Pilih Bidang / Divisi --</option>
+                {divisionList.map(div => (
+                  <option key={div} value={div}>{div}</option>
+                ))}
+              </select>
             </div>
           </div>
         ))}
@@ -1071,7 +1089,17 @@ export default function MembersManager({ members, setMembers, generations, divis
         }
         subtitle="Lengkapi informasi pengurus dan riwayat generasi."
       >
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(e) => {
+            // Cegah tombol Enter memicu submit form di input wizard,
+            // kecuali pada textarea (jika ada) supaya newline tetap berfungsi.
+            if (e.key === 'Enter' && (e.target as HTMLElement).tagName !== 'TEXTAREA') {
+              e.preventDefault();
+            }
+          }}
+          className="space-y-6"
+        >
           <Stepper steps={STEPS} current={step} />
 
           <div className="pt-2">
@@ -1106,7 +1134,7 @@ export default function MembersManager({ members, setMembers, generations, divis
             ) : (
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || isStepTransitioning}
                 className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 ${
                   editingMember ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
                 } disabled:opacity-60 disabled:cursor-not-allowed`}

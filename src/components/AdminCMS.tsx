@@ -39,8 +39,6 @@ interface AdminCMSProps {
   setGallery?: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
   pillars: Pillar[];
   setPillars: React.Dispatch<React.SetStateAction<Pillar[]>>;
-  setIsAdminMode?: (val: boolean) => void;
-  setCurrentTab?: (tab: string) => void;
   settings: Settings;
   onSettingsUpdate: (updated: Settings) => void;
 }
@@ -78,8 +76,6 @@ export default function AdminCMS({
   setGallery,
   pillars,
   setPillars,
-  setIsAdminMode,
-  setCurrentTab,
   settings,
   onSettingsUpdate,
 }: AdminCMSProps) {
@@ -92,11 +88,11 @@ export default function AdminCMS({
 
   const divisionList = useMemo(() => {
     try {
-      const parsed = JSON.parse(settings.divisions || '[]');
+      const parsed = JSON.parse(settings?.divisions || '[]');
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     } catch { /* noop */ }
     return ['Badan Pengurus Harian (BPH)', 'Bidang Edukasi & Sertifikasi', 'Bidang Hubungan Masyarakat', 'Bidang Kewirausahaan & Kemitraan', 'Bidang Media & Desain Kreatif'];
-  }, [settings.divisions]);
+  }, [settings?.divisions]);
 
   // Lock body scroll when mobile drawer open
   useEffect(() => {
@@ -109,17 +105,11 @@ export default function AdminCMS({
 
   const handleLogout = async () => {
     await logout();
-    if (setIsAdminMode && setCurrentTab) {
-      setIsAdminMode(false);
-      setCurrentTab('beranda');
-    }
+    window.location.href = '/';
   };
 
   const handleViewFrontend = () => {
-    if (setIsAdminMode && setCurrentTab) {
-      setIsAdminMode(false);
-      setCurrentTab('beranda');
-    }
+    window.location.href = '/';
   };
 
   const handleNav = (key: CmsTab) => {

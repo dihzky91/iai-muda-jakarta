@@ -61,6 +61,7 @@ export default function Drawer({ isOpen, onClose, title, subtitle, children, foo
                 )}
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="p-2 hover:bg-slate-100 rounded-xl text-slate-400 hover:text-slate-600 transition-all text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/30"
                 aria-label="Tutup panel"

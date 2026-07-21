@@ -1,10 +1,12 @@
 'use client';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import AdminCMS from '@/src/components/AdminCMS';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
+  const router = useRouter();
   const [data, setData] = useState({
     generations: [] as any[],
     members: [] as any[],
@@ -38,6 +40,12 @@ export default function AdminPage() {
 
   useEffect(() => { if (user) fetchAll(); }, [user]);
 
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace('/admin/login');
+    }
+  }, [loading, user, router]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -46,7 +54,18 @@ export default function AdminPage() {
     );
   }
 
-  if (!user) return null;
+  if (!user) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="h-8 w-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
+    </div>
+  );
+
+  const defaultSettings = {
+    id: 1, contactTitle: '', contactDescription: '', address: '', email: '',
+    phone: null, showPhone: false, instagramUrl: null, linkedinUrl: null,
+    youtubeUrl: null, divisionPhotos: null, divisions: null,
+    footerDescription: null, logoUrl: null, faviconUrl: null, updatedAt: null,
+  };
 
   return (
     <AdminCMS
@@ -62,7 +81,7 @@ export default function AdminPage() {
       setGallery={(val: any) => setData(prev => ({ ...prev, gallery: typeof val === 'function' ? val(prev.gallery) : val }))}
       pillars={data.pillars}
       setPillars={(val: any) => setData(prev => ({ ...prev, pillars: typeof val === 'function' ? val(prev.pillars) : val }))}
-      settings={data.settings}
+      settings={data.settings ?? defaultSettings}
       onSettingsUpdate={(updated: any) => setData(prev => ({ ...prev, settings: updated }))}
     />
   );

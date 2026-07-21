@@ -12,8 +12,6 @@ import { useAuth } from '../context/AuthContext';
 interface HeaderProps {
   currentTab: string;
   setCurrentTab: (tab: string) => void;
-  isAdminMode: boolean;
-  setIsAdminMode: (mode: boolean) => void;
   currentGenName: string;
   logoUrl?: string | null;
 }
@@ -23,27 +21,14 @@ const ROLE_LABELS = { superadmin: 'Super Admin', admin: 'Admin', editor: 'Editor
 export default function Header({ 
   currentTab, 
   setCurrentTab, 
-  isAdminMode, 
-  setIsAdminMode,
   currentGenName,
   logoUrl
 }: HeaderProps) {
   const { user, logout } = useAuth();
 
-  const handleAdminToggle = () => {
-    if (isAdminMode) {
-      setIsAdminMode(false);
-      setCurrentTab('beranda');
-    } else {
-      setIsAdminMode(true);
-      setCurrentTab('admin');
-    }
-  };
-
   const handleLogout = async () => {
     await logout();
-    setIsAdminMode(false);
-    setCurrentTab('beranda');
+    window.location.href = '/';
   };
 
   return (
@@ -53,7 +38,7 @@ export default function Header({
         {/* Brand Logo & Name */}
         <div 
           className="flex items-center gap-3 cursor-pointer group flex-shrink-0"
-          onClick={() => { setCurrentTab('beranda'); setIsAdminMode(false); }}
+          onClick={() => { setCurrentTab('beranda'); }}
           id="brand-logo-container"
         >
           {logoUrl ? (
@@ -95,9 +80,9 @@ export default function Header({
               <button
                 key={tab}
                 id={`nav-btn-${tab}`}
-                onClick={() => { setCurrentTab(tab); setIsAdminMode(false); }}
+                onClick={() => { setCurrentTab(tab); }}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer flex-shrink-0 whitespace-nowrap ${
-                  currentTab === tab && !isAdminMode
+                  currentTab === tab
                     ? 'bg-blue-50 text-blue-600 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
                 }`}
@@ -112,7 +97,7 @@ export default function Header({
         {/* Secondary Actions / Admin Toggle */}
         <div className="flex items-center gap-2 flex-shrink-0">
           {/* Show logged-in user badge when authenticated */}
-          {user && !isAdminMode && (
+          {user && (
             <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 flex-shrink-0">
               <span className="text-xs font-semibold text-slate-700 whitespace-nowrap">{user.username}</span>
               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border whitespace-nowrap ${
@@ -132,18 +117,14 @@ export default function Header({
             </div>
           )}
 
-          <button
+          <a
             id="admin-panel-toggle"
-            onClick={handleAdminToggle}
-            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer flex-shrink-0 ${
-              isAdminMode 
-                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-blue-500/20'
-                : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200'
-            }`}
+            href="/admin"
+            className="flex items-center gap-2 rounded-xl px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md cursor-pointer flex-shrink-0 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
           >
-            <ShieldAlert className={`h-4 w-4 flex-shrink-0 ${isAdminMode ? 'animate-pulse' : ''}`} />
-            <span className="whitespace-nowrap">{isAdminMode ? 'Portal Publik' : 'Akses CMS Admin'}</span>
-          </button>
+            <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">Akses CMS Admin</span>
+          </a>
         </div>
 
       </div>

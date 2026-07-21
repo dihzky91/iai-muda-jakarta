@@ -18,9 +18,24 @@ function serialize(obj: any): any {
   return obj;
 }
 
+async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 500): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    // Retry pada koneksi reset (TiDB serverless bisa pause saat idle)
+    if (retries > 0 && (err?.cause?.code === 'ECONNRESET' || err?.message?.includes('ECONNRESET'))) {
+      await new Promise(r => setTimeout(r, delayMs));
+      return fetchWithRetry(fn, retries - 1, delayMs * 2);
+    }
+    throw err;
+  }
+}
+
 export default async function HomePage() {
   try {
-    const [settings] = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
+    const [settings] = await fetchWithRetry(() =>
+      db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1)
+    );
     const pillars = await db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder);
     const events = await db.select().from(schema.events).orderBy(schema.events.date);
     const members = await db.select({

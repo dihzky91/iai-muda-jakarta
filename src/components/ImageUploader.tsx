@@ -10,6 +10,73 @@ interface ImageUploaderProps {
   helperText?: string;
 }
 
+// Kompres gambar di browser menggunakan Canvas API
+// Target: maks 8MB setelah kompresi (aman untuk Cloudinary free tier 10MB)
+function compressImage(file: File, maxSizeMB = 8): Promise<File> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      const canvas = document.createElement('canvas');
+      let { width, height } = img;
+
+      // Resize kalau resolusi terlalu besar (maks 2560px di sisi terpanjang)
+      const MAX_DIMENSION = 2560;
+      if (width > MAX_DIMENSION || height > MAX_DIMENSION) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIMENSION) / width);
+          width = MAX_DIMENSION;
+        } else {
+          width = Math.round((width * MAX_DIMENSION) / height);
+          height = MAX_DIMENSION;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return reject(new Error('Canvas context tidak tersedia'));
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Coba kompres dengan quality menurun sampai ukuran target tercapai
+      const tryCompress = (quality: number) => {
+        canvas.toBlob(
+          (blob) => {
+            if (!blob) return reject(new Error('Gagal mengompres gambar'));
+
+            if (blob.size <= maxSizeMB * 1024 * 1024 || quality <= 0.3) {
+              // Ukuran sudah oke atau quality sudah minimum
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              });
+              resolve(compressedFile);
+            } else {
+              // Kurangi quality dan coba lagi
+              tryCompress(Math.max(quality - 0.1, 0.3));
+            }
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+
+      tryCompress(0.85);
+    };
+
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('Gagal membaca gambar'));
+    };
+
+    img.src = objectUrl;
+  });
+}
+
 export default function ImageUploader({
   label,
   value,
@@ -18,6 +85,7 @@ export default function ImageUploader({
   helperText
 }: ImageUploaderProps) {
   const [isUploading, setIsUploading] = useState(false);
+  const [isCompressing, setIsCompressing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,17 +96,31 @@ export default function ImageUploader({
       return;
     }
 
-    // Limit to 10MB
-    if (file.size > 10 * 1024 * 1024) {
-      setError('Ukuran file maksimal adalah 10MB!');
+    if (file.size > 50 * 1024 * 1024) {
+      setError('Ukuran file maksimal adalah 50MB!');
       return;
     }
 
-    setIsUploading(true);
     setError(null);
 
+    // Kompres kalau ukuran > 8MB
+    let fileToUpload = file;
+    if (file.size > 8 * 1024 * 1024) {
+      setIsCompressing(true);
+      try {
+        fileToUpload = await compressImage(file);
+      } catch (err: any) {
+        setError('Gagal mengompres gambar: ' + err.message);
+        setIsCompressing(false);
+        return;
+      }
+      setIsCompressing(false);
+    }
+
+    setIsUploading(true);
+
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('image', fileToUpload);
 
     try {
       const response = await fetch('/api/upload', {
@@ -98,9 +180,9 @@ export default function ImageUploader({
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
         <label className="text-xs font-bold text-slate-700">{label}</label>
-        {value && value.startsWith('/uploads/') && (
+        {value && value.startsWith('https://res.cloudinary.com') && (
           <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-            <Check className="h-2.5 w-2.5" /> Tersimpan di Server
+            <Check className="h-2.5 w-2.5" /> Tersimpan di Cloudinary
           </span>
         )}
       </div>
@@ -128,7 +210,12 @@ export default function ImageUploader({
             className="hidden"
           />
 
-          {isUploading ? (
+          {isCompressing ? (
+            <div className="flex flex-col items-center gap-1">
+              <Loader2 className="h-5 w-5 text-amber-500 animate-spin" />
+              <span className="text-[10px] font-bold text-amber-600">Mengompres...</span>
+            </div>
+          ) : isUploading ? (
             <div className="flex flex-col items-center gap-1">
               <Loader2 className="h-5 w-5 text-blue-600 animate-spin" />
               <span className="text-[10px] font-bold text-blue-600">Mengunggah...</span>
@@ -151,7 +238,7 @@ export default function ImageUploader({
             <div className="space-y-1 text-slate-400">
               <Upload className="h-5 w-5 mx-auto text-slate-400" />
               <span className="text-[10px] font-bold block text-slate-500">Pilih / Seret Foto</span>
-              <span className="text-[8px] text-slate-400 block font-medium">PNG, JPG, WEBP s.d 10MB</span>
+              <span className="text-[8px] text-slate-400 block font-medium">PNG, JPG, WEBP s.d 50MB (auto-kompres)</span>
             </div>
           )}
         </div>
