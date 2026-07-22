@@ -12,6 +12,7 @@ import EmptyState from './EmptyState';
 import ActionButtons from './ActionButtons';
 import Drawer from './Drawer';
 import ImageUploader from '../ImageUploader';
+import RichTextEditor from './RichTextEditor';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 
@@ -255,13 +256,10 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
 
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-slate-700">Konten Artikel</label>
-            <textarea
-              required
-              rows={12}
-              placeholder="Tulis konten artikel di sini..."
+            <RichTextEditor
               value={form.content}
-              onChange={(e) => setForm(prev => ({ ...prev, content: e.target.value }))}
-              className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px] leading-relaxed"
+              onChange={(html) => setForm(prev => ({ ...prev, content: html }))}
+              placeholder="Tulis konten artikel di sini..."
             />
           </div>
 

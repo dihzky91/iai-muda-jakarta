@@ -68,13 +68,10 @@ export default function ArticlesSection({ articles }: ArticlesSectionProps) {
             </h1>
 
             {/* Render article body nicely with beautiful typographic spacing */}
-            <div className="max-w-none text-slate-700 text-sm sm:text-base leading-relaxed space-y-4 pt-6 border-t border-slate-100">
-              {selectedArticle.content.split('\n\n').map((paragraph, index) => (
-                <p key={index} className="text-slate-700 font-sans leading-relaxed">
-                  {paragraph}
-                </p>
-              ))}
-            </div>
+            <div
+              className="article-content max-w-none text-slate-700 text-sm sm:text-base leading-relaxed pt-6 border-t border-slate-100"
+              dangerouslySetInnerHTML={{ __html: selectedArticle.content }}
+            />
 
             {/* Share action banner */}
             <div className="pt-6 border-t border-slate-100 flex items-center justify-between text-slate-400 text-xs font-semibold">
