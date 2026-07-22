@@ -54,7 +54,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
   useEffect(() => {
     const titles: Record<string, string> = {
       beranda: 'IAI Muda Wilayah DKI Jakarta',
-      struktur: 'Struktur Komite — IAI Muda DKI Jakarta',
+      struktur: 'Kepengurusan — IAI Muda DKI Jakarta',
       acara: 'Agenda & Webinar — IAI Muda DKI Jakarta',
       galeri: 'Galeri Kegiatan — IAI Muda DKI Jakarta',
       artikel: 'Artikel & Opini — IAI Muda DKI Jakarta',
@@ -63,7 +63,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
 
     const descriptions: Record<string, string> = {
       beranda: 'Website resmi IAI Muda Wilayah DKI Jakarta — Badan kelengkapan Ikatan Akuntan Indonesia yang menaungi mahasiswa akuntansi dan akuntan muda.',
-      struktur: 'Lihat struktur komite kepengurusan IAI Muda Wilayah DKI Jakarta.',
+      struktur: 'Lihat susunan kepengurusan IAI Muda Wilayah DKI Jakarta.',
       acara: 'Jadwal agenda, webinar, dan acara terbaru IAI Muda DKI Jakarta.',
       galeri: 'Dokumentasi galeri kegiatan IAI Muda Wilayah DKI Jakarta.',
       artikel: 'Artikel dan opini akuntansi terkini dari IAI Muda DKI Jakarta.',
@@ -501,7 +501,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
                 <button onClick={() => { setCurrentTab('beranda'); }} className="hover:text-blue-600 transition-colors font-medium">Beranda Utama</button>
               </li>
               <li>
-                <button onClick={() => { setCurrentTab('struktur'); }} className="hover:text-blue-600 transition-colors font-medium">Struktur Komite</button>
+                <button onClick={() => { setCurrentTab('struktur'); }} className="hover:text-blue-600 transition-colors font-medium">Kepengurusan</button>
               </li>
               <li>
                 <button onClick={() => { setCurrentTab('acara'); }} className="hover:text-blue-600 transition-colors font-medium">Agenda Webinar</button>

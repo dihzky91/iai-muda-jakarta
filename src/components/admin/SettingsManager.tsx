@@ -165,7 +165,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
     <div className="space-y-8">
       <PageHeader
         title="Pengaturan Aplikasi"
-        description="Kelola informasi kontak, media sosial, bidang/divisi, dan foto grup komite."
+        description="Kelola informasi kontak, media sosial, bidang/divisi, dan foto grup kepengurusan."
       />
 
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm max-w-3xl animate-scale-up">
@@ -433,8 +433,8 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
           {subTab === 'photos' && (
             <div className="space-y-5">
               <div>
-                <h4 className="text-sm font-bold text-slate-800">Foto Group Bidang / Komite</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">URL foto group resmi per divisi. Menjadi banner di halaman Struktur Komite.</p>
+                <h4 className="text-sm font-bold text-slate-800">Foto Group Bidang / Kepengurusan</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">URL foto group resmi per divisi. Menjadi banner di halaman Kepengurusan.</p>
               </div>
               <div className="grid grid-cols-1 gap-4">
                 {divisionList.map((divName) => (

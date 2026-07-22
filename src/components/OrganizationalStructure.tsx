@@ -164,7 +164,7 @@ export default function OrganizationalStructure({ generations, members, settings
       {/* Upper header section */}
       <div className="text-center max-w-3xl mx-auto space-y-4">
         <h2 className="font-display text-3xl font-extrabold text-slate-900 sm:text-4xl">
-          Struktur Komite Pengurus
+          Kepengurusan IAI Muda DKI Jakarta
         </h2>
         <p className="text-slate-600 text-sm sm:text-base">
           Mengenal jajaran pemimpin akuntan muda yang berdedikasi tinggi mengemban amanah kepengurusan IAI Muda DKI Jakarta.

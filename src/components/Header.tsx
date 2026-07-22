@@ -73,7 +73,7 @@ export default function Header({
               artikel: <FileText className="h-4 w-4" />,
             };
             const labels: Record<string, string> = {
-              beranda: 'Beranda', struktur: 'Struktur Komite',
+              beranda: 'Beranda', struktur: 'Kepengurusan',
               acara: 'Acara', galeri: 'Galeri', artikel: 'Artikel',
             };
             return (
