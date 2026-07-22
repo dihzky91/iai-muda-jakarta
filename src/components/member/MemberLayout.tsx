@@ -15,8 +15,6 @@ import {
   ChevronRight,
   Users,
   Calendar,
-  BadgeCheck,
-  CreditCard,
   HelpCircle,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
@@ -52,8 +50,6 @@ const navGroups: NavGroup[] = [
     items: [
       { href: '/portal/directory', label: 'Direktori Anggota', icon: Users },
       { href: '/portal/events', label: 'Acara', icon: Calendar },
-      { href: '/portal/certificates', label: 'Sertifikat', icon: BadgeCheck },
-      { href: '/portal/membership-card', label: 'Kartu Anggota', icon: CreditCard },
     ],
   },
   {

@@ -72,7 +72,7 @@ export default function RecentActivity({
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
+    <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm h-full">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center">
           <Clock className="w-5 h-5 text-slate-600" />

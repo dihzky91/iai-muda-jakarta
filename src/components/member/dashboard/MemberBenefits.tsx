@@ -1,10 +1,9 @@
 'use client';
 
-import { BadgeCheck, GraduationCap, Users, FileBadge, Sparkles } from 'lucide-react';
+import { BadgeCheck, GraduationCap, Users, Sparkles } from 'lucide-react';
 
 const benefits = [
   { id: 'discount', label: 'Diskon Seminar', icon: GraduationCap },
-  { id: 'certificate', label: 'Sertifikat Digital', icon: FileBadge },
   { id: 'networking', label: 'Networking', icon: Users },
   { id: 'directory', label: 'Direktori Anggota', icon: BadgeCheck },
   { id: 'programs', label: 'Program Eksklusif', icon: Sparkles },
@@ -12,7 +11,7 @@ const benefits = [
 
 export default function MemberBenefits() {
   return (
-    <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-md">
+    <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-md h-full flex flex-col justify-between">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
           <BadgeCheck className="w-5 h-5 text-white" />

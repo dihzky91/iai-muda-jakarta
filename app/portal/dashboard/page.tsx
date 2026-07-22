@@ -8,7 +8,6 @@ import { MemberLayout } from '@/src/components/member';
 import {
   DashboardHeader,
   ProfileCompletionCard,
-  ThingsToDo,
   UpcomingEvents,
   Announcements,
   MemberBenefits,
@@ -150,58 +149,63 @@ export default function MemberDashboard() {
           />
         </motion.div>
 
-        {/* Primary CTA: Profile Completion */}
-        <motion.div variants={itemVariants}>
-          <ProfileCompletionCard member={member} />
-        </motion.div>
+        {/* 2-Column Responsive Grid System */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          {/* Main Left Column (8 cols) */}
+          <div className="lg:col-span-8 space-y-6 lg:space-y-8">
+            {/* Quick Actions */}
+            <motion.div variants={itemVariants}>
+              <QuickActions />
+            </motion.div>
 
-        {/* Actionable Tasks */}
-        <motion.div variants={itemVariants}>
-          <ThingsToDo member={member} />
-        </motion.div>
+            {/* Events + Announcements Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants} className="h-full">
+                <UpcomingEvents events={events} />
+              </motion.div>
+              <motion.div variants={itemVariants} className="h-full">
+                <Announcements announcements={announcements} />
+              </motion.div>
+            </div>
 
-        {/* Events + Announcements Row */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          <motion.div variants={itemVariants}>
-            <UpcomingEvents events={events} />
-          </motion.div>
-          <motion.div variants={itemVariants}>
-            <Announcements announcements={announcements} />
-          </motion.div>
-        </div>
+            {/* Recent Activity + Member Benefits Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div variants={itemVariants} className="h-full">
+                <RecentActivity
+                  lastLoginAt={lastLoginAt}
+                  profileCompletionPercentage={profileCompletionPercentage}
+                />
+              </motion.div>
+              <motion.div variants={itemVariants} className="h-full">
+                <MemberBenefits />
+              </motion.div>
+            </div>
+          </div>
 
-        {/* Member Benefits + Quick Actions */}
-        <motion.div variants={itemVariants}>
-          <MemberBenefits />
-        </motion.div>
+          {/* Right Sidebar Column (4 cols) */}
+          <div className="lg:col-span-4 space-y-6 lg:space-y-8">
+            {/* Profile Summary Card */}
+            <motion.div variants={itemVariants}>
+              <ProfileSummary
+                member={{
+                  showPublic: member.showPublic,
+                  division: member.division,
+                  position: member.position,
+                  university: member.university,
+                }}
+              />
+            </motion.div>
 
-        <motion.div variants={itemVariants}>
-          <QuickActions />
-        </motion.div>
-
-        {/* Recent Activity + Profile Summary Row */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          <motion.div variants={itemVariants} className="xl:col-span-1">
-            <RecentActivity
-              lastLoginAt={lastLoginAt}
-              profileCompletionPercentage={profileCompletionPercentage}
-            />
-          </motion.div>
-          <motion.div variants={itemVariants} className="xl:col-span-2">
-            <ProfileSummary
-              member={{
-                showPublic: member.showPublic,
-                division: member.division,
-                position: member.position,
-                university: member.university,
-              }}
-            />
-          </motion.div>
+            {/* Compact Profile Completion Widget */}
+            <motion.div variants={itemVariants}>
+              <ProfileCompletionCard member={member} />
+            </motion.div>
+          </div>
         </div>
 
         {/* Footer Note */}
-        <motion.section variants={itemVariants} className="text-center pt-4">
-          <p className="text-sm text-slate-400">
+        <motion.section variants={itemVariants} className="text-center pt-2">
+          <p className="text-xs text-slate-400">
             Butuh bantuan? Hubungi admin IAI Muda Jakarta.
           </p>
         </motion.section>

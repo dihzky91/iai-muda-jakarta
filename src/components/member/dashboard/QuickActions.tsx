@@ -5,8 +5,6 @@ import {
   User,
   Users,
   Calendar,
-  CreditCard,
-  FileBadge,
   ArrowUpRight,
 } from 'lucide-react';
 
@@ -35,22 +33,6 @@ const actions = [
     href: '/portal/events',
     color: 'bg-amber-50 text-amber-700 border-amber-100 hover:border-amber-300 hover:bg-amber-100/50',
   },
-  {
-    id: 'card',
-    title: 'Kartu Anggota',
-    description: 'Kartu keanggotaan digital',
-    icon: CreditCard,
-    href: '/portal/membership-card',
-    color: 'bg-red-50 text-red-800 border-red-100 hover:border-red-300 hover:bg-red-100/50',
-  },
-  {
-    id: 'certificates',
-    title: 'Sertifikat',
-    description: 'Unduh sertifikat Anda',
-    icon: FileBadge,
-    href: '/portal/certificates',
-    color: 'bg-purple-50 text-purple-700 border-purple-100 hover:border-purple-300 hover:bg-purple-100/50',
-  },
 ];
 
 export default function QuickActions() {
@@ -61,7 +43,7 @@ export default function QuickActions() {
         <p className="text-sm text-slate-500 mt-0.5">Shortcut ke fitur utama</p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {actions.map((action) => (
           <Link
             key={action.id}
