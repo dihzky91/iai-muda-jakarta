@@ -49,6 +49,10 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const generationId = searchParams.get('generationId') ? parseInt(searchParams.get('generationId')!) : undefined;
+    
+    // Check if user is authenticated admin/superadmin
+    const user = getUserFromRequest(request);
+    const isAdmin = user && user.type === 'admin' && (user.role === 'superadmin' || user.role === 'admin' || user.role === 'editor');
 
     let query = db
       .select({
@@ -63,6 +67,7 @@ export async function GET(request: NextRequest) {
         linkedinUrl: schema.members.linkedinUrl,
         bio: schema.members.bio,
         isActive: schema.members.isActive,
+        showPublic: schema.members.showPublic,
         createdAt: schema.members.createdAt,
         updatedAt: schema.members.updatedAt,
         position: schema.positions.name,
@@ -72,6 +77,39 @@ export async function GET(request: NextRequest) {
 
     if (generationId) {
       query = query.where(eq(schema.members.generationId, generationId)) as any;
+    }
+    
+    // If not admin, only show public members
+    if (!isAdmin) {
+      const conditions = [eq(schema.members.showPublic, true)];
+      if (generationId) {
+        conditions.push(eq(schema.members.generationId, generationId));
+      }
+      query = db
+        .select({
+          id: schema.members.id,
+          generationId: schema.members.generationId,
+          positionId: schema.members.positionId,
+          name: schema.members.name,
+          division: schema.members.division,
+          university: schema.members.university,
+          email: schema.members.email,
+          imageUrl: schema.members.imageUrl,
+          linkedinUrl: schema.members.linkedinUrl,
+          bio: schema.members.bio,
+          isActive: schema.members.isActive,
+          showPublic: schema.members.showPublic,
+          createdAt: schema.members.createdAt,
+          updatedAt: schema.members.updatedAt,
+          position: schema.positions.name,
+        })
+        .from(schema.members)
+        .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
+        .where(eq(schema.members.showPublic, true)) as any;
+        
+      if (generationId) {
+        query = query.where(eq(schema.members.generationId, generationId)) as any;
+      }
     }
 
     const rows = await query.orderBy(schema.members.id);

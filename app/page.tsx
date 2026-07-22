@@ -50,12 +50,14 @@ export default async function HomePage() {
       linkedinUrl: schema.members.linkedinUrl,
       bio: schema.members.bio,
       isActive: schema.members.isActive,
+      showPublic: schema.members.showPublic,
       createdAt: schema.members.createdAt,
       updatedAt: schema.members.updatedAt,
       position: schema.positions.name,
     })
     .from(schema.members)
     .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
+    .where(eq(schema.members.showPublic, true))
     .orderBy(schema.members.id);
 
     if (!settings) {

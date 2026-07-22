@@ -1,0 +1,37 @@
+### Test showPublic filter functionality
+
+### 1. GET members as public (unauthenticated) - should only return members with showPublic=true
+GET http://localhost:3000/api/members
+Content-Type: application/json
+
+### 2. GET members as admin (authenticated) - should return all members
+GET http://localhost:3000/api/members
+Content-Type: application/json
+Cookie: auth_token=YOUR_ADMIN_TOKEN_HERE
+
+### 3. Test homepage - should only show public members
+GET http://localhost:3000/
+Content-Type: text/html
+
+### 4. Toggle member visibility (requires admin auth)
+PUT http://localhost:3000/api/members/1
+Content-Type: application/json
+Cookie: auth_token=YOUR_ADMIN_TOKEN_HERE
+
+{
+  "showPublic": false
+}
+
+### 5. Toggle back to public
+PUT http://localhost:3000/api/members/1
+Content-Type: application/json
+Cookie: auth_token=YOUR_ADMIN_TOKEN_HERE
+
+{
+  "showPublic": true
+}
+
+### 6. Verify single member endpoint includes showPublic field
+GET http://localhost:3000/api/members/1
+Content-Type: application/json
+Cookie: auth_token=YOUR_ADMIN_TOKEN_HERE

@@ -37,6 +37,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         linkedinUrl: schema.members.linkedinUrl,
         bio: schema.members.bio,
         isActive: schema.members.isActive,
+        showPublic: schema.members.showPublic,
         createdAt: schema.members.createdAt,
         updatedAt: schema.members.updatedAt,
         position: schema.positions.name,
@@ -63,7 +64,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { id } = await params;
-    const { generationId, positionId, position, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = await request.json();
+    const { generationId, positionId, position, name, division, university, email, imageUrl, linkedinUrl, bio, isActive, showPublic } = await request.json();
     const memberId = parseInt(id);
 
     let resolvedPosId = positionId || undefined;
@@ -82,6 +83,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       linkedinUrl: linkedinUrl || undefined,
       bio: bio || undefined,
       isActive: isActive !== undefined ? isActive : undefined,
+      showPublic: showPublic !== undefined ? showPublic : undefined,
     }).where(eq(schema.members.id, memberId));
 
     return NextResponse.json({ success: true, message: 'Member updated successfully' });

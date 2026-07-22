@@ -73,16 +73,18 @@ export default function RichTextEditor({
   onChange,
   placeholder = 'Tulis konten di sini...',
 }: RichTextEditorProps) {
-  const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        heading: { levels: [1, 2, 3] },
-      }),
-      Underline,
-      Link.configure({
-        openOnClick: false,
-        HTMLAttributes: { class: 'text-blue-600 underline cursor-pointer' },
-      }),
+    const editor = useEditor({
+      immediatelyRender: true,
+      extensions: [
+        StarterKit.configure({
+          heading: { levels: [1, 2, 3] },
+          link: false,
+          underline: false,
+        }),
+        Link.configure({
+          openOnClick: false,
+          HTMLAttributes: { class: 'text-blue-600 underline cursor-pointer' },
+        }),
       Image.configure({
         HTMLAttributes: { class: 'rounded-xl max-w-full' },
       }),

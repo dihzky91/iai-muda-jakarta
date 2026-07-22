@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { signToken } from '@/lib/auth';
+import { signAdminToken } from '@/lib/auth';
 import bcrypt from 'bcrypt';
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Username atau password salah' }, { status: 401 });
     }
 
-    const token = signToken({ userId: user.id, username: user.username, role: user.role });
+    const token = signAdminToken({ userId: user.id, username: user.username, role: user.role });
 
     const response = NextResponse.json({
       success: true,

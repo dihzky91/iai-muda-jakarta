@@ -1,0 +1,76 @@
+### Member Portal Auth API Testing
+### Use REST Client extension in VSCode or import to Postman
+
+@baseUrl = http://localhost:3000
+@email = justin@imud.com
+@password = password123
+
+###############################################
+# 1. Member Login
+###############################################
+
+### Login Request
+# @name memberLogin
+POST {{baseUrl}}/api/member/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Extract token from response
+@authToken = {{memberLogin.response.body.token}}
+
+###############################################
+# 2. Get Member Profile (Authenticated)
+###############################################
+
+### Get Member Profile
+GET {{baseUrl}}/api/member/auth/me
+Authorization: Bearer {{authToken}}
+
+###############################################
+# 3. Get Member Profile (Using Cookie)
+###############################################
+
+### Get Member Profile (cookie-based)
+# Note: Cookie is automatically set from login response
+GET {{baseUrl}}/api/member/auth/me
+
+###############################################
+# 4. Member Logout
+###############################################
+
+### Logout Request
+POST {{baseUrl}}/api/member/auth/logout
+Authorization: Bearer {{authToken}}
+
+###############################################
+# Error Cases
+###############################################
+
+### Login with wrong password
+POST {{baseUrl}}/api/member/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "wrongpassword"
+}
+
+### Login with non-existent email
+POST {{baseUrl}}/api/member/auth/login
+Content-Type: application/json
+
+{
+  "email": "nonexistent@test.com",
+  "password": "password123"
+}
+
+### Get profile without token (should fail)
+GET {{baseUrl}}/api/member/auth/me
+
+### Get profile with invalid token
+GET {{baseUrl}}/api/member/auth/me
+Authorization: Bearer invalid.token.here

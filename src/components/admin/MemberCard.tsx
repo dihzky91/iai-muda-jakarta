@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { Users, Mail, Building2, GraduationCap, Linkedin } from 'lucide-react';
+import React, { useState } from 'react';
+import { Users, Mail, Building2, GraduationCap, Linkedin, Eye, EyeOff, Lock, Unlock, Key, Trash2 } from 'lucide-react';
 import { Member, Generation } from '@/src/types';
 import { HighlightText } from './SearchFilterBar';
 import ActionButtons from './ActionButtons';
@@ -14,6 +14,13 @@ interface MemberCardProps {
   onSelect: (checked: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onToggleVisibility?: (memberId: number, showPublic: boolean) => Promise<void>;
+  onCreateAccount?: (memberId: number) => void;
+  onToggleAccountStatus?: (accountId: number, isActive: boolean) => Promise<void>;
+  onDeleteAccount?: (accountId: number) => Promise<void>;
+  hasAccount?: boolean;
+  accountIsActive?: boolean;
+  accountId?: number;
 }
 
 export default function MemberCard({
@@ -24,7 +31,43 @@ export default function MemberCard({
   onSelect,
   onEdit,
   onDelete,
+  onToggleVisibility,
+  onCreateAccount,
+  onToggleAccountStatus,
+  onDeleteAccount,
+  hasAccount = false,
+  accountIsActive = false,
+  accountId,
 }: MemberCardProps) {
+  const [togglingVisibility, setTogglingVisibility] = useState(false);
+  const [togglingAccount, setTogglingAccount] = useState(false);
+
+  const handleToggleVisibility = async () => {
+    if (!onToggleVisibility || togglingVisibility) return;
+    setTogglingVisibility(true);
+    try {
+      await onToggleVisibility(member.id, !member.showPublic);
+    } finally {
+      setTogglingVisibility(false);
+    }
+  };
+
+  const handleToggleAccountStatus = async () => {
+    if (!onToggleAccountStatus || !accountId || togglingAccount) return;
+    setTogglingAccount(true);
+    try {
+      await onToggleAccountStatus(accountId, !accountIsActive);
+    } finally {
+      setTogglingAccount(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!onDeleteAccount || !accountId) return;
+    if (confirm('Hapus akun portal member ini? Member tidak akan bisa login lagi.')) {
+      await onDeleteAccount(accountId);
+    }
+  };
   return (
     <div className="group relative rounded-2xl border border-slate-100 bg-white p-4 shadow-sm hover:shadow-md hover:border-blue-200 transition-all duration-200">
       <div className="flex items-start gap-4">
@@ -125,6 +168,79 @@ export default function MemberCard({
               </a>
             )}
           </div>
+
+          {/* Portal Account Controls */}
+          {(onToggleVisibility || onCreateAccount || onToggleAccountStatus) && (
+            <div className="mt-4 pt-4 border-t border-slate-100 space-y-2">
+              {/* Visibility Toggle */}
+              {onToggleVisibility && (
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {member.showPublic ? (
+                      <Eye className="h-3.5 w-3.5 text-green-600" />
+                    ) : (
+                      <EyeOff className="h-3.5 w-3.5 text-slate-400" />
+                    )}
+                    <span className="text-xs text-slate-600">
+                      {member.showPublic ? 'Tampil di Publik' : 'Disembunyikan'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleToggleVisibility}
+                    disabled={togglingVisibility}
+                    className={`text-[10px] font-medium px-2 py-1 rounded transition-colors ${
+                      member.showPublic
+                        ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+                        : 'bg-slate-50 text-slate-600 hover:bg-slate-100 border border-slate-200'
+                    } disabled:opacity-50`}
+                  >
+                    {togglingVisibility ? '...' : member.showPublic ? 'Sembunyikan' : 'Tampilkan'}
+                  </button>
+                </div>
+              )}
+
+              {/* Account Status */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Lock className="h-3.5 w-3.5 text-blue-600" />
+                  <span className="text-xs text-slate-600">Akun Portal</span>
+                </div>
+                {hasAccount ? (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={handleToggleAccountStatus}
+                      disabled={togglingAccount}
+                      className={`text-[10px] font-medium px-2 py-1 rounded transition-colors ${
+                        accountIsActive
+                          ? 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
+                          : 'bg-amber-50 text-amber-700 hover:bg-amber-100 border border-amber-200'
+                      } disabled:opacity-50`}
+                      title={accountIsActive ? 'Nonaktifkan akun' : 'Aktifkan akun'}
+                    >
+                      {togglingAccount ? '...' : accountIsActive ? 'Aktif' : 'Nonaktif'}
+                    </button>
+                    {onDeleteAccount && (
+                      <button
+                        onClick={handleDeleteAccount}
+                        className="text-[10px] font-medium px-2 py-1 rounded bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition-colors"
+                        title="Hapus akun portal"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onCreateAccount?.(member.id)}
+                    className="text-[10px] font-medium px-2 py-1 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors flex items-center gap-1"
+                  >
+                    <Key className="h-3 w-3" />
+                    Buat Akun
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

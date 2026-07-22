@@ -22,6 +22,7 @@ import ConfirmDialog from './ConfirmDialog';
 import SkeletonCard from './SkeletonCard';
 import MemberCard from './MemberCard';
 import Stepper from './Stepper';
+import CreateAccountDialog from './CreateAccountDialog';
 
 interface MembersManagerProps {
   members: Member[];
@@ -29,6 +30,12 @@ interface MembersManagerProps {
   generations: Generation[];
   divisionList: string[];
   activeGen?: Generation;
+}
+
+interface MemberAccountInfo {
+  memberId: number;
+  accountId: number | null;
+  isActive: boolean;
 }
 
 interface HistoryEntry {
@@ -108,6 +115,43 @@ export default function MembersManager({ members, setMembers, generations, divis
   const [showImportCsv, setShowImportCsv] = useState(false);
   const [csvText, setCsvText] = useState('');
   const [csvError, setCsvError] = useState<string | null>(null);
+
+  // Member Accounts state
+  const [memberAccounts, setMemberAccounts] = useState<Map<number, MemberAccountInfo>>(new Map());
+  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  const [showCreateAccount, setShowCreateAccount] = useState(false);
+  const [selectedMemberForAccount, setSelectedMemberForAccount] = useState<Member | null>(null);
+
+  // Load member accounts
+  useEffect(() => {
+    const loadAccounts = async () => {
+      setLoadingAccounts(true);
+      try {
+        const response = await fetch('/api/admin/member-accounts', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.data) {
+            const accountsMap = new Map<number, MemberAccountInfo>();
+            data.data.forEach((item: any) => {
+              accountsMap.set(item.id, {
+                memberId: item.id,
+                accountId: item.accountId,
+                isActive: item.accountIsActive || false,
+              });
+            });
+            setMemberAccounts(accountsMap);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load member accounts:', err);
+      } finally {
+        setLoadingAccounts(false);
+      }
+    };
+    loadAccounts();
+  }, []);
 
   // Simulate initial loading state for skeleton demo
   useEffect(() => {
@@ -626,6 +670,133 @@ export default function MembersManager({ members, setMembers, generations, divis
     });
   };
 
+  // Handler untuk toggle visibility member
+  const handleToggleVisibility = async (memberId: number, showPublic: boolean) => {
+    try {
+      const response = await fetch(`/api/members/${memberId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ showPublic }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setMembers(prev => prev.map(m => m.id === memberId ? { ...m, showPublic } : m));
+        triggerToast(showPublic ? 'Member ditampilkan di publik' : 'Member disembunyikan dari publik');
+      } else {
+        triggerToast(`Gagal: ${result.message}`, 'error');
+      }
+    } catch (err) {
+      triggerToast('Terjadi kesalahan', 'error');
+    }
+  };
+
+  // Handler untuk create account
+  const handleCreateAccount = (memberId: number) => {
+    const member = members.find(m => m.id === memberId);
+    if (member) {
+      setSelectedMemberForAccount(member);
+      setShowCreateAccount(true);
+    }
+  };
+
+  // Handler untuk confirm create account
+  const handleConfirmCreateAccount = async (password: string) => {
+    if (!selectedMemberForAccount) return;
+
+    const response = await fetch('/api/admin/member-accounts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        memberId: selectedMemberForAccount.id,
+        password,
+      }),
+    });
+
+    const result = await response.json();
+    if (result.success) {
+      // Reload accounts
+      const accountsRes = await fetch('/api/admin/member-accounts', {
+        credentials: 'include',
+      });
+      if (accountsRes.ok) {
+        const data = await accountsRes.json();
+        if (data.success && data.data) {
+          const accountsMap = new Map<number, MemberAccountInfo>();
+          data.data.forEach((item: any) => {
+            accountsMap.set(item.id, {
+              memberId: item.id,
+              accountId: item.accountId,
+              isActive: item.accountIsActive || false,
+            });
+          });
+          setMemberAccounts(accountsMap);
+        }
+      }
+      triggerToast('Akun portal berhasil dibuat!');
+    } else {
+      throw new Error(result.message || 'Gagal membuat akun');
+    }
+  };
+
+  // Handler untuk toggle account status
+  const handleToggleAccountStatus = async (accountId: number, isActive: boolean) => {
+    try {
+      const response = await fetch(`/api/admin/member-accounts/${accountId}`, {
+        method: 'PUT',
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setMemberAccounts(prev => {
+          const next = new Map(prev);
+          prev.forEach((info, memberId) => {
+            if (info.accountId === accountId) {
+              next.set(memberId, { ...info, isActive: result.isActive });
+            }
+          });
+          return next;
+        });
+        triggerToast(result.message);
+      } else {
+        triggerToast(`Gagal: ${result.message}`, 'error');
+      }
+    } catch (err) {
+      triggerToast('Terjadi kesalahan', 'error');
+    }
+  };
+
+  // Handler untuk delete account
+  const handleDeleteAccount = async (accountId: number) => {
+    try {
+      const response = await fetch(`/api/admin/member-accounts/${accountId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setMemberAccounts(prev => {
+          const next = new Map(prev);
+          prev.forEach((info, memberId) => {
+            if (info.accountId === accountId) {
+              next.set(memberId, { ...info, accountId: null, isActive: false });
+            }
+          });
+          return next;
+        });
+        triggerToast('Akun portal berhasil dihapus');
+      } else {
+        triggerToast(`Gagal: ${result.message}`, 'error');
+      }
+    } catch (err) {
+      triggerToast('Terjadi kesalahan', 'error');
+    }
+  };
+
   const nextStep = () => {
     if (isStepTransitioning) return;
     if (!validateStep(step)) return;
@@ -1060,6 +1231,7 @@ export default function MembersManager({ members, setMembers, generations, divis
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredMembers.map(m => {
                 const gen = generations.find(g => g.id === m.generationId);
+                const accountInfo = memberAccounts.get(m.id);
                 return (
                   <MemberCard
                     key={m.id}
@@ -1070,6 +1242,13 @@ export default function MembersManager({ members, setMembers, generations, divis
                     onSelect={(checked) => toggleSelectOne(m.id, checked)}
                     onEdit={() => handleOpenEdit(m)}
                     onDelete={() => handleDelete(m)}
+                    onToggleVisibility={handleToggleVisibility}
+                    onCreateAccount={handleCreateAccount}
+                    onToggleAccountStatus={handleToggleAccountStatus}
+                    onDeleteAccount={handleDeleteAccount}
+                    hasAccount={!!accountInfo?.accountId}
+                    accountIsActive={accountInfo?.isActive || false}
+                    accountId={accountInfo?.accountId || undefined}
                   />
                 );
               })}
@@ -1158,6 +1337,15 @@ export default function MembersManager({ members, setMembers, generations, divis
 
       <Toast toasts={toasts} onRemove={removeToast} />
       <ConfirmDialog state={confirmState} onConfirm={handleConfirm} onCancel={handleCancel} />
+      <CreateAccountDialog
+        isOpen={showCreateAccount}
+        memberName={selectedMemberForAccount?.name || ''}
+        onClose={() => {
+          setShowCreateAccount(false);
+          setSelectedMemberForAccount(null);
+        }}
+        onConfirm={handleConfirmCreateAccount}
+      />
     </div>
   );
 }

@@ -20,6 +20,11 @@ export interface Member {
   email?: string | null;
   imageUrl?: string | null;
   linkedinUrl?: string | null;
+  phone?: string | null;
+  whatsapp?: string | null;
+  bio?: string | null;
+  isAlumni?: boolean;
+  showPublic?: boolean; // Control visibility on public page (from DB schema line 47)
 }
 
 export interface Event {

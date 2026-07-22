@@ -41,6 +41,10 @@ export const members = mysqlTable('members', {
   imageUrl: varchar('image_url', { length: 500 }),
   linkedinUrl: varchar('linkedin_url', { length: 500 }),
   bio: text('bio'),
+  phone: varchar('phone', { length: 20 }),
+  whatsapp: varchar('whatsapp', { length: 20 }),
+  isAlumni: boolean('is_alumni').default(false).notNull(),
+  showPublic: boolean('show_public').default(true).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
@@ -150,4 +154,21 @@ export const contactMessages = mysqlTable('contact_messages', {
   isRead: boolean('is_read').default(false).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+export const memberAccounts = mysqlTable('member_accounts', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull().unique(),
+  passwordHash: varchar('password_hash', { length: 255 }).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  lastLoginAt: timestamp('last_login_at'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+export const memberAccountsRelations = relations(memberAccounts, ({ one }) => ({
+  member: one(members, {
+    fields: [memberAccounts.memberId],
+    references: [members.id],
+  }),
+}));
 
