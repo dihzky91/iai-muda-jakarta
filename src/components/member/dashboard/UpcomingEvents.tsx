@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Calendar, MapPin, ArrowRight, PartyPopper } from 'lucide-react';
+import { Calendar, ArrowRight, PartyPopper, ExternalLink, Users } from 'lucide-react';
 
 interface Event {
   id: number;
@@ -13,6 +13,7 @@ interface Event {
   imageUrl?: string | null;
   registrationUrl?: string | null;
   status?: string | null;
+  eventType?: 'public' | 'internal';
 }
 
 interface UpcomingEventsProps {
@@ -52,37 +53,86 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
             <EmptyState />
           ) : (
             <ul className="divide-y divide-slate-100">
-              {events.slice(0, 3).map((event) => (
-                <li key={event.id}>
-                  <Link
-                    href={event.registrationUrl || '#'}
-                    className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                    <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center text-center">
-                      <span className="text-[10px] font-semibold text-blue-600 uppercase">
-                        {new Date(event.date + 'T00:00:00').toLocaleDateString('id-ID', { month: 'short' })}
-                      </span>
-                      <span className="text-lg font-bold text-slate-900 leading-none">
-                        {new Date(event.date + 'T00:00:00').getDate()}
-                      </span>
-                    </div>
+              {events.slice(0, 3).map((event) => {
+                const hasReg = Boolean(event.registrationUrl);
+                const isCompleted = event.status === 'completed';
+                const isInternal = event.eventType === 'internal';
 
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1">
-                        {event.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 mt-1 line-clamp-1">
-                        {event.time || 'Waktu menyusul'}
-                        {event.location && ` · ${event.location}`}
-                      </p>
-                      <div className="flex items-center gap-1 mt-2 text-xs font-medium text-blue-600">
-                        {event.registrationUrl ? 'Daftar Sekarang' : 'Lihat Detail'}
-                        <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                // Untuk event publik dengan registrationUrl: buka Google Form di tab baru
+                // Untuk event publik tanpa URL: link ke halaman detail
+                // Untuk event internal: link ke /member/events/{id} (portal)
+                const Wrapper = hasReg && !isInternal
+                  ? ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                      <a
+                        href={event.registrationUrl!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={className}
+                      >
+                        {children}
+                      </a>
+                    )
+                  : ({ children, className }: { children: React.ReactNode; className?: string }) => (
+                      <Link
+                        href={isInternal ? `/portal/events/${event.id}` : `/acara/${event.id}`}
+                        className={className}
+                      >
+                        {children}
+                      </Link>
+                    );
+
+                return (
+                  <li key={event.id}>
+                    <Wrapper className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors">
+                      <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center text-center">
+                        <span className="text-[10px] font-semibold text-blue-600 uppercase">
+                          {new Date(event.date + 'T00:00:00').toLocaleDateString('id-ID', { month: 'short' })}
+                        </span>
+                        <span className="text-lg font-bold text-slate-900 leading-none">
+                          {new Date(event.date + 'T00:00:00').getDate()}
+                        </span>
                       </div>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="text-sm font-semibold text-slate-900 group-hover:text-blue-700 transition-colors line-clamp-1">
+                            {event.title}
+                          </h3>
+                          {isInternal && (
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex-shrink-0">
+                              <Users className="h-2.5 w-2.5" /> Internal
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1 line-clamp-1">
+                          {event.time || 'Waktu menyusul'}
+                          {event.location && ` · ${event.location}`}
+                        </p>
+                        <div className="flex items-center gap-1 mt-2 text-xs font-medium text-blue-600">
+                          {isCompleted ? (
+                            'Pendaftaran Ditutup'
+                          ) : isInternal ? (
+                            <>
+                              Lihat & RSVP
+                              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                            </>
+                          ) : hasReg ? (
+                            <>
+                              Daftar Sekarang
+                              <ExternalLink className="w-3 h-3" />
+                            </>
+                          ) : (
+                            <>
+                              Lihat Detail
+                              <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </Wrapper>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -1,3 +1,5 @@
+const URL_REGEX = /^https:\/\/(docs\.)?google\.com\/forms\/.+/i;
+
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
@@ -26,6 +28,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = await request.json();
     const eventId = parseInt(id);
+
+    // Validasi registrationUrl jika diisi
+    if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
+      return NextResponse.json(
+        { success: false, message: 'Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)' },
+        { status: 400 }
+      );
+    }
 
     await db.update(schema.events).set({
       title: title || undefined,

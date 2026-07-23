@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum, uniqueIndex } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 export const users = mysqlTable('users', {
@@ -60,17 +60,28 @@ export const events = mysqlTable('events', {
   imageUrl: varchar('image_url', { length: 500 }),
   registrationUrl: varchar('registration_url', { length: 500 }),
   status: mysqlEnum('status', ['ongoing', 'upcoming', 'completed']).default('upcoming').notNull(),
+  eventType: mysqlEnum('event_type', ['public', 'internal']).default('public').notNull(),
   generationId: int('generation_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+export const eventRsvps = mysqlTable('event_rsvps', {
+  id: serial('id').primaryKey(),
+  eventId: int('event_id').notNull(),
+  memberId: int('member_id').notNull(),
+  status: mysqlEnum('status', ['attending', 'not_attending', 'maybe']).default('attending').notNull(),
+  respondedAt: timestamp('responded_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqRsvp: uniqueIndex('uniq_event_member_rsvp').on(table.eventId, table.memberId),
+}));
 
 export const generationsRelations = relations(generations, ({ many }) => ({
   members: many(members),
   events: many(events),
 }));
 
-export const membersRelations = relations(members, ({ one }) => ({
+export const membersRelations = relations(members, ({ one, many }) => ({
   generation: one(generations, {
     fields: [members.generationId],
     references: [generations.id],
@@ -79,16 +90,29 @@ export const membersRelations = relations(members, ({ one }) => ({
     fields: [members.positionId],
     references: [positions.id],
   }),
+  rsvps: many(eventRsvps),
 }));
 
 export const positionsRelations = relations(positions, ({ many }) => ({
   members: many(members),
 }));
 
-export const eventsRelations = relations(events, ({ one }) => ({
+export const eventsRelations = relations(events, ({ one, many }) => ({
   generation: one(generations, {
     fields: [events.generationId],
     references: [generations.id],
+  }),
+  rsvps: many(eventRsvps),
+}));
+
+export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
+  event: one(events, {
+    fields: [eventRsvps.eventId],
+    references: [events.id],
+  }),
+  member: one(members, {
+    fields: [eventRsvps.memberId],
+    references: [members.id],
   }),
 }));
 
@@ -171,4 +195,3 @@ export const memberAccountsRelations = relations(memberAccounts, ({ one }) => ({
     references: [members.id],
   }),
 }));
-

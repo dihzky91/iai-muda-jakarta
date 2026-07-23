@@ -37,7 +37,32 @@ export interface Event {
   imageUrl?: string;
   status: 'ongoing' | 'upcoming' | 'completed';
   registrationUrl?: string;
+  eventType?: 'public' | 'internal'; // 'public' = terbuka untuk umum, 'internal' = khusus pengurus
 }
+
+// Extended Event untuk portal anggota (include RSVP info)
+export interface MemberEvent extends Event {
+  myRsvpStatus?: 'attending' | 'not_attending' | 'maybe' | null;
+  stats?: {
+    totalAttending: number;
+    totalNotAttending: number;
+    totalMaybe: number;
+    totalResponded: number;
+  };
+  myRsvp?: {
+    status: 'attending' | 'not_attending' | 'maybe';
+    respondedAt: string;
+  } | null;
+}
+
+export interface RsvpStats {
+  totalAttending: number;
+  totalNotAttending: number;
+  totalMaybe: number;
+  totalResponded: number;
+}
+
+export type RsvpStatus = 'attending' | 'not_attending' | 'maybe';
 
 export interface Article {
   id: number;
@@ -86,4 +111,3 @@ export interface Settings {
   faviconUrl?: string | null;
   updatedAt?: string;
 }
-

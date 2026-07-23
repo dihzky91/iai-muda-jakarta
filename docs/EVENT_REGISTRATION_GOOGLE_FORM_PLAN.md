@@ -3,6 +3,8 @@
 > **Status:** Draft  
 > **Tujuan:** Mengadopsi Google Form sebagai mekanisme pendaftaran acara IAI Muda Jakarta, dengan integrasi link pendaftaran per-event pada website.
 
+> **Cakupan Dokumen:** Plan ini **hanya membahas alur pendaftaran event untuk pengunjung publik** (website `imud.iaijakarta.or.id`). Peran dan perilaku menu "Event" di **Portal Anggota** (eksklusif pengurus IAI Muda, bukan peserta event) dibahas terpisah di [`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md).
+
 ---
 
 ## 1. Latar Belakang
@@ -10,6 +12,11 @@
 Saat ini, halaman publik website IAI Muda Jakarta menampilkan daftar acara, namun tombol "Daftar Sekarang" masih membuka **modal form internal** (`EventsList.tsx`) yang hanya mensimulasikan proses pendaftaran tanpa menyimpan data ke backend. Panitia kegiatan sebenarnya ingin menggunakan **Google Form** sebagai kanal pendaftaran resmi.
 
 Database sudah menyediakan kolom `registrationUrl` pada tabel `events`, tetapi kolom tersebut belum dimanfaatkan secara maksimal di beberapa titik UI.
+
+**Catatan penting:**
+- **Pengunjung publik** (calon peserta event) berinteraksi dengan event melalui halaman publik website.
+- **Portal Anggota** (`/member/*`) adalah area eksklusif untuk pengurus aktif, demisioner, dan alumni IAI Muda (lihat [`portal-anggota-planning.md`](../portal-anggota-planning.md)). Portal **bukan** kanal pendaftaran untuk peserta event umum.
+- Panitia event adalah pengurus itu sendiri, sehingga menu Event di Portal Anggota akan berfungsi sebagai **panel manajemen internal**, bukan mekanisme pendaftaran ulang. Detail peran menu Event di Portal Anggota akan dibahas di dokumen terpisah.
 
 ---
 
@@ -20,6 +27,7 @@ Database sudah menyediakan kolom `registrationUrl` pada tabel `events`, tetapi k
 3. Memberikan pengalaman yang konsisten baik di **homepage publik**, **halaman acara**, maupun **member dashboard**.
 4. Memungkinkan admin mengelola link pendaftaran melalui panel admin.
 5. Menjaga fleksibilitas: acara boleh punya Google Form, tanpa form, atau menggunakan form internal sebagai fallback.
+6. **Memisahkan dengan jelas** antara mekanisme pendaftaran publik (Google Form) dengan fitur Event di Portal Anggota (akan dibahas terpisah).
 
 ---
 
@@ -33,11 +41,11 @@ Tabel `events` sudah memiliki kolom:
 registrationUrl: varchar('registration_url', { length: 500 })
 ```
 
-Kolom ini menjadi **sumber kebenaran** link pendaftaran untuk masing-masing acara.
+Kolom ini menjadi **sumber kebenaran** link pendaftaran untuk masing-masing acara, dan digunakan **khusus untuk flow publik** (pendaftaran peserta event). Portal Anggota tidak menggunakan kolom ini untuk pendaftaran ulang (akan dibahas di [`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md)).
 
 ### 3.2 Alur Pengguna
 
-#### A. Pengunjung Umum (Public Site)
+#### A. Pengunjung Umum (Public Site) — *Fokus utama dokumen ini*
 
 | Kondisi | Perilaku Tombol "Daftar Sekarang" |
 |---------|-----------------------------------|
@@ -45,11 +53,15 @@ Kolom ini menjadi **sumber kebenaran** link pendaftaran untuk masing-masing acar
 | Event tidak memiliki `registrationUrl` dan status `upcoming`/`ongoing` | Tampilkan modal form internal sebagai fallback atau tampilkan status "Link pendaftaran menyusul" |
 | Event status `completed` | Tombol disabled: "Pendaftaran Ditutup" |
 
-#### B. Anggota Terdaftar (Member Dashboard)
+#### B. Portal Anggota (Member Dashboard) — *Catatan, bukan fokus utama*
 
-Komponen `UpcomingEvents.tsx` sudah menggunakan `<Link href={event.registrationUrl}>`. Perlu memastikan:
-- Link eksternal dibuka di tab baru.
-- Jika tidak ada `registrationUrl`, tombol menampilkan "Lihat Detail" dan tidak mengarah ke `#`.
+> **Penting:** Portal Anggota (`/member/dashboard`, `/portal/events`) adalah area eksklusif untuk pengurus IAI Muda. Komponen `UpcomingEvents.tsx` yang menampilkan daftar acara di dashboard anggota saat ini masih memakai `registrationUrl` sebagai link CTA.
+
+Untuk Portal Anggota, perbaikan minimum yang akan dilakukan dalam plan ini:
+- Link eksternal dibuka di tab baru (`target="_blank"` + `rel="noopener noreferrer"`).
+- Jika tidak ada `registrationUrl`, tombol menampilkan "Lihat Detail" (bukan mengarah ke `#`).
+
+**Peran Event di Portal Anggota secara lebih mendalam** (apakah sebagai panel manajemen, RSVP internal, atau read-only) akan dibahas di [`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md). Perubahan Portal Anggota yang lebih besar (mis. upload materi, RSVP internal, komite event) **di luar cakupan** plan ini.
 
 #### C. Sorotan Acara di Homepage
 
@@ -160,3 +172,50 @@ Jika di masa depan ingin menyimpan siapa saja yang sudah mendaftar di database i
 ## 9. Kesimpulan
 
 Mekanisme yang paling praktis adalah **memanfaatkan kolom `registrationUrl` yang sudah ada**, lalu mengarahkan pengguna langsung ke Google Form saat tombol daftar ditekan. Admin mengelola link tersebut dari panel admin. Pendekatan ini minim perubahan, cepat, dan sesuai dengan kebutuhan operasional IAI Muda Jakarta saat ini.
+
+---
+
+## 10. Catatan: Peran Menu Event di Portal Anggota
+
+> **Dokumen rujukan:** [`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md)
+
+### 10.1 Mengapa Perlu Dipisahkan?
+
+Plan ini hanya membahas flow **pendaftaran event untuk pengunjung publik** (calon peserta). Untuk **Portal Anggota** (`/member/*`), perilaku menu "Event" memiliki **peran berbeda** karena:
+
+| Aspek | Pengunjung Publik | Portal Anggota |
+|---|---|---|
+| **Siapa?** | Calon peserta event (umum) | Pengurus aktif, demisioner, alumni IAI Muda |
+| **Tujuan interaksi dengan event** | Mendaftar sebagai peserta | Melihat info event, mengelola kepanitiaan, atau RSVP internal |
+| **Mekanisme utama** | Google Form via `registrationUrl` | Belum ditentukan (lihat dokumen terpisah) |
+| **Outcome** | Data peserta masuk Google Sheets | Tergantung peran menu (manajemen / RSVP / info) |
+
+### 10.2 Apa yang Dilakukan Plan Ini untuk Portal?
+
+Cukup **perbaikan minimum** di komponen `UpcomingEvents.tsx` dan fallback CTA di `EventsList.tsx` (yang menampilkan event di dashboard anggota):
+
+1. **Link eksternal** selalu dibuka di tab baru (`target="_blank"` + `rel="noopener noreferrer"`) — ini berlaku untuk semua link, termasuk Portal Anggota.
+2. **Fallback CTA**: jika event tidak punya `registrationUrl`, tampilkan "Lihat Detail" (bukan ke `#`).
+
+### 10.3 Apa yang TIDAK Dibahas di Plan Ini?
+
+Perubahan **lebih dalam** untuk menu Event di Portal Anggota, antara lain:
+
+- ❌ Upload materi/notulensi paska-event
+- ❌ RSVP untuk event internal organisasi (rapat pleno, gathering, training)
+- ❌ Panel manajemen kepanitiaan per event
+- ❌ Notifikasi ke pengurus tentang event yang ditugaskan
+- ❌ Statistik event khusus anggota
+
+Semua poin di atas akan didokumentasikan dan direncanakan di [`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md).
+
+### 10.4 Prinsip Pemisahan
+
+Untuk menghindari tumpang tindih implementasi, kedua dokumen ini harus dirujuk bersama:
+
+- 📄 **Plan ini** (`EVENT_REGISTRATION_GOOGLE_FORM_PLAN.md`): fokus **pendaftaran publik**
+- 📄 **[`PORTAL_EVENT_MENU_PLAN.md`](./PORTAL_EVENT_MENU_PLAN.md)**: fokus **peran Event di Portal Anggota**
+
+Saat mengerjakan komponen event (mis. `UpcomingEvents.tsx`), perubahan yang hanya terkait **link ke Google Form publik** dilakukan sesuai plan ini, sementara perubahan terkait **fitur internal Portal** menunggu dokumen PORTAL_EVENT_MENU_PLAN.
+
+---

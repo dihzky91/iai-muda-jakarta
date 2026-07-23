@@ -3,6 +3,8 @@ import { db, schema } from '@/lib/db';
 import { desc } from 'drizzle-orm';
 import { getUserFromRequest, requireRole } from '@/lib/auth';
 
+const URL_REGEX = /^https:\/\/(docs\.)?google\.com\/forms\/.+/i;
+
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; enum?: string[]; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
     const val = rule.value;
@@ -32,7 +34,9 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
 
 export async function GET(request: NextRequest) {
   try {
-    const events = await db.select().from(schema.events).orderBy(schema.events.date);
+    const allEvents = await db.select().from(schema.events).orderBy(schema.events.date);
+    // Filter: eventType = 'public' saja untuk API publik. Event 'internal' hanya untuk portal anggota.
+    const events = allEvents.filter((e: any) => e.eventType !== 'internal');
     return NextResponse.json({ success: true, data: events });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message || 'Failed to fetch events' }, { status: 500 });
@@ -47,6 +51,13 @@ export async function POST(request: NextRequest) {
     }
 
     const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = await request.json();
+
+    if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
+      return NextResponse.json(
+        { success: false, message: 'Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)' },
+        { status: 400 }
+      );
+    }
 
     const err = validate({
       title:       { value: title,       type: 'string', minLen: 3, maxLen: 200,  label: 'Judul acara' },
