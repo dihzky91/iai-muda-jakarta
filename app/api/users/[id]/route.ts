@@ -47,7 +47,7 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
     const { id } = await params;
     const userId = parseInt(id);
 
-    if (authUser?.userId === userId) {
+    if (authUser?.type === 'admin' && authUser.userId === userId) {
       return NextResponse.json({ success: false, message: 'Tidak bisa menghapus akun sendiri' }, { status: 400 });
     }
 

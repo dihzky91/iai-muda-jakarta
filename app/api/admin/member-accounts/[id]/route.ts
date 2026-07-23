@@ -6,7 +6,7 @@ import { getUserFromRequest, requireRole } from '@/lib/auth';
 // PUT /api/admin/member-accounts/:id - Toggle account active status
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -18,7 +18,8 @@ export async function PUT(
       );
     }
 
-    const accountId = parseInt(params.id);
+    const { id } = await params;
+    const accountId = parseInt(id);
 
     if (isNaN(accountId)) {
       return NextResponse.json(
@@ -69,7 +70,7 @@ export async function PUT(
 // DELETE /api/admin/member-accounts/:id - Delete member account
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = getUserFromRequest(request);
@@ -81,7 +82,8 @@ export async function DELETE(
       );
     }
 
-    const accountId = parseInt(params.id);
+    const { id } = await params;
+    const accountId = parseInt(id);
 
     if (isNaN(accountId)) {
       return NextResponse.json(

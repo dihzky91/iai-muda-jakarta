@@ -138,12 +138,14 @@ export default function MemberDashboard() {
         animate="visible"
         className="space-y-6 lg:space-y-8"
       >
-        {/* Compact Welcome Header */}
+        {/* Executive Welcome Header */}
         <motion.div variants={itemVariants}>
           <DashboardHeader
             name={member.name}
             role={member.position?.name}
             generation={member.generation?.name}
+            division={member.division}
+            university={member.university}
             imageUrl={member.imageUrl}
             isAlumni={member.isAlumni}
           />
