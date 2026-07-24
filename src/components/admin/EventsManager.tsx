@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Calendar, Sparkles, Check } from 'lucide-react';
+import { Calendar, Sparkles, Check, LayoutGrid, List } from 'lucide-react';
 import { Event } from '@/src/types';
 import { useToast } from '@/src/hooks/useToast';
 import { useConfirm } from '@/src/hooks/useConfirm';
@@ -15,20 +15,28 @@ import ImageUploader from '../ImageUploader';
 import StatusBadge from './StatusBadge';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
+import { CalendarGrid, type CalendarEvent, type CalendarColor, CALENDAR_COLORS, COLOR_CLASSES } from '@/src/components/calendar';
 
 interface EventsManagerProps {
   events: Event[];
   setEvents: React.Dispatch<React.SetStateAction<Event[]>>;
 }
 
+type ViewMode = 'list' | 'calendar';
+
 const emptyForm: Omit<Event, 'id'> = {
   title: '',
   description: '',
   date: '',
+  endDate: '',
   time: '',
   location: '',
   imageUrl: '',
+  registrationUrl: '',
   status: 'upcoming',
+  eventType: 'public',
+  allDay: false,
+  color: 'blue',
 };
 
 const statusOptions: Record<string, { label: string; className: string }> = {
@@ -43,6 +51,7 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | Event['status']>('all');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<Event | null>(null);
@@ -56,15 +65,37 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
       const term = search.toLowerCase();
       return (
         evt.title.toLowerCase().includes(term) ||
-        evt.location.toLowerCase().includes(term) ||
+        (evt.location || '').toLowerCase().includes(term) ||
         evt.description.toLowerCase().includes(term)
       );
     });
   }, [events, search, statusFilter]);
 
-  const handleOpenAdd = () => {
+  // Map ke CalendarEvent untuk CalendarGrid
+  const calendarEvents = useMemo<CalendarEvent[]>(
+    () =>
+      filteredEvents.map((evt) => ({
+        id: evt.id,
+        title: evt.title,
+        description: evt.description,
+        startDate: evt.date,
+        endDate: evt.endDate || null,
+        allDay: Boolean(evt.allDay),
+        time: evt.time || null,
+        location: evt.location || null,
+        imageUrl: evt.imageUrl || null,
+        registrationUrl: evt.registrationUrl || null,
+        status: evt.status,
+        eventType: (evt.eventType as 'public' | 'internal') || 'public',
+        color: evt.color || 'blue',
+        generationId: (evt as any).generationId || null,
+      })),
+    [filteredEvents],
+  );
+
+  const handleOpenAdd = (prefillDate?: string) => {
     setEditingEvent(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, date: prefillDate || '' });
     setIsDrawerOpen(true);
   };
 
@@ -74,10 +105,15 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
       title: evt.title,
       description: evt.description,
       date: evt.date,
+      endDate: evt.endDate || '',
       time: evt.time,
       location: evt.location,
       imageUrl: evt.imageUrl || '',
+      registrationUrl: evt.registrationUrl || '',
       status: evt.status,
+      eventType: (evt.eventType as 'public' | 'internal') || 'public',
+      allDay: Boolean(evt.allDay),
+      color: (evt.color as CalendarColor) || 'blue',
     });
     setIsDrawerOpen(true);
   };
@@ -93,15 +129,21 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
     setSubmitting(true);
 
     try {
+      const payload = {
+        ...form,
+        // pastikan endDate empty string jadi null saat dikirim
+        endDate: form.endDate || null,
+      };
+
       if (editingEvent) {
         const res = await fetch(`/api/events/${editingEvent.id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         const result = await res.json();
         if (result.success) {
-          setEvents(prev => prev.map(evt => evt.id === editingEvent.id ? { ...evt, ...form } : evt));
+          setEvents(prev => prev.map(evt => evt.id === editingEvent.id ? { ...evt, ...form } as Event : evt));
           triggerToast('Acara berhasil diperbarui!');
           handleCloseDrawer();
         } else {
@@ -111,7 +153,7 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
         const res = await fetch('/api/events', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form),
+          body: JSON.stringify(payload),
         });
         const result = await res.json();
         if (result.success) {
@@ -153,6 +195,15 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
     }
   };
 
+  const handleCalendarEventClick = (evt: CalendarEvent) => {
+    const real = events.find((e) => e.id === evt.id);
+    if (real) handleOpenEdit(real);
+  };
+
+  const handleAddFromCalendar = (ymd: string) => {
+    handleOpenAdd(ymd);
+  };
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -160,63 +211,128 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
         description="Terbitkan webinar, kelola status pelaksanaan, dan pantau daftar hadir peserta."
       />
 
-      <ListContainer
-        title="Daftar Agenda Aktif"
-        subtitle={`Total ${events.length} agenda/webinar terdaftar`}
-        addLabel="Tambah Agenda"
-        onAdd={handleOpenAdd}
-        filter={
-          <SearchFilterBar
-            search={search}
-            onSearchChange={setSearch}
-            searchPlaceholder="Cari judul acara, lokasi, atau deskripsi..."
-            filters={[
-              {
-                key: 'status',
-                label: 'Status',
-                value: statusFilter,
-                onChange: (val) => setStatusFilter(val as 'all' | Event['status']),
-                options: [
-                  { value: 'all', label: 'Semua Status' },
-                  { value: 'upcoming', label: 'Akan Datang' },
-                  { value: 'ongoing', label: 'Berlangsung' },
-                  { value: 'completed', label: 'Selesai' },
-                ],
-              },
-            ]}
-          />
-        }
-      >
-        {filteredEvents.length === 0 ? (
-          <EmptyState
-            icon={Calendar}
-            title="Tidak ada acara ditemukan"
-            description={events.length === 0 ? "Belum ada acara terdaftar. Klik tombol Tambah Agenda untuk membuat yang pertama." : "Coba sesuaikan kata kunci pencarian atau filter status."}
-          />
-        ) : (
-          filteredEvents.map(evt => (
-            <div key={evt.id} className="pt-4 flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={evt.status} options={statusOptions} />
-                  <span className="text-[10px] text-slate-500 font-semibold font-mono">{evt.date}</span>
-                </div>
-                <h4 className="text-sm font-semibold text-slate-900 leading-tight">{evt.title}</h4>
-                <p className="text-xs text-slate-500 line-clamp-1">{evt.description}</p>
-                <p className="text-[10px] text-slate-400 font-medium">📍 {evt.location}</p>
-              </div>
-
-              <ActionButtons
-                onEdit={() => handleOpenEdit(evt)}
-                onDelete={() => handleDelete(evt)}
-                editTitle="Ubah Acara"
-                deleteTitle="Hapus Acara"
-              />
+      {/* View Mode Toggle + Filter bar */}
+      <div className="space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <div className="inline-flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200/60">
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'list'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <List className="w-3.5 h-3.5" />
+                Daftar
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('calendar')}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  viewMode === 'calendar'
+                    ? 'bg-white text-blue-600 shadow-sm'
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                Kalender
+              </button>
             </div>
-          ))
-        )}
-      </ListContainer>
+            <span className="text-xs text-slate-500 font-medium">
+              {filteredEvents.length} acara
+            </span>
+          </div>
+        </div>
 
+        <SearchFilterBar
+          search={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Cari judul acara, lokasi, atau deskripsi..."
+          filters={[
+            {
+              key: 'status',
+              label: 'Status',
+              value: statusFilter,
+              onChange: (val) => setStatusFilter(val as 'all' | Event['status']),
+              options: [
+                { value: 'all', label: 'Semua Status' },
+                { value: 'upcoming', label: 'Akan Datang' },
+                { value: 'ongoing', label: 'Berlangsung' },
+                { value: 'completed', label: 'Selesai' },
+              ],
+            },
+          ]}
+        />
+      </div>
+
+      {/* Body: List mode atau Calendar mode */}
+      {viewMode === 'list' ? (
+        <ListContainer
+          title="Daftar Agenda Aktif"
+          subtitle={`Total ${events.length} agenda/webinar terdaftar`}
+          onAdd={handleOpenAdd}
+          addLabel="Tambah Agenda"
+        >
+          {filteredEvents.length === 0 ? (
+            <EmptyState
+              icon={Calendar}
+              title="Tidak ada acara ditemukan"
+              description={
+                events.length === 0
+                  ? "Belum ada acara terdaftar. Klik tombol Tambah Agenda untuk membuat yang pertama."
+                  : "Coba sesuaikan kata kunci pencarian atau filter status."
+              }
+            />
+          ) : (
+            filteredEvents.map(evt => (
+              <div key={evt.id} className="pt-4 flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <StatusBadge status={evt.status} options={statusOptions} />
+                    {evt.eventType === 'internal' && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-purple-50 text-purple-700 border border-purple-200">
+                        Internal
+                      </span>
+                    )}
+                    <span className="text-[10px] text-slate-500 font-semibold font-mono">
+                      {evt.date}{evt.endDate && evt.endDate !== evt.date ? ` → ${evt.endDate}` : ''}
+                    </span>
+                    {evt.allDay && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-600">
+                        All Day
+                      </span>
+                    )}
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-900 leading-tight">{evt.title}</h4>
+                  <p className="text-xs text-slate-500 line-clamp-1">{evt.description}</p>
+                  <p className="text-[10px] text-slate-400 font-medium">📍 {evt.location}</p>
+                </div>
+
+                <ActionButtons
+                  onEdit={() => handleOpenEdit(evt)}
+                  onDelete={() => handleDelete(evt)}
+                  editTitle="Ubah Acara"
+                  deleteTitle="Hapus Acara"
+                />
+              </div>
+            ))
+          )}
+        </ListContainer>
+      ) : (
+        <div className="bg-white border border-slate-200 rounded-2xl p-3 sm:p-4 shadow-sm">
+          <CalendarGrid
+            events={calendarEvents}
+            variant="admin"
+            onEventClick={handleCalendarEventClick}
+            onAddEvent={handleAddFromCalendar}
+          />
+        </div>
+      )}
+
+      {/* Drawer Form */}
       <Drawer
         isOpen={isDrawerOpen}
         onClose={handleCloseDrawer}
@@ -245,7 +361,7 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
             <label className="text-xs font-bold text-slate-700">Deskripsi Lengkap</label>
             <textarea
               required
-              rows={6}
+              rows={5}
               placeholder="Deskripsikan garis besar materi, sasaran peserta, dan benefit..."
               value={form.description}
               onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
@@ -253,9 +369,37 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
             />
           </div>
 
+          {/* Tipe + Status (2 kolom) */}
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Tanggal Pelaksanaan</label>
+              <label className="text-xs font-bold text-slate-700">Tipe Acara</label>
+              <select
+                value={form.eventType}
+                onChange={(e) => setForm(prev => ({ ...prev, eventType: e.target.value as 'public' | 'internal' }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              >
+                <option value="public">Publik (Terbuka)</option>
+                <option value="internal">Internal (Pengurus)</option>
+              </select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Status Publikasi</label>
+              <select
+                value={form.status}
+                onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value as Event['status'] }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              >
+                <option value="upcoming">Akan Datang (Upcoming)</option>
+                <option value="ongoing">Berlangsung (Ongoing)</option>
+                <option value="completed">Telah Selesai (Completed)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Tanggal mulai + selesai */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Tanggal Mulai</label>
               <input
                 type="date"
                 required
@@ -265,50 +409,95 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Waktu Mulai</label>
+              <label className="text-xs font-bold text-slate-700">Tanggal Selesai</label>
               <input
-                type="time"
-                required
-                value={form.time}
-                onChange={(e) => setForm(prev => ({ ...prev, time: e.target.value }))}
+                type="date"
+                value={form.endDate || ''}
+                onChange={(e) => setForm(prev => ({ ...prev, endDate: e.target.value }))}
                 className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
               />
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Lokasi / Media Pertemuan</label>
+          {/* All Day checkbox */}
+          <div className="flex items-center gap-2">
             <input
-              type="text"
-              required
-              placeholder="Contoh: Media Zoom / Aula Grha Akuntan"
-              value={form.location}
-              onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
-              className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              type="checkbox"
+              id="allDay"
+              checked={form.allDay}
+              onChange={(e) => setForm(prev => ({ ...prev, allDay: e.target.checked, time: e.target.checked ? '' : prev.time }))}
+              className="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
             />
+            <label htmlFor="allDay" className="text-xs font-bold text-slate-700">Sepanjang Hari (All Day)</label>
           </div>
 
+          {/* Waktu + Lokasi (2 kolom) */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Waktu</label>
+              <input
+                type="time"
+                value={form.time || ''}
+                disabled={form.allDay}
+                onChange={(e) => setForm(prev => ({ ...prev, time: e.target.value }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-700">Lokasi</label>
+              <input
+                type="text"
+                placeholder="Gedung IAI, Menteng / Zoom Meeting"
+                value={form.location || ''}
+                onChange={(e) => setForm(prev => ({ ...prev, location: e.target.value }))}
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Image Uploader */}
           <ImageUploader
-            label="Gambar Sampul Acara"
+            label="Gambar Acara"
             value={form.imageUrl || ''}
             onChange={(url) => setForm(prev => ({ ...prev, imageUrl: url }))}
             placeholder="https://images.unsplash.com/photo-..."
-            helperText="Unggah gambar poster atau pamflet webinar, atau tempel link gambar."
           />
 
+          {/* Link Pendaftaran */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Status Publikasi</label>
-            <select
-              value={form.status}
-              onChange={(e) => setForm(prev => ({ ...prev, status: e.target.value as Event['status'] }))}
-              className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-            >
-              <option value="upcoming">Akan Datang (Upcoming)</option>
-              <option value="ongoing">Berlangsung (Ongoing)</option>
-              <option value="completed">Telah Selesai (Completed)</option>
-            </select>
+            <label className="text-xs font-bold text-slate-700">Link Pendaftaran (Google Form)</label>
+            <input
+              type="url"
+              placeholder="https://docs.google.com/forms/..."
+              value={form.registrationUrl || ''}
+              onChange={(e) => setForm(prev => ({ ...prev, registrationUrl: e.target.value }))}
+              className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px]"
+            />
           </div>
 
+          {/* Color Picker */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-slate-700">Warna Chip Kalender</label>
+            <div className="flex items-center gap-2 flex-wrap">
+              {CALENDAR_COLORS.map((c) => {
+                const cls = COLOR_CLASSES[c];
+                const active = form.color === c;
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm(prev => ({ ...prev, color: c }))}
+                    className={`w-8 h-8 rounded-full ${cls.bg} transition-all ${
+                      active ? 'ring-2 ring-offset-2 ring-slate-400 scale-110' : 'opacity-70 hover:opacity-100'
+                    }`}
+                    title={c}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Submit buttons */}
           <div className="pt-6 flex items-center gap-3 border-t border-slate-100 mt-6">
             <button
               type="button"
@@ -332,7 +521,7 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  {editingEvent ? 'Simpan Perubahan' : 'Terbitkan Agenda'}
+                  {editingEvent ? 'Simpan Perubahan' : 'Tambah Acara'}
                 </>
               )}
             </button>

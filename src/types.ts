@@ -32,12 +32,15 @@ export interface Event {
   title: string;
   description: string;
   date: string;         // YYYY-MM-DD
+  endDate?: string | null; // YYYY-MM-DD, opsional, untuk event multi-hari
   time: string;         // HH:MM
   location: string;     // e.g., "Gedung IAI, Menteng / Zoom Meeting"
   imageUrl?: string;
   status: 'ongoing' | 'upcoming' | 'completed';
   registrationUrl?: string;
   eventType?: 'public' | 'internal'; // 'public' = terbuka untuk umum, 'internal' = khusus pengurus
+  allDay?: boolean;     // true = sepanjang hari
+  color?: string;       // nama warna chip: 'blue' | 'emerald' | 'purple' | 'amber' | 'slate' (default 'blue')
 }
 
 // Extended Event untuk portal anggota (include RSVP info)

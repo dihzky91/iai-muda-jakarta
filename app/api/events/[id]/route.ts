@@ -26,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const { id } = await params;
-    const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = await request.json();
+    const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
     const eventId = parseInt(id);
 
     // Validasi registrationUrl jika diisi
@@ -37,15 +37,26 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       );
     }
 
+    if (endDate && date && endDate < date) {
+      return NextResponse.json(
+        { success: false, message: 'Tanggal selesai harus sama atau setelah tanggal mulai.' },
+        { status: 400 }
+      );
+    }
+
     await db.update(schema.events).set({
       title: title || undefined,
       description: description || undefined,
       date: date || undefined,
+      endDate: endDate !== undefined ? endDate : undefined,
       time: time || undefined,
       location: location || undefined,
       imageUrl: imageUrl || undefined,
       registrationUrl: registrationUrl || undefined,
       status: status || undefined,
+      eventType: eventType || undefined,
+      allDay: allDay !== undefined ? allDay : undefined,
+      color: color || undefined,
       generationId: generationId || undefined,
     }).where(eq(schema.events.id, eventId));
 

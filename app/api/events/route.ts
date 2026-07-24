@@ -50,11 +50,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
     }
 
-    const { title, description, date, time, location, imageUrl, registrationUrl, status, generationId } = await request.json();
+    const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
 
     if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
       return NextResponse.json(
         { success: false, message: 'Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)' },
+        { status: 400 }
+      );
+    }
+
+    if (endDate && endDate < date) {
+      return NextResponse.json(
+        { success: false, message: 'Tanggal selesai harus sama atau setelah tanggal mulai.' },
         { status: 400 }
       );
     }
@@ -64,6 +71,8 @@ export async function POST(request: NextRequest) {
       description: { value: description, type: 'string', minLen: 10,              label: 'Deskripsi' },
       date:        { value: date,        type: 'string', regex: /^\d{4}-\d{2}-\d{2}$/, label: 'Tanggal (format YYYY-MM-DD)' },
       ...(status ? { status: { value: status, enum: ['upcoming', 'ongoing', 'completed'], label: 'Status' } } : {}),
+      ...(eventType ? { eventType: { value: eventType, enum: ['public', 'internal'], label: 'Tipe acara' } } : {}),
+      ...(color ? { color: { value: color, enum: ['blue', 'emerald', 'purple', 'amber', 'slate', 'rose'], label: 'Warna' } } : {}),
     });
     if (err) return NextResponse.json({ success: false, message: err }, { status: 400 });
 
@@ -71,11 +80,15 @@ export async function POST(request: NextRequest) {
       title,
       description,
       date,
+      endDate: endDate || null,
       time: time || null,
       location: location || null,
       imageUrl: imageUrl || null,
       registrationUrl: registrationUrl || null,
       status: status || 'upcoming',
+      eventType: eventType || 'public',
+      allDay: allDay ?? false,
+      color: color || 'blue',
       generationId: generationId || null,
     });
 
