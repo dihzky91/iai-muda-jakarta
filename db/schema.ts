@@ -62,6 +62,7 @@ export const events = mysqlTable('events', {
   registrationUrl: varchar('registration_url', { length: 500 }),
   status: mysqlEnum('status', ['ongoing', 'upcoming', 'completed']).default('upcoming').notNull(),
   eventType: mysqlEnum('event_type', ['public', 'internal']).default('public').notNull(),
+  visibleToAlumni: boolean('visible_to_alumni').default(false).notNull(),
   allDay: boolean('all_day').default(false).notNull(),
   color: varchar('color', { length: 20 }).default('blue').notNull(),
   generationId: int('generation_id'),
@@ -79,6 +80,26 @@ export const eventRsvps = mysqlTable('event_rsvps', {
   uniqRsvp: uniqueIndex('uniq_event_member_rsvp').on(table.eventId, table.memberId),
 }));
 
+export const eventCommittees = mysqlTable('event_committees', {
+  id: serial('id').primaryKey(),
+  eventId: int('event_id').notNull(),
+  memberId: int('member_id').notNull(),
+  role: varchar('role', { length: 100 }).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqCommittee: uniqueIndex('uniq_event_member_role').on(table.eventId, table.memberId, table.role),
+}));
+
+export const eventMaterials = mysqlTable('event_materials', {
+  id: serial('id').primaryKey(),
+  eventId: int('event_id').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  fileUrl: varchar('file_url', { length: 500 }).notNull(),
+  fileType: varchar('file_type', { length: 50 }),
+  uploadedBy: int('uploaded_by'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
 export const generationsRelations = relations(generations, ({ many }) => ({
   members: many(members),
   events: many(events),
@@ -94,6 +115,8 @@ export const membersRelations = relations(members, ({ one, many }) => ({
     references: [positions.id],
   }),
   rsvps: many(eventRsvps),
+  committees: many(eventCommittees),
+  uploadedMaterials: many(eventMaterials),
 }));
 
 export const positionsRelations = relations(positions, ({ many }) => ({
@@ -106,6 +129,8 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
     references: [generations.id],
   }),
   rsvps: many(eventRsvps),
+  committees: many(eventCommittees),
+  materials: many(eventMaterials),
 }));
 
 export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
@@ -115,6 +140,28 @@ export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
   }),
   member: one(members, {
     fields: [eventRsvps.memberId],
+    references: [members.id],
+  }),
+}));
+
+export const eventCommitteesRelations = relations(eventCommittees, ({ one }) => ({
+  event: one(events, {
+    fields: [eventCommittees.eventId],
+    references: [events.id],
+  }),
+  member: one(members, {
+    fields: [eventCommittees.memberId],
+    references: [members.id],
+  }),
+}));
+
+export const eventMaterialsRelations = relations(eventMaterials, ({ one }) => ({
+  event: one(events, {
+    fields: [eventMaterials.eventId],
+    references: [events.id],
+  }),
+  uploader: one(members, {
+    fields: [eventMaterials.uploadedBy],
     references: [members.id],
   }),
 }));
@@ -150,6 +197,22 @@ export const galleries = mysqlTable('galleries', {
   category: varchar('category', { length: 255 }),
   photographer: varchar('photographer', { length: 255 }),
   images: text('images'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+/**
+ * Tabel kategori galeri (editable dari CMS)
+ * Menggantikan list hardcode di GalleryManager.tsx.
+ * Kolom `slug` untuk identifikasi internal; `name` untuk tampilan.
+ */
+export const galleryCategories = mysqlTable('gallery_categories', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 100 }).notNull().unique(),
+  slug: varchar('slug', { length: 100 }).notNull().unique(),
+  color: varchar('color', { length: 20 }).default('blue').notNull(),
+  sortOrder: int('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });

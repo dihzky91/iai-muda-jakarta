@@ -45,7 +45,7 @@ export default function ActionButtons({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-xl border border-slate-100 shadow-xl shadow-slate-900/10 z-20 py-1 animate-scale-up origin-top-right"
+          className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-xl border border-slate-100 shadow-xl shadow-slate-900/10 z-50 py-1 animate-scale-up origin-top-right"
         >
           <button
             type="button"

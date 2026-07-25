@@ -33,7 +33,12 @@ export default function ListContainer({ title, subtitle, onAdd, addLabel, childr
       {filter && <div>{filter}</div>}
       {toolbar && <div className="-mt-2">{toolbar}</div>}
 
-      <div className="overflow-y-auto max-h-[600px] pr-2 space-y-4">
+      <div
+        className="pr-2 space-y-4 relative"
+        // overflow-visible supaya dropdown menu (⋮) dari ActionButtons tidak ter-clip
+        // oleh container scroll. z-index tinggi agar dropdown tampil di atas elemen lain.
+        style={{ zIndex: 1 }}
+      >
         {children}
       </div>
     </div>

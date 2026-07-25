@@ -39,6 +39,7 @@ export interface Event {
   status: 'ongoing' | 'upcoming' | 'completed';
   registrationUrl?: string;
   eventType?: 'public' | 'internal'; // 'public' = terbuka untuk umum, 'internal' = khusus pengurus
+  visibleToAlumni?: boolean; // untuk event internal, apakah visible ke alumni?
   allDay?: boolean;     // true = sepanjang hari
   color?: string;       // nama warna chip: 'blue' | 'emerald' | 'purple' | 'amber' | 'slate' (default 'blue')
 }
@@ -67,6 +68,36 @@ export interface RsvpStats {
 
 export type RsvpStatus = 'attending' | 'not_attending' | 'maybe';
 
+// Event Committee (panitia event)
+export interface EventCommittee {
+  id: number;
+  eventId: number;
+  memberId: number;
+  role: string; // 'ketua_panitia', 'acara', 'humasi', 'dokumentasi', etc
+  createdAt: string;
+  member?: Member; // populated dari join
+}
+
+// Event Material (materi/file event)
+export interface EventMaterial {
+  id: number;
+  eventId: number;
+  title: string;
+  fileUrl: string;
+  fileType?: string | null; // 'slide', 'notulensi', 'sertifikat', 'foto'
+  uploadedBy?: number | null;
+  createdAt: string;
+  uploader?: Member; // populated dari join
+}
+
+// Extended Event dengan committee & materials untuk managed events
+export interface ManagedEvent extends Event {
+  committees?: EventCommittee[];
+  materials?: EventMaterial[];
+  isCommittee?: boolean; // apakah current user adalah committee
+  committeeRole?: string; // role current user di event ini
+}
+
 export interface Article {
   id: number;
   title: string;
@@ -88,6 +119,20 @@ export interface GalleryItem {
   images?: string[];
 }
 
+/**
+ * Kategori galeri (editable dari CMS).
+ * Tabel: gallery_categories di DB.
+ * Dipakai untuk dropdown & filter chip di GalleryManager.
+ */
+export interface GalleryCategory {
+  id: number;
+  name: string;
+  slug: string;
+  color: string;       // 'blue' | 'amber' | 'emerald' | 'pink' | 'purple' | 'slate' | ...
+  sortOrder: number;
+  isActive: boolean;
+}
+
 export interface Pillar {
   id: number;
   title: string;
@@ -104,13 +149,12 @@ export interface Settings {
   email: string;
   phone: string | null;
   showPhone: boolean;
-  instagramUrl?: string | null;
-  linkedinUrl?: string | null;
-  youtubeUrl?: string | null;
-  divisionPhotos?: string | null;
-  divisions?: string | null; // JSON array of division name strings
-  footerDescription?: string | null;
+  instagramUrl: string | null;
+  linkedinUrl: string | null;
+  youtubeUrl: string | null;
+  divisionPhotos: string | null;
+  divisions: string | null;
+  footerDescription: string | null;
   logoUrl?: string | null;
   faviconUrl?: string | null;
-  updatedAt?: string;
 }

@@ -15,7 +15,9 @@ import {
   ChevronRight,
   Users,
   Calendar,
+  CalendarDays,
   HelpCircle,
+  Briefcase,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 
@@ -49,7 +51,15 @@ const navGroups: NavGroup[] = [
     title: 'Organisasi',
     items: [
       { href: '/portal/directory', label: 'Direktori Anggota', icon: Users },
-      { href: '/portal/events', label: 'Acara', icon: Calendar },
+      { href: '/portal/calendar', label: 'Kalender', icon: CalendarDays },
+    ],
+  },
+  {
+    title: 'Kegiatan',
+    items: [
+      { href: '/portal/events', label: 'Semua Acara', icon: Calendar },
+      { href: '/portal/events/managed', label: 'Yang Saya Kelola', icon: Briefcase },
+      { href: '/portal/events/internal', label: 'Event Internal', icon: Users },
     ],
   },
   {

@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
-import { Image as ImageIcon, Sparkles, Upload, Check } from 'lucide-react';
-import { GalleryItem } from '@/src/types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { Image as ImageIcon, Sparkles, Upload, Check, Plus, Tag, Trash2 } from 'lucide-react';
+import { GalleryItem, GalleryCategory } from '@/src/types';
 import { useToast } from '@/src/hooks/useToast';
 import { useConfirm } from '@/src/hooks/useConfirm';
 import PageHeader from './PageHeader';
@@ -20,16 +20,32 @@ interface GalleryManagerProps {
   setGallery: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
 }
 
-const categories = ['Webinar & Talkshow', 'Rapat Kerja (Raker)', 'Kunjungan Industri', 'Sosial & Pengabdian'];
-
 const emptyForm: Omit<GalleryItem, 'id'> = {
   title: '',
   description: '',
-  category: categories[0],
+  category: '',
   date: '',
   imageUrl: '',
   photographer: '',
   images: [],
+};
+
+const COLOR_OPTIONS = [
+  { value: 'blue',    label: 'Biru' },
+  { value: 'amber',   label: 'Kuning' },
+  { value: 'emerald', label: 'Hijau' },
+  { value: 'pink',    label: 'Merah Muda' },
+  { value: 'purple',  label: 'Ungu' },
+  { value: 'slate',   label: 'Abu-Abu' },
+];
+
+const colorMap: Record<string, string> = {
+  blue: 'bg-blue-50 text-blue-700 border-blue-100',
+  amber: 'bg-amber-50 text-amber-700 border-amber-100',
+  emerald: 'bg-emerald-50 text-emerald-700 border-emerald-100',
+  pink: 'bg-pink-50 text-pink-700 border-pink-100',
+  purple: 'bg-purple-50 text-purple-700 border-purple-100',
+  slate: 'bg-slate-50 text-slate-700 border-slate-200',
 };
 
 export default function GalleryManager({ gallery, setGallery }: GalleryManagerProps) {
@@ -39,10 +55,40 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
 
+  const [categories, setCategories] = useState<GalleryCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+
+  const [newCategory, setNewCategory] = useState({ name: '', color: 'blue' });
+  const [addingCategory, setAddingCategory] = useState(false);
+
+  const fetchCategories = async () => {
+    setLoadingCategories(true);
+    try {
+      const res = await fetch('/api/gallery-categories');
+      const result = await res.json();
+      if (result.success) {
+        setCategories(result.data || []);
+      }
+    } catch {
+      triggerToast('Gagal memuat daftar kategori.', 'error');
+    } finally {
+      setLoadingCategories(false);
+    }
+  };
+
+  useEffect(() => { fetchCategories(); }, []);
+
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<GalleryItem | null>(null);
   const [form, setForm] = useState<Omit<GalleryItem, 'id'>>(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!form.category && categories.length > 0) {
+      const first = categories.find(c => c.isActive) ?? categories[0];
+      setForm(prev => ({ ...prev, category: first.name }));
+    }
+  }, [categories, form.category]);
 
   const filteredGallery = useMemo(() => {
     return gallery.filter(item => {
@@ -63,8 +109,9 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
   };
 
   const handleOpenAdd = () => {
+    const firstCat = categories.find(c => c.isActive) ?? categories[0];
     setEditingItem(null);
-    setForm(emptyForm);
+    setForm({ ...emptyForm, category: firstCat?.name ?? '' });
     setIsDrawerOpen(true);
   };
 
@@ -73,7 +120,7 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
     setForm({
       title: item.title,
       description: item.description,
-      category: item.category || categories[0],
+      category: item.category || '',
       date: item.date,
       imageUrl: item.imageUrl || '',
       photographer: item.photographer || '',
@@ -86,23 +133,6 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
     setIsDrawerOpen(false);
     setEditingItem(null);
     setForm(emptyForm);
-  };
-
-  const handleUploadAdditional = async (file: File) => {
-    const formData = new FormData();
-    formData.append('image', file);
-    try {
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.success && data.url) {
-        setForm(prev => ({ ...prev, images: [...(prev.images || []), data.url] }));
-        triggerToast('Berhasil mengunggah foto tambahan!');
-      } else {
-        triggerToast(data.message || 'Gagal mengunggah foto tambahan.', 'error');
-      }
-    } catch {
-      triggerToast('Terjadi kesalahan saat mengunggah foto.', 'error');
-    }
   };
 
   const handleUploadMultiple = async (files: FileList | null) => {
@@ -131,9 +161,7 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-
     const payload = { ...form };
-
     try {
       if (editingItem) {
         const res = await fetch(`/api/galleries/${editingItem.id}`, {
@@ -172,7 +200,7 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
           triggerToast(`Gagal menambahkan: ${result.message}`, 'error');
         }
       }
-    } catch (err) {
+    } catch {
       triggerToast('Terjadi kesalahan saat menyimpan galeri.', 'error');
     } finally {
       setSubmitting(false);
@@ -187,7 +215,6 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
       variant: 'danger',
     });
     if (!confirmed) return;
-
     const res = await fetch(`/api/galleries/${item.id}`, { method: 'DELETE' });
     const result = await res.json();
     if (result.success) {
@@ -195,6 +222,56 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
       triggerToast('Foto galeri berhasil dihapus.');
     } else {
       triggerToast(`Gagal menghapus: ${result.message}`, 'error');
+    }
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategory.name.trim()) {
+      triggerToast('Nama kategori wajib diisi.', 'error');
+      return;
+    }
+    setAddingCategory(true);
+    try {
+      const res = await fetch('/api/gallery-categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCategory.name.trim(),
+          color: newCategory.color,
+          sortOrder: categories.length + 1,
+        }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        triggerToast(`Kategori "${result.data.name}" berhasil ditambahkan!`);
+        setNewCategory({ name: '', color: 'blue' });
+        await fetchCategories();
+        setForm(prev => ({ ...prev, category: result.data.name }));
+      } else {
+        triggerToast(`Gagal: ${result.message}`, 'error');
+      }
+    } catch {
+      triggerToast('Terjadi kesalahan saat menambah kategori.', 'error');
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const handleDeleteCategory = async (cat: GalleryCategory) => {
+    const confirmed = await confirm({
+      title: 'Hapus Kategori',
+      message: `Hapus kategori "${cat.name}"? Foto yang sudah ada di kategori ini tidak akan terhapus.`,
+      confirmText: 'Hapus',
+      variant: 'danger',
+    });
+    if (!confirmed) return;
+    const res = await fetch(`/api/gallery-categories/${cat.id}`, { method: 'DELETE' });
+    const result = await res.json();
+    if (result.success) {
+      triggerToast('Kategori berhasil dihapus.');
+      await fetchCategories();
+    } else {
+      triggerToast(`Gagal: ${result.message}`, 'error');
     }
   };
 
@@ -221,7 +298,10 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
                 label: 'Kategori',
                 value: categoryFilter,
                 onChange: setCategoryFilter,
-                options: [{ value: 'all', label: 'Semua Kategori' }, ...categories.map(c => ({ value: c, label: c }))],
+                options: [
+                  { value: 'all', label: 'Semua Kategori' },
+                  ...categories.map(c => ({ value: c.name, label: c.name })),
+                ],
               },
             ]}
           />
@@ -256,7 +336,6 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
                   <p className="text-[10px] text-slate-400 line-clamp-1 mt-0.5">{item.description}</p>
                 </div>
               </div>
-
               <ActionButtons
                 onEdit={() => handleOpenEdit(item)}
                 onDelete={() => handleDelete(item)}
@@ -266,6 +345,85 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
             </div>
           ))
         )}
+      </ListContainer>
+
+      {/* Panel manajemen kategori */}
+      <ListContainer
+        title="Manajemen Kategori Galeri"
+        subtitle={`Total ${categories.length} kategori • Tambah atau hapus kategori dari sini`}
+        addLabel=""
+        onAdd={() => {}}
+      >
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Tag className="h-4 w-4 text-blue-600" />
+              <h4 className="text-xs font-bold text-slate-700">Tambah Kategori Baru</h4>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                placeholder="Contoh: Workshop & Training"
+                value={newCategory.name}
+                onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                className="flex-1 rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              />
+              <select
+                value={newCategory.color}
+                onChange={(e) => setNewCategory(prev => ({ ...prev, color: e.target.value }))}
+                className="rounded-xl bg-white border border-slate-200 px-3 py-2 text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+              >
+                {COLOR_OPTIONS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+              </select>
+              <button
+                type="button"
+                onClick={handleAddCategory}
+                disabled={addingCategory || !newCategory.name.trim()}
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 text-xs font-bold transition-all shadow-md shadow-blue-500/10 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {addingCategory ? 'Menambah…' : 'Tambah'}
+              </button>
+            </div>
+          </div>
+
+          {loadingCategories ? (
+            <p className="text-xs text-slate-500 text-center py-4">Memuat kategori…</p>
+          ) : categories.length === 0 ? (
+            <EmptyState
+              icon={Tag}
+              title="Belum ada kategori"
+              description="Tambahkan kategori pertama Anda di atas."
+            />
+          ) : (
+            <div className="space-y-2">
+              {categories.map(cat => {
+                const pillColor = colorMap[cat.color] || colorMap.blue;
+                const usage = gallery.filter(g => g.category === cat.name).length;
+                return (
+                  <div key={cat.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white px-3 py-2.5">
+                    <div className="flex items-center gap-2 flex-1 min-w-0">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border ${pillColor}`}>
+                        {cat.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {usage} foto
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteCategory(cat)}
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer"
+                      title="Hapus kategori"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </ListContainer>
 
       <Drawer
@@ -309,9 +467,12 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
               <select
                 value={form.category}
                 onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))}
-                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-850"
+                className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900"
               >
-                {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="">— Pilih Kategori —</option>
+                {categories.filter(c => c.isActive).map(c => (
+                  <option key={c.id} value={c.name}>{c.name}</option>
+                ))}
               </select>
             </div>
             <div className="space-y-1.5">

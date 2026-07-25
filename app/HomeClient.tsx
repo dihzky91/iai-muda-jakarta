@@ -13,6 +13,8 @@ import FeaturedEventSpotlight from '@/src/components/home/FeaturedEventSpotlight
 import ArticlesSection from '@/src/components/ArticlesSection';
 import GallerySection from '@/src/components/GallerySection';
 import { SkeletonBanner, SkeletonCardGrid, SkeletonPillars, SkeletonStructure } from '@/src/components/SkeletonLoader';
+import { CalendarGrid, type CalendarEvent } from '@/src/components/calendar';
+import EventRegistrationModal from '@/src/components/EventRegistrationModal';
 import type { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '@/src/types';
 
 interface HomeClientProps {
@@ -27,6 +29,9 @@ interface HomeClientProps {
 
 export default function HomeClient({ settings: serverSettings, pillars: serverPillars, events: serverEvents, members: serverMembers, generations: serverGenerations, articles: serverArticles, galleries: serverGalleries }: HomeClientProps) {
   const [currentTab, setCurrentTab] = useState<string>('beranda');
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [registeringEvent, setRegisteringEvent] = useState<Event | null>(null);
 
   const defaultSettings: Settings = { id: 1, contactTitle: 'Hubungi IAI Wilayah DKI Jakarta', contactDescription: 'Kami siap mendengar aspirasi dan pertanyaan Anda seputar program IAI Muda DKI Jakarta.', address: 'Grha Akuntan, Jl. Sindanglaya No. 7, Menteng, Jakarta Pusat 10310', email: 'imud@iaijakarta.or.id', phone: null, showPhone: false, instagramUrl: null, linkedinUrl: null, youtubeUrl: null, divisionPhotos: null, divisions: null, footerDescription: null };
 
@@ -57,6 +62,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       beranda: 'IAI Muda Wilayah DKI Jakarta',
       struktur: 'Kepengurusan — IAI Muda DKI Jakarta',
       acara: 'Agenda & Webinar — IAI Muda DKI Jakarta',
+      kalender: 'Kalender Acara — IAI Muda DKI Jakarta',
       galeri: 'Galeri Kegiatan — IAI Muda DKI Jakarta',
       artikel: 'Artikel & Opini — IAI Muda DKI Jakarta',
     };
@@ -66,6 +72,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       beranda: 'Website resmi IAI Muda Wilayah DKI Jakarta — Badan kelengkapan Ikatan Akuntan Indonesia yang menaungi mahasiswa akuntansi dan akuntan muda.',
       struktur: 'Lihat susunan kepengurusan IAI Muda Wilayah DKI Jakarta.',
       acara: 'Jadwal agenda, webinar, dan acara terbaru IAI Muda DKI Jakarta.',
+      kalender: 'Lihat kalender acara bulanan IAI Muda DKI Jakarta dalam tampilan visual yang mudah dipahami.',
       galeri: 'Dokumentasi galeri kegiatan IAI Muda Wilayah DKI Jakarta.',
       artikel: 'Artikel dan opini akuntansi terkini dari IAI Muda DKI Jakarta.',
     };
@@ -90,6 +97,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       beranda: defaultOgImage,
       struktur: 'https://imud.iaijakarta.or.id/images/seo-struktur.png',
       acara: 'https://imud.iaijakarta.or.id/images/seo-acara.png',
+      kalender: 'https://imud.iaijakarta.or.id/images/seo-acara.png',
       galeri: 'https://imud.iaijakarta.or.id/images/seo-galeri.png',
       artikel: 'https://imud.iaijakarta.or.id/images/seo-artikel.png',
     };
@@ -106,6 +114,7 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       beranda: '',
       struktur: '/struktur',
       acara: '/acara',
+      kalender: '/kalender',
       galeri: '/galeri',
       artikel: '/artikel',
     };
@@ -121,6 +130,34 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
       document.head.appendChild(link);
     }
   }, [currentTab]);
+
+  // Fetch calendar events when tab switches to kalender
+  useEffect(() => {
+    if (currentTab === 'kalender' && calendarEvents.length === 0) {
+      setCalendarLoading(true);
+      fetch('/api/calendar/events?scope=public')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.data)) {
+            setCalendarEvents(data.data);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch calendar events:', err);
+        })
+        .finally(() => {
+          setCalendarLoading(false);
+        });
+    }
+  }, [currentTab, calendarEvents.length]);
+
+  const handleCalendarEventClick = (e: CalendarEvent) => {
+    // Find matching event from events array
+    const matchingEvent = events.find((evt) => evt.id === e.id);
+    if (matchingEvent) {
+      setRegisteringEvent(matchingEvent);
+    }
+  };
 
   const [contactName, setContactName] = useState('');
   const [contactEmail, setContactEmail] = useState('');
@@ -418,6 +455,57 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
             )
           )}
 
+          {currentTab === 'kalender' && (
+            <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
+              {/* Header Section */}
+              <div className="text-center max-w-3xl mx-auto space-y-4">
+                <h2 className="font-display text-3xl font-extrabold text-slate-900 sm:text-4xl">
+                  Kalender Acara IAI Muda
+                </h2>
+                <p className="text-slate-600 text-sm sm:text-base">
+                  Lihat agenda acara dalam tampilan kalender bulanan. Klik pada event untuk melihat detail dan melakukan pendaftaran.
+                </p>
+              </div>
+
+              {/* Calendar Stats */}
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-50 border border-blue-100">
+                  <Calendar className="h-4 w-4 text-blue-600" />
+                  <span className="text-xs font-bold text-blue-700">
+                    {calendarEvents.length} Total Acara
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-50 border border-emerald-100">
+                  <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span className="text-xs font-bold text-emerald-700">
+                    {calendarEvents.filter((e) => e.status === 'upcoming').length} Akan Datang
+                  </span>
+                </div>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-4 sm:p-6 shadow-sm">
+                <CalendarGrid
+                  events={calendarEvents}
+                  variant="public"
+                  loading={calendarLoading}
+                  onEventClick={handleCalendarEventClick}
+                />
+              </div>
+
+              {/* Quick Link */}
+              <div className="text-center">
+                <button
+                  onClick={() => setCurrentTab('acara')}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+                >
+                  <ArrowRight className="h-4 w-4" />
+                  Lihat Tampilan Daftar Lengkap
+                </button>
+              </div>
+            </div>
+          )}
+
           {currentTab === 'galeri' && (
             isLoading ? (
               <SkeletonCardGrid count={6} />
@@ -471,6 +559,9 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
                 <button onClick={() => { setCurrentTab('acara'); }} className="hover:text-blue-600 transition-colors font-medium">Agenda Webinar</button>
               </li>
               <li>
+                <button onClick={() => { setCurrentTab('kalender'); }} className="hover:text-blue-600 transition-colors font-medium">Kalender Acara</button>
+              </li>
+              <li>
                 <button onClick={() => { setCurrentTab('galeri'); }} className="hover:text-blue-600 transition-colors font-medium">Galeri Kegiatan</button>
               </li>
               <li>
@@ -499,6 +590,14 @@ export default function HomeClient({ settings: serverSettings, pillars: serverPi
 
         </div>
       </footer>
+
+      {/* Event Registration Modal */}
+      {registeringEvent && (
+        <EventRegistrationModal
+          event={registeringEvent}
+          onClose={() => setRegisteringEvent(null)}
+        />
+      )}
 
     </div>
   );

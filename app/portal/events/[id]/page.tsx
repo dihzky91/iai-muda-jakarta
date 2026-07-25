@@ -3,15 +3,19 @@
 import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Calendar, MapPin, Clock, Users, Globe, ExternalLink, FileText, Check, X, HelpCircle, Sparkles, CalendarDays } from 'lucide-react';
+import { ArrowLeft, Calendar, MapPin, Clock, Users, Globe, ExternalLink, FileText, Check, X, HelpCircle, Sparkles, CalendarDays, Briefcase } from 'lucide-react';
 import { MemberLayout } from '@/src/components/member';
 import RsvpButton from '@/src/components/member/events/RsvpButton';
-import type { MemberEvent, RsvpStatus } from '@/src/types';
+import EventMaterialUploader from '@/src/components/member/events/EventMaterialUploader';
+import EventCommitteeList from '@/src/components/member/events/EventCommitteeList';
+import EventAttendeesList from '@/src/components/member/events/EventAttendeesList';
+import type { MemberEvent, RsvpStatus, ManagedEvent } from '@/src/types';
 
 export default function EventDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const [event, setEvent] = useState<MemberEvent | null>(null);
+  const [managedEvent, setManagedEvent] = useState<ManagedEvent | null>(null);
   const [loading, setLoading] = useState(true);
   const [rsvpStatus, setRsvpStatus] = useState<RsvpStatus | null>(null);
 
@@ -27,6 +31,8 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       if (data.success) {
         setEvent(data.data);
         setRsvpStatus(data.data.myRsvp?.status || null);
+        // Also fetch managed event data if user is committee
+        fetchManagedEvent();
       } else {
         router.push('/portal/events');
       }
@@ -36,6 +42,25 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchManagedEvent = async () => {
+    try {
+      const res = await fetch('/api/member/events/managed');
+      const data = await res.json();
+      if (res.ok && data.events) {
+        const found = data.events.find((e: ManagedEvent) => e.id === parseInt(id));
+        if (found) {
+          setManagedEvent(found);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch managed event:', err);
+    }
+  };
+
+  const handleEventUpdate = (updatedEvent: ManagedEvent) => {
+    setManagedEvent(updatedEvent);
   };
 
   if (loading) {
@@ -115,6 +140,18 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Content (Left Column) */}
           <div className="lg:col-span-2 space-y-5">
+            {/* Committee Badge */}
+            {managedEvent?.isCommittee && (
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-500/10 via-indigo-500/5 to-transparent border border-blue-200 shadow-sm">
+                <div className="flex items-center gap-2 text-blue-900">
+                  <Briefcase className="h-5 w-5 text-blue-600" />
+                  <h2 className="text-sm font-extrabold">Anda adalah Panitia</h2>
+                </div>
+                <p className="text-xs text-slate-600 mt-1">
+                  Anda terdaftar sebagai {formatRole(managedEvent.committeeRole || 'panitia')}. Anda dapat mengelola materi dan melihat daftar kehadiran.
+                </p>
+              </div>
+            )}
             {/* Metadata Cards Grid */}
             <div className="bg-white border border-slate-200/80 rounded-2xl p-4 sm:p-5 shadow-sm grid grid-cols-2 sm:grid-cols-4 gap-4">
               <MetaItem
@@ -181,18 +218,25 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
               </div>
             )}
 
-            {/* Materials Section Notice */}
-            <div className="bg-amber-50/70 border border-dashed border-amber-300/80 rounded-2xl p-4 space-y-1.5 shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">
-                  Materi Kegiatan
-                </span>
-                <h2 className="text-xs font-bold text-slate-800">Sertifikat & Slide Presentasi</h2>
+            {/* Materials & Committee Sections */}
+            {managedEvent?.isCommittee ? (
+              <div className="space-y-5">
+                <EventCommitteeList committees={managedEvent.committees || []} />
+                <EventMaterialUploader event={managedEvent} onEventUpdate={handleEventUpdate} />
               </div>
-              <p className="text-xs text-slate-600 leading-relaxed">
-                Materi seminar dan notulensi acara dibagikan langsung oleh panitia pelaksana melalui grup internal atau tautan Drive resmi.
-              </p>
-            </div>
+            ) : (
+              <div className="bg-amber-50/70 border border-dashed border-amber-300/80 rounded-2xl p-4 space-y-1.5 shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 bg-amber-200 px-2 py-0.5 rounded-full">
+                    Materi Kegiatan
+                  </span>
+                  <h2 className="text-xs font-bold text-slate-800">Sertifikat & Slide Presentasi</h2>
+                </div>
+                <p className="text-xs text-slate-600 leading-relaxed">
+                  Materi seminar dan notulensi acara dibagikan langsung oleh panitia pelaksana melalui grup internal atau tautan Drive resmi.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Sidebar Controls (Right Column) */}
@@ -230,6 +274,11 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
                   <StatBar icon={X} label="Halangan / Absent" count={event.stats.totalNotAttending} color="rose" />
                 </div>
               </div>
+            )}
+
+            {/* Attendees List (Committee only) */}
+            {managedEvent?.isCommittee && isInternal && (
+              <EventAttendeesList eventId={event.id} />
             )}
           </div>
         </div>
@@ -289,6 +338,14 @@ function TypeBadge({ type, light = false }: { type: 'public' | 'internal'; light
       <Globe className="h-3.5 w-3.5 text-emerald-200" /> Acara Publik
     </span>
   );
+}
+
+function formatRole(role: string): string {
+  return role
+    .replace(/_/g, ' ')
+    .split(' ')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 function StatusBadge({ status, light = false }: { status: string; light?: boolean }) {

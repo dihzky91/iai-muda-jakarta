@@ -35,6 +35,7 @@ const emptyForm: Omit<Event, 'id'> = {
   registrationUrl: '',
   status: 'upcoming',
   eventType: 'public',
+  visibleToAlumni: false,
   allDay: false,
   color: 'blue',
 };
@@ -395,6 +396,25 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               </select>
             </div>
           </div>
+
+          {/* Visible to Alumni checkbox - hanya muncul jika event internal */}
+          {form.eventType === 'internal' && (
+            <div className="flex items-center gap-2 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+              <input
+                type="checkbox"
+                id="visibleToAlumni"
+                checked={form.visibleToAlumni || false}
+                onChange={(e) => setForm(prev => ({ ...prev, visibleToAlumni: e.target.checked }))}
+                className="w-4 h-4 rounded border-purple-300 text-purple-600 focus:ring-purple-500"
+              />
+              <label htmlFor="visibleToAlumni" className="text-xs font-bold text-purple-900">
+                Visible untuk Alumni
+                <span className="block text-[10px] font-normal text-purple-700 mt-0.5">
+                  Centang jika event internal ini bisa dilihat oleh alumni
+                </span>
+              </label>
+            </div>
+          )}
 
           {/* Tanggal mulai + selesai */}
           <div className="grid grid-cols-2 gap-4">

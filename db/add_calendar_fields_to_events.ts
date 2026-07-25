@@ -7,19 +7,40 @@
  * - color    : varchar(20), default 'blue' — warna chip di kalender
  *
  * Usage:
- *   tsx db/add_calendar_fields_to_events.ts
+ *   npx tsx db/add_calendar_fields_to_events.ts
  */
 import 'dotenv/config';
 import mysql from 'mysql2/promise';
 
 async function main() {
-  const url = process.env.DATABASE_URL;
-  if (!url) {
-    console.error('DATABASE_URL not set');
+  const host = process.env.DB_HOST;
+  const user = process.env.DB_USER;
+  const password = process.env.DB_PASSWORD;
+  const database = process.env.DB_NAME;
+  const port = parseInt(process.env.DB_PORT || '3306', 10);
+
+  if (!host || !user || !database) {
+    console.error('DB_HOST / DB_USER / DB_NAME belum di-set di .env');
     process.exit(1);
   }
 
-  const conn = await mysql.createConnection(url);
+  const isTiDB = host.includes('tidb');
+
+  const conn = await mysql.createConnection({
+    host,
+    user,
+    password,
+    database,
+    port,
+    ...(isTiDB
+      ? {
+          ssl: {
+            rejectUnauthorized: true,
+            minVersion: 'TLSv1.2' as const,
+          },
+        }
+      : {}),
+  });
 
   console.log('Adding calendar fields to events table...');
 
@@ -32,7 +53,7 @@ async function main() {
   for (const sql of statements) {
     try {
       await conn.query(sql);
-      console.log(`✓ ${sql}`);
+      console.log(`OK ${sql}`);
     } catch (err: any) {
       // kolom sudah ada = skip (idempotent)
       if (err.code === 'ER_DUP_FIELDNAME') {

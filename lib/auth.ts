@@ -86,3 +86,49 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
+
+/**
+ * Verify member token from request
+ * Returns member authentication status and memberId if valid
+ */
+export async function verifyMemberToken(request: NextRequest): Promise<{
+  valid: boolean;
+  memberId?: number;
+  email?: string;
+}> {
+  const user = getUserFromRequest(request);
+  
+  if (!user || user.type !== 'member') {
+    return { valid: false };
+  }
+
+  return {
+    valid: true,
+    memberId: user.memberId,
+    email: user.email,
+  };
+}
+
+/**
+ * Verify admin token from request
+ * Returns admin authentication status and userId/role if valid
+ */
+export async function verifyAdminToken(request: NextRequest): Promise<{
+  valid: boolean;
+  userId?: number;
+  username?: string;
+  role?: UserRole;
+}> {
+  const user = getUserFromRequest(request);
+  
+  if (!user || user.type !== 'admin') {
+    return { valid: false };
+  }
+
+  return {
+    valid: true,
+    userId: user.userId,
+    username: user.username,
+    role: user.role,
+  };
+}

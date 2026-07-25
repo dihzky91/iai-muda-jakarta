@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      // 'lax' agar cookie tetap terkirim pada request same-origin (termasuk fetch DELETE/PUT dari CMS).
+      // 'strict' akan memblokir cookie pada fetch non-navigation → muncul 401/403 acak di aksi admin.
+      sameSite: 'lax',
+      path: '/',
       maxAge: 8 * 60 * 60,
     });
 

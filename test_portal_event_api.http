@@ -1,0 +1,108 @@
+### Portal Event Menu API Testing
+### Use REST Client extension in VSCode or import to Postman
+
+@baseUrl = http://localhost:3000
+@email = justin@imud.com
+@password = password123
+
+###############################################
+# 1. Member Login
+###############################################
+
+### Login Request
+# @name memberLogin
+POST {{baseUrl}}/api/member/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{email}}",
+  "password": "{{password}}"
+}
+
+### Extract token from response
+@authToken = {{memberLogin.response.body.token}}
+
+###############################################
+# 2. Get Managed Events (Committee only)
+###############################################
+
+### Get events that I manage
+GET {{baseUrl}}/api/member/events/managed
+Authorization: Bearer {{authToken}}
+
+###############################################
+# 3. Get Internal Events
+###############################################
+
+### Get internal events with RSVP info
+GET {{baseUrl}}/api/member/events/internal
+Authorization: Bearer {{authToken}}
+
+###############################################
+# 4. Event Materials
+###############################################
+
+### Get materials for an event
+GET {{baseUrl}}/api/member/events/1/materials
+Authorization: Bearer {{authToken}}
+
+### Upload material for an event (committee only)
+POST {{baseUrl}}/api/member/events/1/materials
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Slide Presentasi",
+  "fileUrl": "https://drive.google.com/file/d/example",
+  "fileType": "slide"
+}
+
+### Delete material (uploader or ketua_panitia only)
+DELETE {{baseUrl}}/api/member/events/1/materials/1
+Authorization: Bearer {{authToken}}
+
+###############################################
+# 5. Event Attendees
+###############################################
+
+### Get attendees for an event (committee only)
+GET {{baseUrl}}/api/member/events/1/attendees
+Authorization: Bearer {{authToken}}
+
+###############################################
+# 6. Existing APIs
+###############################################
+
+### Get all member events
+GET {{baseUrl}}/api/member/events
+Authorization: Bearer {{authToken}}
+
+### Submit RSVP for an event
+POST {{baseUrl}}/api/member/events/1/rsvp
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "status": "attending"
+}
+
+### Get my RSVP for an event
+GET {{baseUrl}}/api/member/events/1/rsvp
+Authorization: Bearer {{authToken}}
+
+###############################################
+# Error Cases
+###############################################
+
+### Get managed events without token (should fail 401)
+GET {{baseUrl}}/api/member/events/managed
+
+### Upload material without committee role (should fail 403)
+POST {{baseUrl}}/api/member/events/999/materials
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "title": "Test",
+  "fileUrl": "https://example.com"
+}

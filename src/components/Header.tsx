@@ -65,16 +65,17 @@ export default function Header({
 
         {/* Desktop Navigation Links */}
         <nav className="hidden md:flex items-center gap-1 flex-shrink-0" id="desktop-navigation">
-          {['beranda', 'struktur', 'acara', 'galeri', 'artikel'].map((tab) => {
+          {['beranda', 'struktur', 'acara', 'kalender', 'galeri', 'artikel'].map((tab) => {
             const icons: Record<string, React.ReactNode> = {
               struktur: <Users className="h-4 w-4" />,
               acara: <Calendar className="h-4 w-4" />,
+              kalender: <Calendar className="h-4 w-4" />,
               galeri: <Camera className="h-4 w-4" />,
               artikel: <FileText className="h-4 w-4" />,
             };
             const labels: Record<string, string> = {
               beranda: 'Beranda', struktur: 'Kepengurusan',
-              acara: 'Acara', galeri: 'Galeri', artikel: 'Artikel',
+              acara: 'Acara', kalender: 'Kalender', galeri: 'Galeri', artikel: 'Artikel',
             };
             return (
               <button
