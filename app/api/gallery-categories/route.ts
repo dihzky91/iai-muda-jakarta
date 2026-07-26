@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq, asc } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { adminRoute, publicRoute, fail, ok } from '@/lib/api';
+import { NextResponse } from 'next/server';
 
 function slugify(s: string): string {
   return s
@@ -13,60 +13,57 @@ function slugify(s: string): string {
     .replace(/^-|-$/g, '');
 }
 
-export async function GET() {
-  try {
-    const rows = await db
-      .select()
-      .from(schema.galleryCategories)
-      .orderBy(asc(schema.galleryCategories.sortOrder), asc(schema.galleryCategories.id));
-    return NextResponse.json({ success: true, data: rows });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to fetch categories' }, { status: 500 });
+export const GET = publicRoute(async () => {
+  const rows = await db
+    .select()
+    .from(schema.galleryCategories)
+    .orderBy(asc(schema.galleryCategories.sortOrder), asc(schema.galleryCategories.id));
+  return ok(rows);
+}, 'Failed to fetch categories');
+
+export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
+  const { name, color, sortOrder } = await request.json();
+  if (!name || typeof name !== 'string' || name.trim().length < 2) {
+    return fail('Nama kategori minimal 2 karakter', 400);
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin', 'editor')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+  const slug = slugify(name);
 
-    const { name, color, sortOrder } = await request.json();
-    if (!name || typeof name !== 'string' || name.trim().length < 2) {
-      return NextResponse.json({ success: false, message: 'Nama kategori minimal 2 karakter' }, { status: 400 });
-    }
-
-    const slug = slugify(name);
-
-    // Cek duplikat name
-    const existing = await db
-      .select()
-      .from(schema.galleryCategories)
-      .where(eq(schema.galleryCategories.name, name.trim()))
-      .limit(1);
-    if (existing.length > 0) {
-      return NextResponse.json({ success: false, message: 'Nama kategori sudah ada' }, { status: 400 });
-    }
-
-    const result = await db.insert(schema.galleryCategories).values({
-      name: name.trim(),
-      slug,
-      color: color || 'blue',
-      sortOrder: typeof sortOrder === 'number' ? sortOrder : 99,
-      isActive: true,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Kategori berhasil ditambahkan',
-      id: (result as any).insertId,
-      data: { id: (result as any).insertId, name: name.trim(), slug, color: color || 'blue', sortOrder: typeof sortOrder === 'number' ? sortOrder : 99, isActive: true },
-    });
-  } catch (err: any) {
-    if (err.code === 'ER_DUP_ENTRY') {
-      return NextResponse.json({ success: false, message: 'Kategori sudah ada' }, { status: 400 });
-    }
-    return NextResponse.json({ success: false, message: err.message || 'Failed to create category' }, { status: 500 });
+  // Cek duplikat name
+  const existing = await db
+    .select()
+    .from(schema.galleryCategories)
+    .where(eq(schema.galleryCategories.name, name.trim()))
+    .limit(1);
+  if (existing.length > 0) {
+    return fail('Nama kategori sudah ada', 400);
   }
-}
+
+  const values = {
+    name: name.trim(),
+    slug,
+    color: color || 'blue',
+    sortOrder: typeof sortOrder === 'number' ? sortOrder : 99,
+    isActive: true,
+  };
+
+  let insertId: number;
+  try {
+    const result = await db.insert(schema.galleryCategories).values(values);
+    insertId = (result as any).insertId;
+  } catch (err: any) {
+    // Ditangani di sini, bukan diserahkan ke penangan error wrapper: bentrok
+    // unique index adalah kesalahan input (400), bukan kegagalan server (500).
+    if (err?.code === 'ER_DUP_ENTRY') {
+      return fail('Kategori sudah ada', 400);
+    }
+    throw err;
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: 'Kategori berhasil ditambahkan',
+    id: insertId,
+    data: { id: insertId, ...values },
+  });
+}, 'Failed to create category');

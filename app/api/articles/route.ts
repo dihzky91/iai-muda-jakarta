@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { desc } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; enum?: string[]; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
@@ -27,43 +25,30 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
   return null;
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const articles = await db.select().from(schema.articles).orderBy(schema.articles.date);
-    return NextResponse.json({ success: true, data: articles });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to fetch articles' }, { status: 500 });
-  }
-}
+export const GET = publicRoute(async () => {
+  const articles = await db.select().from(schema.articles).orderBy(schema.articles.date);
+  return ok(articles);
+}, 'Failed to fetch articles');
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin', 'editor')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
+  const { title, excerpt, content, date, author, imageUrl } = await request.json();
 
-    const { title, excerpt, content, date, author, imageUrl } = await request.json();
+  const err = validate({
+    title:   { value: title,   type: 'string', minLen: 5, maxLen: 255,  label: 'Judul artikel' },
+    content: { value: content, type: 'string', minLen: 50,              label: 'Konten artikel' },
+    author:  { value: author,  type: 'string', minLen: 2, maxLen: 255,  label: 'Nama penulis' },
+    date:    { value: date,    type: 'string', regex: /^\d{4}-\d{2}-\d{2}$/, label: 'Tanggal (format YYYY-MM-DD)' },
+  });
+  if (err) return fail(err, 400);
 
-    const err = validate({
-      title:   { value: title,   type: 'string', minLen: 5, maxLen: 255,  label: 'Judul artikel' },
-      content: { value: content, type: 'string', minLen: 50,              label: 'Konten artikel' },
-      author:  { value: author,  type: 'string', minLen: 2, maxLen: 255,  label: 'Nama penulis' },
-      date:    { value: date,    type: 'string', regex: /^\d{4}-\d{2}-\d{2}$/, label: 'Tanggal (format YYYY-MM-DD)' },
-    });
-    if (err) return NextResponse.json({ success: false, message: err }, { status: 400 });
+  const result = await db.insert(schema.articles).values({
+    title,
+    excerpt: excerpt || null,
+    content,
+    date,
+    author,
+    imageUrl: imageUrl || null,
+  });
 
-    const result = await db.insert(schema.articles).values({
-      title,
-      excerpt: excerpt || null,
-      content,
-      date,
-      author,
-      imageUrl: imageUrl || null,
-    });
-
-    return NextResponse.json({ success: true, message: 'Article created successfully', id: (result as any).insertId });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to create article' }, { status: 500 });
-  }
-}
+  return done('Article created successfully', { id: (result as any).insertId });
+}, 'Failed to create article');

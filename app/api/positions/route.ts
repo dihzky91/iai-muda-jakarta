@@ -1,37 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
-export async function GET(request: NextRequest) {
-  try {
-    const positions = await db.select().from(schema.positions).orderBy(schema.positions.sortOrder);
-    return NextResponse.json({ success: true, data: positions });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to fetch positions' }, { status: 500 });
+export const GET = publicRoute(async () => {
+  const positions = await db.select().from(schema.positions).orderBy(schema.positions.sortOrder);
+  return ok(positions);
+}, 'Failed to fetch positions');
+
+export const POST = adminRoute(['superadmin'], async (request) => {
+  const { name, category, sortOrder } = await request.json();
+
+  if (!name || !category) {
+    return fail('Missing required fields', 400);
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+  const result = await db.insert(schema.positions).values({
+    name,
+    category,
+    sortOrder: sortOrder || 0,
+  });
 
-    const { name, category, sortOrder } = await request.json();
-
-    if (!name || !category) {
-      return NextResponse.json({ success: false, message: 'Missing required fields' }, { status: 400 });
-    }
-
-    const result = await db.insert(schema.positions).values({
-      name,
-      category,
-      sortOrder: sortOrder || 0,
-    });
-
-    return NextResponse.json({ success: true, message: 'Position created successfully', id: (result as any).insertId });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to create position' }, { status: 500 });
-  }
-}
+  return done('Position created successfully', { id: (result as any).insertId });
+}, 'Failed to create position');
