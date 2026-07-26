@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, FormEvent } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import {
@@ -330,7 +331,7 @@ export default function MemberProfile() {
               <div className="p-6">
                 <div className="flex items-center gap-4 mb-4">
                   {member.imageUrl ? (
-                    <img src={member.imageUrl} alt={member.name} className="w-14 h-14 rounded-full object-cover" />
+                    <Image src={member.imageUrl} alt={member.name} width={56} height={56} className="w-14 h-14 rounded-full object-cover" />
                   ) : (
                     <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
                       {initials}

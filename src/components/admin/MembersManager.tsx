@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import Image from 'next/image';
 import {
   Users, Sparkles, History, Plus, Trash2, FileSpreadsheet, Download, Upload,
   AlertCircle, Check, ChevronRight, ChevronLeft, UserPlus,
@@ -624,7 +625,7 @@ export default function MembersManager({ members, setMembers, generations, divis
       preview: (
         <div className="flex items-center gap-3 p-3 rounded-xl border border-slate-100 bg-slate-50">
           {m.imageUrl ? (
-            <img src={m.imageUrl} alt={m.name} className="h-14 w-14 rounded-xl object-cover bg-slate-100" referrerPolicy="no-referrer" />
+            <Image src={m.imageUrl} alt={m.name} width={56} height={56} className="h-14 w-14 rounded-xl object-cover bg-slate-100" referrerPolicy="no-referrer" />
           ) : (
             <div className="h-14 w-14 rounded-xl bg-slate-200 flex items-center justify-center text-slate-400">
               <Users className="h-6 w-6" />

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { Generation, Member, Settings } from '../types';
 import { Mail, Linkedin, Users, Filter, Award, History, Search, X, Clock, ImageOff, Camera } from 'lucide-react';
 
@@ -367,11 +368,13 @@ export default function OrganizationalStructure({ generations, members, settings
                   {/* Profile Image container */}
                   <div className="relative aspect-[4/3] w-full overflow-hidden bg-slate-50">
                     {m.imageUrl ? (
-                      <img 
-                        src={m.imageUrl} 
+                      <Image
+                        src={m.imageUrl}
                         alt={m.name}
+                        fill
+                        sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                         referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-slate-100">
@@ -473,13 +476,15 @@ export default function OrganizationalStructure({ generations, members, settings
             <div className="px-6 pb-8 relative">
               {/* Photo — centered, large, overlapping header */}
               <div className="flex justify-center -mt-16 mb-4">
-                <div className="h-32 w-32 rounded-2xl border-4 border-white bg-slate-50 overflow-hidden shadow-xl ring-4 ring-blue-100">
+                <div className="relative h-32 w-32 rounded-2xl border-4 border-white bg-slate-50 overflow-hidden shadow-xl ring-4 ring-blue-100">
                   {selectedMember.imageUrl ? (
-                    <img 
-                      src={selectedMember.imageUrl} 
-                      alt={selectedMember.name} 
+                    <Image
+                      src={selectedMember.imageUrl}
+                      alt={selectedMember.name}
+                      fill
+                      sizes="128px"
                       referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover"
+                      className="object-cover"
                     />
                   ) : (
                     <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">

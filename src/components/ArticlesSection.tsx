@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { Article } from '../types';
 import { FileText, Calendar, User, ArrowLeft, Clock, Share2, BookOpen } from 'lucide-react';
 
@@ -35,12 +36,14 @@ export default function ArticlesSection({ articles }: ArticlesSectionProps) {
 
           {/* Banner cover */}
           {selectedArticle.imageUrl && (
-            <div className="aspect-[21/9] w-full rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm">
-              <img 
-                src={selectedArticle.imageUrl} 
+            <div className="relative aspect-[21/9] w-full rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 shadow-sm">
+              <Image
+                src={selectedArticle.imageUrl}
                 alt={selectedArticle.title}
+                fill
+                sizes="(max-width: 768px) 100vw, 768px"
                 referrerPolicy="no-referrer"
-                className="h-full w-full object-cover"
+                className="object-cover"
               />
             </div>
           )}
@@ -113,11 +116,13 @@ export default function ArticlesSection({ articles }: ArticlesSectionProps) {
                 {/* Side Image */}
                 {art.imageUrl && (
                   <div className="sm:w-2/5 aspect-video sm:aspect-auto bg-slate-50 overflow-hidden relative">
-                    <img 
-                      src={art.imageUrl} 
+                    <Image
+                      src={art.imageUrl}
                       alt={art.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 40vw"
                       referrerPolicy="no-referrer"
-                      className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
                 )}
