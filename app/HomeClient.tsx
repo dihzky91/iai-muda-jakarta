@@ -28,6 +28,39 @@ interface HomeClientProps {
 }
 
 /**
+ * Judul tab browser per bagian. Hanya judul — bukan metadata SEO.
+ *
+ * Blok ini dulunya juga menimpa meta description, og:title, og:description,
+ * og:image, twitter:image, dan rel=canonical dari sisi klien. Semuanya
+ * dihapus karena dua alasan:
+ *
+ * 1. Crawler mengambil metadata dari HTML awal dan tidak menjalankan
+ *    JavaScript untuk itu, jadi tag yang diubah setelah hidrasi tidak pernah
+ *    terbaca. Sumber kebenarannya sekarang `generateMetadata()` di layout.
+ * 2. Canonical-nya justru merugikan: ia menunjuk ke /struktur, /acara,
+ *    /kalender, /galeri, dan /artikel — kelimanya 404. Halaman ini
+ *    memberitahu mesin pencari bahwa alamat resminya adalah URL yang tidak
+ *    ada.
+ *
+ * Judul dokumen tetap diperbarui: itu terlihat pengguna di tab browser dan
+ * di riwayat, dan tidak menyesatkan siapa pun.
+ */
+const TAB_TITLES: Record<string, string> = {
+  beranda: 'IAI Muda Wilayah DKI Jakarta',
+  struktur: 'Kepengurusan — IAI Muda DKI Jakarta',
+  acara: 'Agenda & Webinar — IAI Muda DKI Jakarta',
+  kalender: 'Kalender Acara — IAI Muda DKI Jakarta',
+  galeri: 'Galeri Kegiatan — IAI Muda DKI Jakarta',
+  artikel: 'Artikel & Opini — IAI Muda DKI Jakarta',
+};
+
+function useDocumentTitle(currentTab: string) {
+  useEffect(() => {
+    document.title = TAB_TITLES[currentTab] || TAB_TITLES.beranda;
+  }, [currentTab]);
+}
+
+/**
  * Data dari server dipakai LANGSUNG sebagai props.
  *
  * Sebelumnya ketujuhnya disalin ke useState lalu disinkronkan balik lewat
@@ -58,79 +91,8 @@ export default function HomeClient({
   const activeGenMembers = useMemo(() => members.filter((m) => m.generationId === activeGen?.id), [members, activeGen]);
   const featuredEvent = useMemo(() => events.find((e) => e.status === 'ongoing') ?? events.find((e) => e.status === 'upcoming'), [events]);
 
-  useEffect(() => {
-    const titles: Record<string, string> = {
-      beranda: 'IAI Muda Wilayah DKI Jakarta',
-      struktur: 'Kepengurusan — IAI Muda DKI Jakarta',
-      acara: 'Agenda & Webinar — IAI Muda DKI Jakarta',
-      kalender: 'Kalender Acara — IAI Muda DKI Jakarta',
-      galeri: 'Galeri Kegiatan — IAI Muda DKI Jakarta',
-      artikel: 'Artikel & Opini — IAI Muda DKI Jakarta',
-    };
-    document.title = titles[currentTab] || 'IAI Muda Wilayah DKI Jakarta';
+  useDocumentTitle(currentTab);
 
-    const descriptions: Record<string, string> = {
-      beranda: 'Website resmi IAI Muda Wilayah DKI Jakarta — Badan kelengkapan Ikatan Akuntan Indonesia yang menaungi mahasiswa akuntansi dan akuntan muda.',
-      struktur: 'Lihat susunan kepengurusan IAI Muda Wilayah DKI Jakarta.',
-      acara: 'Jadwal agenda, webinar, dan acara terbaru IAI Muda DKI Jakarta.',
-      kalender: 'Lihat kalender acara bulanan IAI Muda DKI Jakarta dalam tampilan visual yang mudah dipahami.',
-      galeri: 'Dokumentasi galeri kegiatan IAI Muda Wilayah DKI Jakarta.',
-      artikel: 'Artikel dan opini akuntansi terkini dari IAI Muda DKI Jakarta.',
-    };
-    const desc = descriptions[currentTab] || descriptions.beranda;
-
-    let metaDesc = document.querySelector('meta[name="description"]');
-    if (!metaDesc) {
-      metaDesc = document.createElement('meta');
-      metaDesc.setAttribute('name', 'description');
-      document.head.appendChild(metaDesc);
-    }
-    metaDesc.setAttribute('content', desc);
-
-    let ogTitle = document.querySelector('meta[property="og:title"]');
-    if (ogTitle) ogTitle.setAttribute('content', document.title);
-
-    let ogDesc = document.querySelector('meta[property="og:description"]');
-    if (ogDesc) ogDesc.setAttribute('content', desc);
-
-    const defaultOgImage = 'https://imud.iaijakarta.or.id/og-image.png';
-    const images: Record<string, string> = {
-      beranda: defaultOgImage,
-      struktur: 'https://imud.iaijakarta.or.id/images/seo-struktur.png',
-      acara: 'https://imud.iaijakarta.or.id/images/seo-acara.png',
-      kalender: 'https://imud.iaijakarta.or.id/images/seo-acara.png',
-      galeri: 'https://imud.iaijakarta.or.id/images/seo-galeri.png',
-      artikel: 'https://imud.iaijakarta.or.id/images/seo-artikel.png',
-    };
-    const currentImage = images[currentTab] || defaultOgImage;
-
-    let ogImage = document.querySelector('meta[property="og:image"]');
-    if (ogImage) ogImage.setAttribute('content', currentImage);
-
-    let twitterImage = document.querySelector('meta[name="twitter:image"]');
-    if (twitterImage) twitterImage.setAttribute('content', currentImage);
-
-    const baseUrl = 'https://imud.iaijakarta.or.id';
-    const paths: Record<string, string> = {
-      beranda: '',
-      struktur: '/struktur',
-      acara: '/acara',
-      kalender: '/kalender',
-      galeri: '/galeri',
-      artikel: '/artikel',
-    };
-    const currentPath = paths[currentTab] !== undefined ? paths[currentTab] : `/${currentTab}`;
-    const canonicalLink = document.getElementById('canonical-link') || document.querySelector('link[rel="canonical"]');
-    if (canonicalLink) {
-      canonicalLink.setAttribute('href', `${baseUrl}${currentPath}`);
-    } else {
-      const link = document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      link.setAttribute('id', 'canonical-link');
-      link.setAttribute('href', `${baseUrl}${currentPath}`);
-      document.head.appendChild(link);
-    }
-  }, [currentTab]);
 
   // Fetch calendar events when tab switches to kalender
   useEffect(() => {
