@@ -31,8 +31,10 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       if (data.success) {
         setEvent(data.data);
         setRsvpStatus(data.data.myRsvp?.status || null);
-        // Also fetch managed event data if user is committee
-        fetchManagedEvent();
+        // Info kepanitiaan ikut di response detail. Sebelumnya di sini ada
+        // fetch kedua ke /api/member/events/managed yang menarik seluruh event
+        // yang dikelola, hanya untuk mencari satu yang id-nya cocok.
+        setManagedEvent(data.data.isCommittee ? (data.data as ManagedEvent) : null);
       } else {
         router.push('/portal/events');
       }
@@ -41,21 +43,6 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
       router.push('/portal/events');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchManagedEvent = async () => {
-    try {
-      const res = await fetch('/api/member/events/managed');
-      const data = await res.json();
-      if (res.ok && data.events) {
-        const found = data.events.find((e: ManagedEvent) => e.id === parseInt(id));
-        if (found) {
-          setManagedEvent(found);
-        }
-      }
-    } catch (err) {
-      console.error('Failed to fetch managed event:', err);
     }
   };
 
