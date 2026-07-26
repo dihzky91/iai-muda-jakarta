@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { signAdminToken } from '@/lib/auth';
-import bcrypt from 'bcrypt';
+import { signAdminToken, comparePassword } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Username atau password salah' }, { status: 401 });
     }
 
-    const valid = await bcrypt.compare(password, user.passwordHash);
+    const valid = await comparePassword(password, user.passwordHash);
     if (!valid) {
       return NextResponse.json({ success: false, message: 'Username atau password salah' }, { status: 401 });
     }

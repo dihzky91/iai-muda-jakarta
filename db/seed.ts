@@ -1,6 +1,8 @@
+// './index' harus lebih dulu — di situ `dotenv/config` dimuat, dan
+// '../lib/auth' butuh JWT_SECRET sudah tersedia saat dievaluasi.
 import { db, schema } from './index';
 import { sql } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import { hashPassword } from '../lib/auth';
 
 async function seed() {
   console.log('🌱 Seeding database...');
@@ -212,7 +214,7 @@ async function seed() {
 
     // Seed default superadmin user
     const defaultPassword = process.env.SUPERADMIN_PASSWORD || 'admin123';
-    const passwordHash = await bcrypt.hash(defaultPassword, 12);
+    const passwordHash = await hashPassword(defaultPassword);
     await db.insert(schema.users).values({
       username: 'superadmin',
       passwordHash,

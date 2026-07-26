@@ -4,9 +4,11 @@
  * Run: npx tsx db/create_test_member_account.ts
  */
 
+// './index' harus lebih dulu — di situ `dotenv/config` dimuat, dan
+// '../lib/auth' butuh JWT_SECRET sudah tersedia saat dievaluasi.
 import { db, schema } from './index';
 import { eq } from 'drizzle-orm';
-import bcrypt from 'bcrypt';
+import { hashPassword } from '../lib/auth';
 
 async function createTestAccount() {
   console.log('🚀 Creating test member account...\n');
@@ -35,7 +37,7 @@ async function createTestAccount() {
       console.log('⚠️  Member account already exists!');
       console.log('Updating password to: password123\n');
       
-      const passwordHash = await bcrypt.hash('password123', 10);
+      const passwordHash = await hashPassword('password123');
       
       await db
         .update(schema.memberAccounts)
@@ -49,7 +51,7 @@ async function createTestAccount() {
     } else {
       console.log('Creating new member account...');
       
-      const passwordHash = await bcrypt.hash('password123', 10);
+      const passwordHash = await hashPassword('password123');
       
       await db.insert(schema.memberAccounts).values({
         memberId: member.id,

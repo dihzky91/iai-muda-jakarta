@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
-import bcrypt from 'bcrypt';
+import { getUserFromRequest, requireRole, hashPassword } from '@/lib/auth';
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -23,7 +22,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       updates.role = role;
     }
     if (password) {
-      updates.passwordHash = await bcrypt.hash(password, 12);
+      updates.passwordHash = await hashPassword(password);
     }
 
     if (Object.keys(updates).length === 0) {

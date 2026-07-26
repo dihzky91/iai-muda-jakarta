@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { signMemberToken } from '@/lib/auth';
-import bcrypt from 'bcrypt';
+import { signMemberToken, comparePassword } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,7 +55,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 4. Verify password
-    const valid = await bcrypt.compare(password, account.passwordHash);
+    const valid = await comparePassword(password, account.passwordHash);
     if (!valid) {
       return NextResponse.json(
         { success: false, message: 'Email atau password salah' }, 

@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
-import bcrypt from 'bcrypt';
+import { getUserFromRequest, requireRole, hashPassword } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
@@ -41,7 +40,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'Username sudah digunakan' }, { status: 409 });
     }
 
-    const passwordHash = await bcrypt.hash(password, 12);
+    const passwordHash = await hashPassword(password);
     const result = await db.insert(schema.users).values({ username, passwordHash, role });
     return NextResponse.json({ success: true, message: 'User created', id: (result as any).insertId });
   } catch (err: any) {

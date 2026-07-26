@@ -1,5 +1,11 @@
 import jwt from 'jsonwebtoken';
-import { NextRequest } from 'next/server';
+// Type-only: NextRequest hanya dipakai sebagai anotasi. Import biasa akan
+// memuat `next/server` saat runtime, yang tidak diinginkan ketika modul ini
+// dipakai script CLI (seed, migrasi) di luar Next.js.
+import type { NextRequest } from 'next/server';
+// Satu-satunya import bcrypt di seluruh proyek. Paket native `bcrypt` sudah
+// dibuang; `bcryptjs` murni JS sehingga tidak perlu kompilasi saat deploy.
+// Hash $2a$/$2b$ yang dibuat paket native tetap terverifikasi di sini.
 import bcrypt from 'bcryptjs';
 
 export type UserRole = 'superadmin' | 'admin' | 'editor';
@@ -78,9 +84,17 @@ export function isMember(user: JwtPayload | null): user is MemberJwtPayload {
   return user?.type === 'member';
 }
 
+/**
+ * Cost factor bcrypt untuk seluruh aplikasi.
+ *
+ * Sebelumnya tercecer: route admin memakai 12, helper ini 10, script test 10.
+ * Disatukan ke 12 (nilai terkuat yang sudah dipakai). Hash lama tetap valid —
+ * cost tersimpan di dalam string hash-nya, jadi verifikasi tidak terpengaruh.
+ */
+const SALT_ROUNDS = 12;
+
 export async function hashPassword(password: string): Promise<string> {
-  const saltRounds = 10;
-  return bcrypt.hash(password, saltRounds);
+  return bcrypt.hash(password, SALT_ROUNDS);
 }
 
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
