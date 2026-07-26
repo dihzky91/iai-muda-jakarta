@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/auth';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 import { selectMembers, normalizeMemberPosition, resolvePositionId } from '@/lib/members';
@@ -70,5 +70,5 @@ export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
     isActive: isActive !== false,
   });
 
-  return done('Member created successfully', { id: (result as any).insertId });
+  return done('Member created successfully', { id: insertedId(result) });
 }, 'Failed to create member');

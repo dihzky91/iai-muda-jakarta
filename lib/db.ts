@@ -1,4 +1,5 @@
 import { drizzle } from 'drizzle-orm/mysql2';
+import type { MySqlRawQueryResult } from 'drizzle-orm/mysql2';
 import mysql from 'mysql2/promise';
 import * as schema from '../db/schema';
 
@@ -48,3 +49,19 @@ if (process.env.NODE_ENV !== 'production') {
 
 export const db = drizzle(pool, { schema, mode: 'default' });
 export { schema, pool };
+
+/**
+ * Ambil id baris hasil INSERT.
+ *
+ * `db.insert(...)` pada driver mysql2 mengembalikan TUPLE
+ * `[ResultSetHeader, FieldPacket[]]`, bukan objek. Jadi `result.insertId`
+ * bernilai `undefined` — id-nya ada di `result[0].insertId`.
+ *
+ * Seluruh route sebelumnya menulis `(result as any).insertId`; cast itu
+ * membungkam TypeScript sekaligus menyembunyikan bahwa nilainya selalu
+ * undefined, sehingga setiap endpoint create mengembalikan `id: undefined`
+ * dan `resolvePositionId()` gagal menautkan jabatan yang baru dibuat.
+ */
+export function insertedId(result: MySqlRawQueryResult): number {
+  return result[0].insertId;
+}

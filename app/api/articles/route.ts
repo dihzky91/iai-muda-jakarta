@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; enum?: string[]; regex?: RegExp; label: string }>) {
@@ -50,5 +50,5 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     imageUrl: imageUrl || null,
   });
 
-  return done('Article created successfully', { id: (result as any).insertId });
+  return done('Article created successfully', { id: insertedId(result) });
 }, 'Failed to create article');

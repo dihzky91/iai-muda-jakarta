@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { Calendar, Search, CalendarDays, Users, Globe, ChevronRight, Sparkles, Filter, LayoutGrid, List, RotateCcw, CheckCircle2, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { MemberLayout } from '@/src/components/member';
 import EventCard from '@/src/components/member/events/EventCard';
 import type { MemberEvent } from '@/src/types';
@@ -322,7 +323,7 @@ function EventSection({
   events,
   viewMode,
 }: {
-  icon: any;
+  icon: LucideIcon;
   iconColor: 'purple' | 'emerald';
   title: string;
   subtitle: string;

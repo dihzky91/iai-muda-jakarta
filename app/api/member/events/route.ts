@@ -6,6 +6,18 @@ import { memberRoute, ok } from '@/lib/api';
 const EVENT_TYPES = ['public', 'internal'] as const;
 const EVENT_STATUSES = ['upcoming', 'ongoing', 'completed'] as const;
 
+/**
+ * `Array.includes` pada tuple `as const` tidak menerima `string` sembarang,
+ * sehingga pemakaian polos memaksa cast. Type guard ini melakukan penyempitan
+ * yang sama tanpa `as any`.
+ */
+function isOneOf<T extends readonly string[]>(
+  allowed: T,
+  value: string | null
+): value is T[number] {
+  return value !== null && (allowed as readonly string[]).includes(value);
+}
+
 export const GET = memberRoute(async (request, _context, member) => {
   const { searchParams } = new URL(request.url);
   const eventType = searchParams.get('type');
@@ -14,11 +26,11 @@ export const GET = memberRoute(async (request, _context, member) => {
   // Filter dilakukan di SQL, bukan di memori — sebelumnya seluruh tabel
   // events ditarik dulu lalu di-.filter() di JS.
   const conditions: SQL[] = [];
-  if (EVENT_TYPES.includes(eventType as any)) {
-    conditions.push(eq(events.eventType, eventType as (typeof EVENT_TYPES)[number]));
+  if (isOneOf(EVENT_TYPES, eventType)) {
+    conditions.push(eq(events.eventType, eventType));
   }
-  if (EVENT_STATUSES.includes(status as any)) {
-    conditions.push(eq(events.status, status as (typeof EVENT_STATUSES)[number]));
+  if (isOneOf(EVENT_STATUSES, status)) {
+    conditions.push(eq(events.status, status));
   }
 
   // RSVP milik member digabung lewat LEFT JOIN, jadi cukup satu round-trip

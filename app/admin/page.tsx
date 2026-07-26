@@ -1,44 +1,80 @@
 'use client';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import AdminCMS from '@/src/components/AdminCMS';
+import { DEFAULT_SETTINGS } from '@/src/constants/defaults';
+import type { Generation, Member, Event, Article, GalleryItem, Pillar, Settings } from '@/src/types';
+
+/** Seluruh data CMS yang dipegang halaman ini. */
+interface AdminData {
+  generations: Generation[];
+  members: Member[];
+  events: Event[];
+  articles: Article[];
+  gallery: GalleryItem[];
+  pillars: Pillar[];
+  settings: Settings | null;
+}
+
+const EMPTY_DATA: AdminData = {
+  generations: [],
+  members: [],
+  events: [],
+  articles: [],
+  gallery: [],
+  pillars: [],
+  settings: null,
+};
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState({
-    generations: [] as any[],
-    members: [] as any[],
-    events: [] as any[],
-    articles: [] as any[],
-    gallery: [] as any[],
-    pillars: [] as any[],
-    settings: null as any,
-  });
+  const [data, setData] = useState<AdminData>(EMPTY_DATA);
 
-  const fetchAll = async () => {
-    const fetches = await Promise.all([
-      fetch('/api/generations').then(r => r.json()),
-      fetch('/api/members').then(r => r.json()),
-      fetch('/api/events').then(r => r.json()),
-      fetch('/api/articles').then(r => r.json()),
-      fetch('/api/galleries').then(r => r.json()),
-      fetch('/api/pillars').then(r => r.json()),
-      fetch('/api/settings').then(r => r.json()),
-    ]);
+  /**
+   * Bikin setter bergaya React.Dispatch untuk satu key di `data`.
+   *
+   * Sebelumnya tiap prop punya lambda `(val: any) => ...` yang identik —
+   * tujuh salinan, tujuh `any`. Di sini tipenya terikat ke AdminData[K],
+   * jadi salah pasang prop ketahuan saat kompilasi.
+   */
+  const makeSetter = useCallback(
+    <K extends keyof AdminData>(key: K): React.Dispatch<React.SetStateAction<AdminData[K]>> =>
+      (val) =>
+        setData(prev => ({
+          ...prev,
+          [key]: typeof val === 'function'
+            ? (val as (p: AdminData[K]) => AdminData[K])(prev[key])
+            : val,
+        })),
+    []
+  );
+
+  const fetchAll = useCallback(async () => {
+    const [generations, members, events, articles, galleries, pillars, settings] =
+      await Promise.all([
+        fetch('/api/generations').then(r => r.json()),
+        fetch('/api/members').then(r => r.json()),
+        fetch('/api/events').then(r => r.json()),
+        fetch('/api/articles').then(r => r.json()),
+        fetch('/api/galleries').then(r => r.json()),
+        fetch('/api/pillars').then(r => r.json()),
+        fetch('/api/settings').then(r => r.json()),
+      ]);
+
     setData({
-      generations: fetches[0].data || [],
-      members: fetches[1].data || [],
-      events: fetches[2].data || [],
-      articles: fetches[3].data || [],
-      gallery: fetches[4].data || [],
-      pillars: fetches[5].data || [],
-      settings: fetches[6].data || null,
+      generations: generations.data || [],
+      members: members.data || [],
+      events: events.data || [],
+      articles: articles.data || [],
+      gallery: galleries.data || [],
+      pillars: pillars.data || [],
+      settings: settings.data || null,
     });
-  };
+  }, []);
 
-  useEffect(() => { if (user) fetchAll(); }, [user]);
+  useEffect(() => { if (user) fetchAll(); }, [user, fetchAll]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,7 +82,7 @@ export default function AdminPage() {
     }
   }, [loading, user, router]);
 
-  if (loading) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="h-8 w-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
@@ -54,35 +90,22 @@ export default function AdminPage() {
     );
   }
 
-  if (!user) return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-      <div className="h-8 w-8 rounded-full border-4 border-blue-200 border-t-blue-600 animate-spin" />
-    </div>
-  );
-
-  const defaultSettings = {
-    id: 1, contactTitle: '', contactDescription: '', address: '', email: '',
-    phone: null, showPhone: false, instagramUrl: null, linkedinUrl: null,
-    youtubeUrl: null, divisionPhotos: null, divisions: null,
-    footerDescription: null, logoUrl: null, faviconUrl: null, updatedAt: null,
-  };
-
   return (
     <AdminCMS
       generations={data.generations}
-      setGenerations={(val: any) => setData(prev => ({ ...prev, generations: typeof val === 'function' ? val(prev.generations) : val }))}
+      setGenerations={makeSetter('generations')}
       members={data.members}
-      setMembers={(val: any) => setData(prev => ({ ...prev, members: typeof val === 'function' ? val(prev.members) : val }))}
+      setMembers={makeSetter('members')}
       events={data.events}
-      setEvents={(val: any) => setData(prev => ({ ...prev, events: typeof val === 'function' ? val(prev.events) : val }))}
+      setEvents={makeSetter('events')}
       articles={data.articles}
-      setArticles={(val: any) => setData(prev => ({ ...prev, articles: typeof val === 'function' ? val(prev.articles) : val }))}
+      setArticles={makeSetter('articles')}
       gallery={data.gallery}
-      setGallery={(val: any) => setData(prev => ({ ...prev, gallery: typeof val === 'function' ? val(prev.gallery) : val }))}
+      setGallery={makeSetter('gallery')}
       pillars={data.pillars}
-      setPillars={(val: any) => setData(prev => ({ ...prev, pillars: typeof val === 'function' ? val(prev.pillars) : val }))}
-      settings={data.settings ?? defaultSettings}
-      onSettingsUpdate={(updated: any) => setData(prev => ({ ...prev, settings: updated }))}
+      setPillars={makeSetter('pillars')}
+      settings={data.settings ?? DEFAULT_SETTINGS}
+      onSettingsUpdate={(updated: Settings) => setData(prev => ({ ...prev, settings: updated }))}
     />
   );
 }

@@ -11,4 +11,4 @@
  */
 import 'dotenv/config';
 
-export { db, schema, pool } from '../lib/db';
+export { db, schema, pool, insertedId } from '../lib/db';

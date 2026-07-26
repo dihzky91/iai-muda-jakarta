@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { hashPassword } from '@/lib/auth';
 import { adminRoute, fail, ok, done } from '@/lib/api';
@@ -27,5 +27,5 @@ export const POST = adminRoute(['superadmin'], async (request) => {
 
   const passwordHash = await hashPassword(password);
   const result = await db.insert(schema.users).values({ username, passwordHash, role });
-  return done('User created', { id: (result as any).insertId });
+  return done('User created', { id: insertedId(result) });
 }, 'Failed to create user');

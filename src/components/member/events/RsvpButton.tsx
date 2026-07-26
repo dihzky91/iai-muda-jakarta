@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Check, X, HelpCircle, Loader2 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { RsvpStatus } from '@/src/types';
 
 interface RsvpButtonProps {
@@ -11,7 +12,7 @@ interface RsvpButtonProps {
   onUpdate?: (newStatus: RsvpStatus | null) => void;
 }
 
-const STATUS_OPTIONS: { value: RsvpStatus; label: string; icon: any; ring: string; active: string; icon_active: string; icon_inactive: string }[] = [
+const STATUS_OPTIONS: { value: RsvpStatus; label: string; icon: LucideIcon; ring: string; active: string; icon_active: string; icon_inactive: string }[] = [
   {
     value: 'attending',
     label: 'Akan Hadir',

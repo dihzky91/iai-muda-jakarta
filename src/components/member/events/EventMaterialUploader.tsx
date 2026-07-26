@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { FileText, Upload, X, ExternalLink, Loader2, Trash2, FileSpreadsheet, FileImage, File } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { EventMaterial, ManagedEvent } from '@/src/types';
 
 interface EventMaterialUploaderProps {
@@ -17,7 +18,7 @@ const FILE_TYPE_OPTIONS = [
   { value: 'lainnya', label: 'Lainnya', icon: File },
 ];
 
-const FILE_TYPE_LABELS: Record<string, { label: string; icon: any; color: string }> = {
+const FILE_TYPE_LABELS: Record<string, { label: string; icon: LucideIcon; color: string }> = {
   slide: { label: 'Slide', icon: FileText, color: 'text-blue-600 bg-blue-50 border-blue-200' },
   notulensi: { label: 'Notulensi', icon: FileSpreadsheet, color: 'text-emerald-600 bg-emerald-50 border-emerald-200' },
   sertifikat: { label: 'Sertifikat', icon: FileText, color: 'text-amber-600 bg-amber-50 border-amber-200' },

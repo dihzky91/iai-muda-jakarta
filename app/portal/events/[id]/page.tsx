@@ -4,6 +4,7 @@ import { useEffect, useState, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Calendar, MapPin, Clock, Users, Globe, ExternalLink, FileText, Check, X, HelpCircle, Sparkles, CalendarDays, Briefcase } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { MemberLayout } from '@/src/components/member';
 import RsvpButton from '@/src/components/member/events/RsvpButton';
 import EventMaterialUploader from '@/src/components/member/events/EventMaterialUploader';
@@ -274,7 +275,7 @@ export default function EventDetailPage({ params }: { params: Promise<{ id: stri
   );
 }
 
-function MetaItem({ icon: Icon, iconColor, label, value }: { icon: any; iconColor: string; label: string; value: string }) {
+function MetaItem({ icon: Icon, iconColor, label, value }: { icon: LucideIcon; iconColor: string; label: string; value: string }) {
   return (
     <div className="flex items-start gap-3 min-w-0">
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
@@ -290,7 +291,7 @@ function MetaItem({ icon: Icon, iconColor, label, value }: { icon: any; iconColo
   );
 }
 
-function StatBar({ icon: Icon, label, count, color }: { icon: any; label: string; count: number; color: 'emerald' | 'amber' | 'rose' }) {
+function StatBar({ icon: Icon, label, count, color }: { icon: LucideIcon; label: string; count: number; color: 'emerald' | 'amber' | 'rose' }) {
   const colorClass = {
     emerald: 'text-emerald-700 bg-emerald-50 border-emerald-200',
     amber: 'text-amber-700 bg-amber-50 border-amber-200',

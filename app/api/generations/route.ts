@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 export const GET = publicRoute(async () => {
@@ -21,5 +21,5 @@ export const POST = adminRoute(['superadmin'], async (request) => {
     description: description || null,
   });
 
-  return done('Generation created successfully', { id: (result as any).insertId });
+  return done('Generation created successfully', { id: insertedId(result) });
 }, 'Failed to create generation');

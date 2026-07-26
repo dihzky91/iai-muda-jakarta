@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { eq, asc } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok } from '@/lib/api';
 import { NextResponse } from 'next/server';
@@ -50,7 +50,7 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
   let insertId: number;
   try {
     const result = await db.insert(schema.galleryCategories).values(values);
-    insertId = (result as any).insertId;
+    insertId = insertedId(result);
   } catch (err: any) {
     // Ditangani di sini, bukan diserahkan ke penangan error wrapper: bentrok
     // unique index adalah kesalahan input (400), bukan kegagalan server (500).

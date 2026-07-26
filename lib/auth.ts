@@ -36,8 +36,13 @@ if (!JWT_SECRET) {
 }
 
 export function signToken(payload: AdminJwtPayload | MemberJwtPayload): string {
-  const options = { expiresIn: (process.env.JWT_EXPIRES_IN || '8h') as any };
-  return jwt.sign(payload as object, JWT_SECRET, options as any);
+  // `expiresIn` bertipe template literal ketat (`${number}h` dsb) di
+  // @types/jsonwebtoken, sedangkan nilainya datang dari env yang bertipe
+  // string biasa. Cast dipersempit ke tipe opsi yang sebenarnya, bukan `any`.
+  const options: jwt.SignOptions = {
+    expiresIn: (process.env.JWT_EXPIRES_IN || '8h') as jwt.SignOptions['expiresIn'],
+  };
+  return jwt.sign(payload as object, JWT_SECRET, options);
 }
 
 export function signAdminToken(payload: Omit<AdminJwtPayload, 'type'>): string {

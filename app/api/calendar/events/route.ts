@@ -12,7 +12,7 @@
  */
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { and, gte, lte, eq } from 'drizzle-orm';
+import { and, gte, lte, eq, type SQL } from 'drizzle-orm';
 import { getUserFromRequest, requireAdmin } from '@/lib/auth';
 import { publicRoute, fail } from '@/lib/api';
 
@@ -33,7 +33,7 @@ export type CalendarEventType = {
   generationId: number | null;
 };
 
-function normalize(row: any): CalendarEventType {
+function normalize(row: typeof schema.events.$inferSelect): CalendarEventType {
   return {
     id: row.id,
     title: row.title,
@@ -72,7 +72,7 @@ export const GET = publicRoute(async (request) => {
     }
 
     // Bangun kondisi WHERE
-    const conditions: any[] = [];
+    const conditions: SQL[] = [];
     if (from) conditions.push(gte(schema.events.date, from));
     if (to) conditions.push(lte(schema.events.date, to));
 
