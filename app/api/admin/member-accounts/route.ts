@@ -1,21 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireRole, hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
+import { adminRoute, fail, ok, done } from '@/lib/api';
 
-// GET /api/admin/member-accounts - List all member accounts
-export async function GET(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
+const MANAGERS = ['superadmin', 'admin'] as const;
 
-    if (!requireRole(user, 'superadmin', 'admin')) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+/** Route ini memakai 401 (bukan 403) saat otorisasi gagal — dipertahankan. */
+const UNAUTHORIZED_STATUS = 401;
 
-    // Get all members with their account status
+/** GET /api/admin/member-accounts — daftar anggota beserta status akun portalnya. */
+export const GET = adminRoute(
+  [...MANAGERS],
+  async () => {
     const members = await db
       .select({
         id: schema.members.id,
@@ -33,103 +29,55 @@ export async function GET(request: NextRequest) {
         accountCreatedAt: schema.memberAccounts.createdAt,
       })
       .from(schema.members)
-      .leftJoin(
-        schema.memberAccounts,
-        eq(schema.members.id, schema.memberAccounts.memberId)
-      )
+      .leftJoin(schema.memberAccounts, eq(schema.members.id, schema.memberAccounts.memberId))
       .orderBy(schema.members.name);
 
-    return NextResponse.json({
-      success: true,
-      data: members,
-    });
-  } catch (err: any) {
-    console.error('[Admin Member Accounts List Error]', err);
-    return NextResponse.json(
-      { success: false, message: err.message || 'Gagal mengambil data' },
-      { status: 500 }
-    );
-  }
-}
+    return ok(members);
+  },
+  'Gagal mengambil data',
+  UNAUTHORIZED_STATUS
+);
 
-// POST /api/admin/member-accounts - Create member account
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
+/** POST /api/admin/member-accounts — buatkan akun portal untuk seorang anggota. */
+export const POST = adminRoute(
+  [...MANAGERS],
+  async (request) => {
+    const { memberId, password } = await request.json();
 
-    if (!requireRole(user, 'superadmin', 'admin')) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const body = await request.json();
-    const { memberId, password } = body;
-
-    // Validate required fields
     if (!memberId || !password) {
-      return NextResponse.json(
-        { success: false, message: 'Member ID dan password harus diisi' },
-        { status: 400 }
-      );
+      return fail('Member ID dan password harus diisi', 400);
     }
 
-    // Validate password length
     if (password.length < 6) {
-      return NextResponse.json(
-        { success: false, message: 'Password minimal 6 karakter' },
-        { status: 400 }
-      );
+      return fail('Password minimal 6 karakter', 400);
     }
 
-    // Check if member exists
-    const members = await db
-      .select()
-      .from(schema.members)
-      .where(eq(schema.members.id, memberId))
-      .limit(1);
+    // Anggota harus ada, dan belum punya akun portal.
+    const [members, existingAccounts] = await Promise.all([
+      db.select().from(schema.members).where(eq(schema.members.id, memberId)).limit(1),
+      db
+        .select()
+        .from(schema.memberAccounts)
+        .where(eq(schema.memberAccounts.memberId, memberId))
+        .limit(1),
+    ]);
 
     if (members.length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'Member tidak ditemukan' },
-        { status: 404 }
-      );
+      return fail('Member tidak ditemukan', 404);
     }
-
-    // Check if account already exists
-    const existingAccounts = await db
-      .select()
-      .from(schema.memberAccounts)
-      .where(eq(schema.memberAccounts.memberId, memberId))
-      .limit(1);
 
     if (existingAccounts.length > 0) {
-      return NextResponse.json(
-        { success: false, message: 'Akun portal sudah ada untuk member ini' },
-        { status: 400 }
-      );
+      return fail('Akun portal sudah ada untuk member ini', 400);
     }
 
-    // Hash password
-    const passwordHash = await hashPassword(password);
-
-    // Create account
     await db.insert(schema.memberAccounts).values({
       memberId,
-      passwordHash,
+      passwordHash: await hashPassword(password),
       isActive: true,
     });
 
-    return NextResponse.json({
-      success: true,
-      message: 'Akun portal berhasil dibuat',
-    });
-  } catch (err: any) {
-    console.error('[Admin Create Member Account Error]', err);
-    return NextResponse.json(
-      { success: false, message: err.message || 'Gagal membuat akun' },
-      { status: 500 }
-    );
-  }
-}
+    return done('Akun portal berhasil dibuat');
+  },
+  'Gagal membuat akun',
+  UNAUTHORIZED_STATUS
+);

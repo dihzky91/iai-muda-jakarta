@@ -1,177 +1,104 @@
 /**
  * API: /api/member/events/[id]/materials
- * 
- * GET: List materials for an event
- * POST: Upload material (only for committee members)
+ *
+ * GET  : daftar materi sebuah event (semua anggota portal)
+ * POST : unggah materi (hanya panitia event tersebut)
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { eventMaterials, eventCommittees, members } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
-import { verifyMemberToken } from '@/lib/auth';
+import { memberRouteRaw, errorBody } from '@/lib/api';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const eventId = parseInt(id);
+type Params = { id: string };
 
-    if (isNaN(eventId)) {
-      return NextResponse.json(
-        { error: 'Invalid event ID' },
-        { status: 400 }
-      );
-    }
-
-    // Verify member authentication
-    const authResult = await verifyMemberToken(request);
-    if (!authResult.valid || !authResult.memberId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    // Get materials with uploader info
-    const materials = await db
-      .select({
-        material: eventMaterials,
-        uploader: members,
-      })
-      .from(eventMaterials)
-      .leftJoin(members, eq(eventMaterials.uploadedBy, members.id))
-      .where(eq(eventMaterials.eventId, eventId));
-
-    const formattedMaterials = materials.map(m => ({
-      id: m.material.id,
-      eventId: m.material.eventId,
-      title: m.material.title,
-      fileUrl: m.material.fileUrl,
-      fileType: m.material.fileType,
-      uploadedBy: m.material.uploadedBy,
-      createdAt: m.material.createdAt?.toISOString() || '',
-      uploader: m.uploader ? {
-        id: m.uploader.id,
-        name: m.uploader.name,
-        imageUrl: m.uploader.imageUrl,
-      } : undefined,
-    }));
-
-    return NextResponse.json({ materials: formattedMaterials });
-
-  } catch (error) {
-    console.error('Error fetching materials:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch materials' },
-      { status: 500 }
-    );
-  }
+/** Bentuk materi yang dikirim ke klien. */
+function formatMaterial(material: typeof eventMaterials.$inferSelect, uploader: typeof members.$inferSelect | null) {
+  return {
+    id: material.id,
+    eventId: material.eventId,
+    title: material.title,
+    fileUrl: material.fileUrl,
+    fileType: material.fileType,
+    uploadedBy: material.uploadedBy,
+    createdAt: material.createdAt?.toISOString() || '',
+    uploader: uploader
+      ? { id: uploader.id, name: uploader.name, imageUrl: uploader.imageUrl }
+      : undefined,
+  };
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
-    const { id } = await params;
-    const eventId = parseInt(id);
+export const GET = memberRouteRaw<Params>(async (_request, { params }) => {
+  const { id } = await params;
+  const eventId = parseInt(id);
 
-    if (isNaN(eventId)) {
-      return NextResponse.json(
-        { error: 'Invalid event ID' },
-        { status: 400 }
-      );
-    }
+  if (isNaN(eventId)) {
+    return errorBody('Invalid event ID', 400);
+  }
 
-    // Verify member authentication
-    const authResult = await verifyMemberToken(request);
-    if (!authResult.valid || !authResult.memberId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+  const materials = await db
+    .select({ material: eventMaterials, uploader: members })
+    .from(eventMaterials)
+    .leftJoin(members, eq(eventMaterials.uploadedBy, members.id))
+    .where(eq(eventMaterials.eventId, eventId));
 
-    const memberId = authResult.memberId;
+  return NextResponse.json({
+    materials: materials.map(m => formatMaterial(m.material, m.uploader)),
+  });
+}, 'Failed to fetch materials', 'Error fetching materials:');
 
-    // Check if member is committee for this event
-    const [committee] = await db
-      .select()
-      .from(eventCommittees)
-      .where(
-        and(
-          eq(eventCommittees.eventId, eventId),
-          eq(eventCommittees.memberId, memberId)
-        )
+export const POST = memberRouteRaw<Params>(async (request, { params }, member) => {
+  const { id } = await params;
+  const eventId = parseInt(id);
+
+  if (isNaN(eventId)) {
+    return errorBody('Invalid event ID', 400);
+  }
+
+  const [committee] = await db
+    .select()
+    .from(eventCommittees)
+    .where(
+      and(
+        eq(eventCommittees.eventId, eventId),
+        eq(eventCommittees.memberId, member.memberId)
       )
-      .limit(1);
+    )
+    .limit(1);
 
-    if (!committee) {
-      return NextResponse.json(
-        { error: 'Forbidden: Only committee members can upload materials' },
-        { status: 403 }
-      );
-    }
-
-    // Parse request body
-    const body = await request.json();
-    const { title, fileUrl, fileType } = body;
-
-    if (!title || !fileUrl) {
-      return NextResponse.json(
-        { error: 'Title and fileUrl are required' },
-        { status: 400 }
-      );
-    }
-
-    // Insert material
-    const [material] = await db
-      .insert(eventMaterials)
-      .values({
-        eventId,
-        title,
-        fileUrl,
-        fileType: fileType || null,
-        uploadedBy: memberId,
-      })
-      .$returningId();
-
-    // Get the created material with uploader info
-    const [createdMaterial] = await db
-      .select({
-        material: eventMaterials,
-        uploader: members,
-      })
-      .from(eventMaterials)
-      .leftJoin(members, eq(eventMaterials.uploadedBy, members.id))
-      .where(eq(eventMaterials.id, material.id));
-
-    return NextResponse.json({
-      message: 'Material uploaded successfully',
-      material: {
-        id: createdMaterial.material.id,
-        eventId: createdMaterial.material.eventId,
-        title: createdMaterial.material.title,
-        fileUrl: createdMaterial.material.fileUrl,
-        fileType: createdMaterial.material.fileType,
-        uploadedBy: createdMaterial.material.uploadedBy,
-        createdAt: createdMaterial.material.createdAt?.toISOString() || '',
-        uploader: createdMaterial.uploader ? {
-          id: createdMaterial.uploader.id,
-          name: createdMaterial.uploader.name,
-          imageUrl: createdMaterial.uploader.imageUrl,
-        } : undefined,
-      },
-    }, { status: 201 });
-
-  } catch (error) {
-    console.error('Error uploading material:', error);
-    return NextResponse.json(
-      { error: 'Failed to upload material' },
-      { status: 500 }
-    );
+  if (!committee) {
+    return errorBody('Forbidden: Only committee members can upload materials', 403);
   }
-}
+
+  const { title, fileUrl, fileType } = await request.json();
+
+  if (!title || !fileUrl) {
+    return errorBody('Title and fileUrl are required', 400);
+  }
+
+  const [inserted] = await db
+    .insert(eventMaterials)
+    .values({
+      eventId,
+      title,
+      fileUrl,
+      fileType: fileType || null,
+      uploadedBy: member.memberId,
+    })
+    .$returningId();
+
+  const [created] = await db
+    .select({ material: eventMaterials, uploader: members })
+    .from(eventMaterials)
+    .leftJoin(members, eq(eventMaterials.uploadedBy, members.id))
+    .where(eq(eventMaterials.id, inserted.id));
+
+  return NextResponse.json(
+    {
+      message: 'Material uploaded successfully',
+      material: formatMaterial(created.material, created.uploader),
+    },
+    { status: 201 }
+  );
+}, 'Failed to upload material', 'Error uploading material:');

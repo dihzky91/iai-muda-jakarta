@@ -1,87 +1,44 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 import { existsSync } from 'fs';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireMember } from '@/lib/auth';
+import { memberRoute, fail, done } from '@/lib/api';
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
+const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
-    if (!requireMember(user)) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+export const POST = memberRoute(async (request, _context, user) => {
+  const formData = await request.formData();
+  const file = formData.get('image') as File;
 
-    const formData = await request.formData();
-    const file = formData.get('image') as File;
-
-    if (!file) {
-      return NextResponse.json(
-        { success: false, message: 'Tidak ada file yang diupload' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json(
-        { success: false, message: 'Format file harus JPG, PNG, atau WebP' },
-        { status: 400 }
-      );
-    }
-
-    // Validate file size (max 5MB)
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    if (file.size > maxSize) {
-      return NextResponse.json(
-        { success: false, message: 'Ukuran file maksimal 5MB' },
-        { status: 400 }
-      );
-    }
-
-    // Create uploads directory if not exists
-    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'members');
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true });
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const fileExt = file.name.split('.').pop();
-    const fileName = `member-${user.memberId}-${timestamp}.${fileExt}`;
-    const filePath = join(uploadsDir, fileName);
-
-    // Save file
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    await writeFile(filePath, buffer);
-
-    // Update member imageUrl in database
-    const imageUrl = `/uploads/members/${fileName}`;
-    await db
-      .update(schema.members)
-      .set({
-        imageUrl,
-        updatedAt: new Date(),
-      })
-      .where(eq(schema.members.id, user.memberId));
-
-    return NextResponse.json({
-      success: true,
-      message: 'Foto profil berhasil diupload',
-      imageUrl,
-    });
-  } catch (err: any) {
-    console.error('[Member Profile Image Upload Error]', err);
-    return NextResponse.json(
-      { success: false, message: err.message || 'Gagal upload foto' },
-      { status: 500 }
-    );
+  if (!file) {
+    return fail('Tidak ada file yang diupload', 400);
   }
-}
+
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return fail('Format file harus JPG, PNG, atau WebP', 400);
+  }
+
+  if (file.size > MAX_SIZE) {
+    return fail('Ukuran file maksimal 5MB', 400);
+  }
+
+  const uploadsDir = join(process.cwd(), 'public', 'uploads', 'members');
+  if (!existsSync(uploadsDir)) {
+    await mkdir(uploadsDir, { recursive: true });
+  }
+
+  const fileExt = file.name.split('.').pop();
+  const fileName = `member-${user.memberId}-${Date.now()}.${fileExt}`;
+
+  await writeFile(join(uploadsDir, fileName), Buffer.from(await file.arrayBuffer()));
+
+  const imageUrl = `/uploads/members/${fileName}`;
+  await db
+    .update(schema.members)
+    .set({ imageUrl, updatedAt: new Date() })
+    .where(eq(schema.members.id, user.memberId));
+
+  return done('Foto profil berhasil diupload', { imageUrl });
+}, 'Gagal upload foto');

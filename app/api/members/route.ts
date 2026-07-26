@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
-import { selectMembers, normalizeMemberPosition } from '@/lib/members';
+import { getUserFromRequest } from '@/lib/auth';
+import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
+import { selectMembers, normalizeMemberPosition, resolvePositionId } from '@/lib/members';
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
@@ -28,78 +27,48 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
   return null;
 }
 
-async function resolvePositionId(positionName: string | undefined, divisionName: string | undefined): Promise<number | null> {
-  if (!positionName) return null;
-  const nameTrimmed = positionName.trim();
-  if (!nameTrimmed) return null;
+/**
+ * Bukan adminRoute: endpoint ini terbuka untuk publik, tapi hasilnya menyempit
+ * jadi anggota yang show_public saja bila pemanggilnya bukan admin.
+ */
+export const GET = publicRoute(async (request) => {
+  const { searchParams } = new URL(request.url);
+  const generationId = searchParams.get('generationId') ? parseInt(searchParams.get('generationId')!) : undefined;
 
-  const matched = await db.select().from(schema.positions).where(eq(schema.positions.name, nameTrimmed)).limit(1);
-  if (matched.length > 0) {
-    return matched[0].id;
-  }
+  const user = getUserFromRequest(request);
+  const isAdmin = user?.type === 'admin' && ['superadmin', 'admin', 'editor'].includes(user.role);
 
-  const result = await db.insert(schema.positions).values({
-    name: nameTrimmed,
-    category: divisionName || 'Lainnya',
-    sortOrder: 100,
+  const rows = await selectMembers({ generationId, publicOnly: !isAdmin });
+  return ok(rows.map(normalizeMemberPosition));
+}, 'Failed to fetch members');
+
+export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
+  const { generationId, positionId, position, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = await request.json();
+
+  const err = validate({
+    name:        { value: name,        type: 'string', minLen: 2, maxLen: 255, label: 'Nama anggota' },
+    generationId:{ value: generationId,                                        label: 'ID Generasi' },
+    ...(email ? { email: { value: email, type: 'string', regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, label: 'Email' } } : {}),
   });
-  return (result as any).insertId;
-}
+  if (err) return fail(err, 400);
 
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const generationId = searchParams.get('generationId') ? parseInt(searchParams.get('generationId')!) : undefined;
-    
-    // Check if user is authenticated admin/superadmin
-    const user = getUserFromRequest(request);
-    const isAdmin = user && user.type === 'admin' && (user.role === 'superadmin' || user.role === 'admin' || user.role === 'editor');
-
-    const rows = await selectMembers({ generationId, publicOnly: !isAdmin });
-    const members = rows.map(normalizeMemberPosition);
-
-    return NextResponse.json({ success: true, data: members });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to fetch members' }, { status: 500 });
+  let resolvedPosId = positionId || null;
+  if (!resolvedPosId && position) {
+    resolvedPosId = await resolvePositionId(position, division);
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+  const result = await db.insert(schema.members).values({
+    generationId,
+    positionId: resolvedPosId,
+    name,
+    division: division || null,
+    university: university || null,
+    email: email || null,
+    imageUrl: imageUrl || null,
+    linkedinUrl: linkedinUrl || null,
+    bio: bio || null,
+    isActive: isActive !== false,
+  });
 
-    const { generationId, positionId, position, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = await request.json();
-
-    const err = validate({
-      name:        { value: name,        type: 'string', minLen: 2, maxLen: 255, label: 'Nama anggota' },
-      generationId:{ value: generationId,                                        label: 'ID Generasi' },
-      ...(email ? { email: { value: email, type: 'string', regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, label: 'Email' } } : {}),
-    });
-    if (err) return NextResponse.json({ success: false, message: err }, { status: 400 });
-
-    let resolvedPosId = positionId || null;
-    if (!resolvedPosId && position) {
-      resolvedPosId = await resolvePositionId(position, division);
-    }
-
-    const result = await db.insert(schema.members).values({
-      generationId,
-      positionId: resolvedPosId,
-      name,
-      division: division || null,
-      university: university || null,
-      email: email || null,
-      imageUrl: imageUrl || null,
-      linkedinUrl: linkedinUrl || null,
-      bio: bio || null,
-      isActive: isActive !== false,
-    });
-
-    return NextResponse.json({ success: true, message: 'Member created successfully', id: (result as any).insertId });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to create member' }, { status: 500 });
-  }
-}
+  return done('Member created successfully', { id: (result as any).insertId });
+}, 'Failed to create member');

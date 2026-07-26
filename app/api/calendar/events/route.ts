@@ -10,10 +10,11 @@
  * Return shape konsisten untuk 3 area (publik/admin/portal) sehingga
  * satu komponen CalendarGrid bisa dipakai ulang.
  */
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { and, gte, lte, or, eq } from 'drizzle-orm';
+import { and, gte, lte, eq } from 'drizzle-orm';
 import { getUserFromRequest, requireAdmin } from '@/lib/auth';
+import { publicRoute, fail } from '@/lib/api';
 
 export type CalendarEventType = {
   id: number;
@@ -51,8 +52,7 @@ function normalize(row: any): CalendarEventType {
   };
 }
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = publicRoute(async (request) => {
     const { searchParams } = new URL(request.url);
     const from = searchParams.get('from');         // YYYY-MM-DD
     const to = searchParams.get('to');             // YYYY-MM-DD
@@ -60,17 +60,14 @@ export async function GET(request: NextRequest) {
 
     // Validasi scope
     if (!['public', 'member', 'admin'].includes(scope)) {
-      return NextResponse.json(
-        { success: false, message: 'scope harus salah satu dari: public, member, admin' },
-        { status: 400 }
-      );
+      return fail('scope harus salah satu dari: public, member, admin', 400);
     }
 
     // Admin scope butuh login admin
     if (scope === 'admin') {
       const user = getUserFromRequest(request);
       if (!requireAdmin(user)) {
-        return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 401 });
+        return fail('Unauthorized', 401);
       }
     }
 
@@ -94,11 +91,6 @@ export async function GET(request: NextRequest) {
     // Scope public sudah difilter di WHERE di atas — tidak ada filter ulang di JS.
     const data = rows.map(normalize);
 
+    // Bukan helper ok(): response ini juga membawa `scope`.
     return NextResponse.json({ success: true, data, scope });
-  } catch (err: any) {
-    return NextResponse.json(
-      { success: false, message: err.message || 'Failed to fetch calendar events' },
-      { status: 500 }
-    );
-  }
-}
+}, 'Failed to fetch calendar events');

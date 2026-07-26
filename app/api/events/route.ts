@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { desc } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { eq } from 'drizzle-orm';
+import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 const URL_REGEX = /^https:\/\/(docs\.)?google\.com\/forms\/.+/i;
 
@@ -32,68 +31,53 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
   return null;
 }
 
-export async function GET(request: NextRequest) {
-  try {
-    const allEvents = await db.select().from(schema.events).orderBy(schema.events.date);
-    // Filter: eventType = 'public' saja untuk API publik. Event 'internal' hanya untuk portal anggota.
-    const events = allEvents.filter((e: any) => e.eventType !== 'internal');
-    return NextResponse.json({ success: true, data: events });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to fetch events' }, { status: 500 });
+export const GET = publicRoute(async () => {
+  // Event 'internal' hanya untuk portal anggota. Filternya di WHERE, bukan
+  // .filter() setelah seluruh tabel ditarik — memakai idx_events_type_date.
+  const events = await db
+    .select()
+    .from(schema.events)
+    .where(eq(schema.events.eventType, 'public'))
+    .orderBy(schema.events.date);
+  return ok(events);
+}, 'Failed to fetch events');
+
+export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
+  const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
+
+  if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
+    return fail('Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)', 400);
   }
-}
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin', 'editor')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
-
-    const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
-
-    if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
-      return NextResponse.json(
-        { success: false, message: 'Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)' },
-        { status: 400 }
-      );
-    }
-
-    if (endDate && endDate < date) {
-      return NextResponse.json(
-        { success: false, message: 'Tanggal selesai harus sama atau setelah tanggal mulai.' },
-        { status: 400 }
-      );
-    }
-
-    const err = validate({
-      title:       { value: title,       type: 'string', minLen: 3, maxLen: 200,  label: 'Judul acara' },
-      description: { value: description, type: 'string', minLen: 10,              label: 'Deskripsi' },
-      date:        { value: date,        type: 'string', regex: /^\d{4}-\d{2}-\d{2}$/, label: 'Tanggal (format YYYY-MM-DD)' },
-      ...(status ? { status: { value: status, enum: ['upcoming', 'ongoing', 'completed'], label: 'Status' } } : {}),
-      ...(eventType ? { eventType: { value: eventType, enum: ['public', 'internal'], label: 'Tipe acara' } } : {}),
-      ...(color ? { color: { value: color, enum: ['blue', 'emerald', 'purple', 'amber', 'slate', 'rose'], label: 'Warna' } } : {}),
-    });
-    if (err) return NextResponse.json({ success: false, message: err }, { status: 400 });
-
-    const result = await db.insert(schema.events).values({
-      title,
-      description,
-      date,
-      endDate: endDate || null,
-      time: time || null,
-      location: location || null,
-      imageUrl: imageUrl || null,
-      registrationUrl: registrationUrl || null,
-      status: status || 'upcoming',
-      eventType: eventType || 'public',
-      allDay: allDay ?? false,
-      color: color || 'blue',
-      generationId: generationId || null,
-    });
-
-    return NextResponse.json({ success: true, message: 'Event created successfully', id: (result as any).insertId });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Failed to create event' }, { status: 500 });
+  if (endDate && endDate < date) {
+    return fail('Tanggal selesai harus sama atau setelah tanggal mulai.', 400);
   }
-}
+
+  const err = validate({
+    title:       { value: title,       type: 'string', minLen: 3, maxLen: 200,  label: 'Judul acara' },
+    description: { value: description, type: 'string', minLen: 10,              label: 'Deskripsi' },
+    date:        { value: date,        type: 'string', regex: /^\d{4}-\d{2}-\d{2}$/, label: 'Tanggal (format YYYY-MM-DD)' },
+    ...(status ? { status: { value: status, enum: ['upcoming', 'ongoing', 'completed'], label: 'Status' } } : {}),
+    ...(eventType ? { eventType: { value: eventType, enum: ['public', 'internal'], label: 'Tipe acara' } } : {}),
+    ...(color ? { color: { value: color, enum: ['blue', 'emerald', 'purple', 'amber', 'slate', 'rose'], label: 'Warna' } } : {}),
+  });
+  if (err) return fail(err, 400);
+
+  const result = await db.insert(schema.events).values({
+    title,
+    description,
+    date,
+    endDate: endDate || null,
+    time: time || null,
+    location: location || null,
+    imageUrl: imageUrl || null,
+    registrationUrl: registrationUrl || null,
+    status: status || 'upcoming',
+    eventType: eventType || 'public',
+    allDay: allDay ?? false,
+    color: color || 'blue',
+    generationId: generationId || null,
+  });
+
+  return done('Event created successfully', { id: (result as any).insertId });
+}, 'Failed to create event');
