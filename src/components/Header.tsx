@@ -41,6 +41,10 @@ export default function Header({
           onClick={() => { setCurrentTab('beranda'); }}
           id="brand-logo-container"
         >
+          {/* Sengaja <img>, bukan next/image: logoUrl adalah URL bebas yang
+              diketik admin di Pengaturan, bisa dari host mana pun. next/image
+              menolak host di luar remotePatterns dengan HTTP 400 — logonya akan
+              hilang sama sekali, bukan sekadar tidak teroptimasi. */}
           {logoUrl ? (
             <img src={logoUrl} alt="Logo IAI Muda DKI" className="h-10 w-10 rounded-xl object-contain group-hover:scale-105 transition-transform flex-shrink-0" />
           ) : (

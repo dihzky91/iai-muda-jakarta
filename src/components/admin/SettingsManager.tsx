@@ -411,6 +411,11 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
                   {form.logoUrl && (
                     <div className="mt-2">
                       <p className="text-[10px] font-semibold text-slate-500 mb-1">Pratinjau:</p>
+                      {/* Sengaja <img>: ini pratinjau URL bebas yang sedang
+                          diketik admin. Host apa pun harus bisa tampil, dan
+                          onError di bawah menangani URL yang tidak valid —
+                          next/image justru akan gagal keras untuk host di luar
+                          remotePatterns. */}
                       <img src={form.logoUrl} alt="Preview logo" className="h-12 w-12 rounded-xl border border-slate-200 object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     </div>
                   )}

@@ -6,6 +6,7 @@
  */
 
 import React, { useState } from 'react';
+import Image from 'next/image';
 import { GalleryItem } from '../types';
 import { Camera, Calendar, Maximize2, X, Search, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -222,7 +223,7 @@ export default function GallerySection({ galleryItems }: GallerySectionProps) {
                           : 'border-transparent opacity-60 hover:opacity-100'
                       }`}
                     >
-                      <img src={imgSrc} alt="" className="h-full w-full object-cover" referrerPolicy="no-referrer" />
+                      <Image src={imgSrc} alt="" fill sizes="80px" className="object-cover" referrerPolicy="no-referrer" />
                     </button>
                   ))}
                 </div>

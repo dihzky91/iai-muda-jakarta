@@ -222,9 +222,13 @@ export default function ImageUploader({
             </div>
           ) : value ? (
             <>
-              <img 
-                src={value} 
-                alt="Pratinjau" 
+              {/* Sengaja <img>: `value` bisa berupa URL apa pun yang ditempel
+                  admin lewat input teks di bawah, bukan hanya hasil upload
+                  Cloudinary. next/image menolak host di luar remotePatterns
+                  dengan HTTP 400, sehingga pratinjau gagal total. */}
+              <img
+                src={value}
+                alt="Pratinjau"
                 className="absolute inset-0 w-full h-full object-cover"
                 referrerPolicy="no-referrer"
               />

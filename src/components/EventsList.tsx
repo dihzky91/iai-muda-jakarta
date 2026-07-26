@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
+import Image from 'next/image';
 import { Event } from '../types';
 import EventRegistrationModal from './EventRegistrationModal';
 import { Calendar, MapPin, Clock, Search, ExternalLink } from 'lucide-react';
@@ -125,11 +126,13 @@ export default function EventsList({ events }: EventsListProps) {
                   {/* Event Thumbnail */}
                   <div className="relative aspect-video w-full bg-slate-50 overflow-hidden">
                     {evt.imageUrl ? (
-                      <img 
-                        src={evt.imageUrl} 
+                      <Image
+                        src={evt.imageUrl}
                         alt={evt.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        className="object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-slate-100">
