@@ -1,31 +1,14 @@
-import { drizzle } from 'drizzle-orm/mysql2';
-import mysql from 'mysql2/promise';
-import * as schema from './schema';
+/**
+ * Entry point DB untuk script CLI (seed, migrasi) yang dijalankan lewat `tsx`,
+ * di luar Next.js — karena itu `.env` perlu dimuat manual.
+ *
+ * Pool-nya TIDAK dibuat di sini: modul ini hanya me-re-export instance tunggal
+ * dari `lib/db.ts`. Sebelumnya ada dua `mysql.createPool()` terpisah (di sini
+ * dan di `lib/db.ts`) sehingga satu proses membuka dua pool sekaligus dan
+ * memakai dua kali jatah koneksi TiDB.
+ *
+ * Kode aplikasi (route handler, server component) harus import dari `@/lib/db`.
+ */
 import 'dotenv/config';
 
-const isTiDB = process.env.DB_HOST?.includes('tidb');
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'iai_muda_jakarta',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  waitForConnections: true,
-  connectionLimit: isTiDB ? 5 : 10,
-  queueLimit: 0,
-  enableKeepAlive: true,
-  keepAliveInitialDelay: 10000,
-  maxIdle: isTiDB ? 2 : 5,
-  idleTimeout: 30000,
-  connectTimeout: 10000,
-  ...(isTiDB ? { 
-    ssl: { 
-      rejectUnauthorized: true,
-      minVersion: 'TLSv1.2'
-    } 
-  } : {}),
-});
-
-export const db = drizzle(pool, { schema, mode: 'default' });
-export { schema };
+export { db, schema, pool } from '../lib/db';

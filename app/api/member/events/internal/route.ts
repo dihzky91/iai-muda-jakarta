@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { events, eventRsvps, members } from '@/db/schema';
 import { eq, and, or, desc } from 'drizzle-orm';
 import { verifyMemberToken } from '@/lib/auth';

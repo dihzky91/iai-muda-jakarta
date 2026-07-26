@@ -84,26 +84,15 @@ export async function GET(request: NextRequest) {
       conditions.push(eq(schema.events.eventType, 'public'));
     }
 
-    // Query
-    let rows: any[];
-    if (conditions.length > 0) {
-      rows = await db
-        .select()
-        .from(schema.events)
-        .where(and(...conditions))
-        .orderBy(schema.events.date, schema.events.time);
-    } else {
-      rows = await db
-        .select()
-        .from(schema.events)
-        .orderBy(schema.events.date, schema.events.time);
-    }
+    // Query — `where(undefined)` diabaikan Drizzle, jadi tidak perlu percabangan
+    const rows = await db
+      .select()
+      .from(schema.events)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(schema.events.date, schema.events.time);
 
-    // Untuk public, double-check exclude internal (safety)
-    let data = rows.map(normalize);
-    if (scope === 'public') {
-      data = data.filter((e) => e.eventType !== 'internal');
-    }
+    // Scope public sudah difilter di WHERE di atas — tidak ada filter ulang di JS.
+    const data = rows.map(normalize);
 
     return NextResponse.json({ success: true, data, scope });
   } catch (err: any) {

@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum, uniqueIndex } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum, uniqueIndex, index } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 export const users = mysqlTable('users', {
@@ -28,7 +28,10 @@ export const positions = mysqlTable('positions', {
   sortOrder: int('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Dipakai resolvePositionId() di POST /api/members untuk lookup by name.
+  idxName: index('idx_positions_name').on(table.name),
+}));
 
 export const members = mysqlTable('members', {
   id: serial('id').primaryKey(),
@@ -48,7 +51,15 @@ export const members = mysqlTable('members', {
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Kolom FK — dipakai LEFT JOIN di homepage, /api/members, dan directory.
+  idxGenerationId: index('idx_members_generation_id').on(table.generationId),
+  idxPositionId: index('idx_members_position_id').on(table.positionId),
+  // Dipakai grouping riwayat generasi di /api/member/directory.
+  idxEmail: index('idx_members_email').on(table.email),
+  // Homepage & /api/members selalu memfilter show_public.
+  idxShowPublic: index('idx_members_show_public').on(table.showPublic),
+}));
 
 export const events = mysqlTable('events', {
   id: serial('id').primaryKey(),
@@ -68,7 +79,14 @@ export const events = mysqlTable('events', {
   generationId: int('generation_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // /api/calendar/events memfilter rentang tanggal lalu ORDER BY date, time.
+  idxDate: index('idx_events_date').on(table.date),
+  // /api/calendar/events?scope=public → WHERE event_type = 'public' AND date BETWEEN ...
+  idxTypeDate: index('idx_events_type_date').on(table.eventType, table.date),
+  // /api/member/events?type=&status=
+  idxTypeStatus: index('idx_events_type_status').on(table.eventType, table.status),
+}));
 
 export const eventRsvps = mysqlTable('event_rsvps', {
   id: serial('id').primaryKey(),
@@ -98,7 +116,11 @@ export const eventMaterials = mysqlTable('event_materials', {
   fileType: varchar('file_type', { length: 50 }),
   uploadedBy: int('uploaded_by'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Selalu di-query per event: GET /api/member/events/[id]/materials.
+  // Nama menyesuaikan index yang sudah dibuat migrasi add_event_committees_and_materials.
+  idxEventId: index('idx_event_materials_event').on(table.eventId),
+}));
 
 export const generationsRelations = relations(generations, ({ many }) => ({
   members: many(members),

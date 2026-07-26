@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
+import { db } from '@/lib/db';
 import { eventMaterials, eventCommittees } from '@/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { verifyMemberToken } from '@/lib/auth';

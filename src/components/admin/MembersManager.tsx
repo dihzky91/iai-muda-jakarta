@@ -89,6 +89,40 @@ function validateUrl(value: string): string | null {
   }
 }
 
+/** Jumlah request yang boleh jalan bersamaan saat operasi massal. */
+const REQUEST_CONCURRENCY = 5;
+
+/**
+ * Jalankan sekumpulan request dengan batas konkurensi.
+ *
+ * Menggantikan pola `for (const x of items) { await fetch(...) }` yang
+ * membuat N request berantai — impor 50 baris CSV berarti 50 round-trip
+ * berurutan. Sekarang maksimal `limit` request jalan bersamaan.
+ *
+ * Limitnya sengaja tidak tak-terbatas: connection pool MySQL di server hanya
+ * 5–10 koneksi, jadi membanjirinya justru memperlambat.
+ *
+ * Urutan hasil mengikuti urutan `items`.
+ */
+async function runWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  task: (item: T) => Promise<R>
+): Promise<R[]> {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (cursor < items.length) {
+      const index = cursor++;
+      results[index] = await task(items[index]);
+    }
+  });
+
+  await Promise.all(workers);
+  return results;
+}
+
 export default function MembersManager({ members, setMembers, generations, divisionList, activeGen }: MembersManagerProps) {
   const { toasts, triggerToast, removeToast } = useToast();
   const { confirm, state: confirmState, handleConfirm, handleCancel } = useConfirm();
@@ -415,24 +449,28 @@ export default function MembersManager({ members, setMembers, generations, divis
     }
 
     setIsLoading(true);
-    let successCount = 0;
-    for (const m of importedMembers) {
-      const res = await fetch('/api/members', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: m.name,
-          division: m.division,
-          university: m.university || null,
-          generationId: m.generationId || undefined,
-          email: m.email || null,
-          imageUrl: m.imageUrl || null,
-          linkedinUrl: m.linkedinUrl || null,
-        }),
-      });
-      const result = await res.json();
-      if (result.success) successCount++;
-    }
+    const importResults = await runWithConcurrency(importedMembers, REQUEST_CONCURRENCY, async (m) => {
+      try {
+        const res = await fetch('/api/members', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: m.name,
+            division: m.division,
+            university: m.university || null,
+            generationId: m.generationId || undefined,
+            email: m.email || null,
+            imageUrl: m.imageUrl || null,
+            linkedinUrl: m.linkedinUrl || null,
+          }),
+        });
+        const result = await res.json();
+        return result.success === true;
+      } catch {
+        return false;
+      }
+    });
+    const successCount = importResults.filter(Boolean).length;
 
     const listRes = await fetch('/api/members');
     const listResult = await listRes.json();
@@ -490,12 +528,16 @@ export default function MembersManager({ members, setMembers, generations, divis
           const existingHistoryRecords = members.filter(
             m => m.id !== editingMember.id && (m.name ?? '').trim().toLowerCase() === normalizedName
           );
-          for (const oldRec of existingHistoryRecords) {
-            await fetch(`/api/members/${oldRec.id}`, { method: 'DELETE' });
-          }
-          for (const hist of previousHistory) {
-            if (!hist.generationId || !hist.position) continue;
-            await fetch('/api/members', {
+          // Hapus dulu semua record riwayat lama, baru buat yang baru.
+          // Dua fase ini harus tetap berurutan satu sama lain, tapi di dalam
+          // tiap fase request boleh jalan paralel.
+          await runWithConcurrency(existingHistoryRecords, REQUEST_CONCURRENCY, (oldRec) =>
+            fetch(`/api/members/${oldRec.id}`, { method: 'DELETE' })
+          );
+
+          const historyToCreate = previousHistory.filter(h => h.generationId && h.position);
+          await runWithConcurrency(historyToCreate, REQUEST_CONCURRENCY, (hist) =>
+            fetch('/api/members', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -508,8 +550,9 @@ export default function MembersManager({ members, setMembers, generations, divis
                 imageUrl: form.imageUrl || null,
                 linkedinUrl: form.linkedinUrl || null,
               }),
-            });
-          }
+            })
+          );
+
           const listRes = await fetch('/api/members');
           const listResult = await listRes.json();
           if (listResult.success) {
@@ -534,9 +577,8 @@ export default function MembersManager({ members, setMembers, generations, divis
           return;
         }
 
-        let histCount = 0;
-        for (const hist of previousHistory) {
-          if (!hist.generationId || !hist.position) continue;
+        const historyToCreate = previousHistory.filter(h => h.generationId && h.position);
+        const histResults = await runWithConcurrency(historyToCreate, REQUEST_CONCURRENCY, async (hist) => {
           const histRes = await fetch('/api/members', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -552,8 +594,9 @@ export default function MembersManager({ members, setMembers, generations, divis
             }),
           });
           const histResult = await histRes.json();
-          if (histResult.success) histCount++;
-        }
+          return histResult.success === true;
+        });
+        const histCount = histResults.filter(Boolean).length;
 
         const listRes = await fetch('/api/members');
         const listResult = await listRes.json();
@@ -629,12 +672,17 @@ export default function MembersManager({ members, setMembers, generations, divis
     if (!confirmed) return;
 
     setIsLoading(true);
-    let successCount = 0;
-    for (const id of selectedIds) {
-      const res = await fetch(`/api/members/${id}`, { method: 'DELETE' });
-      const result = await res.json();
-      if (result.success) successCount++;
-    }
+    const deleteResults = await runWithConcurrency([...selectedIds], REQUEST_CONCURRENCY, async (id) => {
+      try {
+        const res = await fetch(`/api/members/${id}`, { method: 'DELETE' });
+        const result = await res.json();
+        return result.success === true;
+      } catch {
+        return false;
+      }
+    });
+    const successCount = deleteResults.filter(Boolean).length;
+
     const listRes = await fetch('/api/members');
     const listResult = await listRes.json();
     if (listResult.success) {
