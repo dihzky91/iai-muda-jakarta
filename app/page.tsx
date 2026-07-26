@@ -1,5 +1,6 @@
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
+import { selectMembers, normalizeMemberPosition } from '@/lib/members';
 import HomeClient from './HomeClient';
 
 /**
@@ -54,30 +55,7 @@ export default async function HomePage() {
         fetchWithRetry(() =>
           db.select().from(schema.events).orderBy(schema.events.date)
         ),
-        fetchWithRetry(() =>
-          db
-            .select({
-              id: schema.members.id,
-              generationId: schema.members.generationId,
-              positionId: schema.members.positionId,
-              name: schema.members.name,
-              division: schema.members.division,
-              university: schema.members.university,
-              email: schema.members.email,
-              imageUrl: schema.members.imageUrl,
-              linkedinUrl: schema.members.linkedinUrl,
-              bio: schema.members.bio,
-              isActive: schema.members.isActive,
-              showPublic: schema.members.showPublic,
-              createdAt: schema.members.createdAt,
-              updatedAt: schema.members.updatedAt,
-              position: schema.positions.name,
-            })
-            .from(schema.members)
-            .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
-            .where(eq(schema.members.showPublic, true))
-            .orderBy(schema.members.id)
-        ),
+        fetchWithRetry(() => selectMembers({ publicOnly: true })),
         fetchWithRetry(() =>
           db.select().from(schema.generations).orderBy(schema.generations.id)
         ),
@@ -95,7 +73,7 @@ export default async function HomePage() {
       return <HomeClient settings={null} pillars={[]} events={[]} members={[]} generations={[]} articles={[]} galleries={[]} />;
     }
 
-    const membersWithPos = members.map(m => ({ ...serialize(m), position: m.position || '' }));
+    const membersWithPos = members.map(m => serialize(normalizeMemberPosition(m)));
     const galleriesWithImages = galleries.map(g => ({
       ...serialize(g),
       images: g.images ? JSON.parse(g.images) : [],

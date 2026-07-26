@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { selectMembers, normalizeMemberPosition } from '@/lib/members';
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
@@ -54,69 +55,9 @@ export async function GET(request: NextRequest) {
     const user = getUserFromRequest(request);
     const isAdmin = user && user.type === 'admin' && (user.role === 'superadmin' || user.role === 'admin' || user.role === 'editor');
 
-    let query = db
-      .select({
-        id: schema.members.id,
-        generationId: schema.members.generationId,
-        positionId: schema.members.positionId,
-        name: schema.members.name,
-        division: schema.members.division,
-        university: schema.members.university,
-        email: schema.members.email,
-        imageUrl: schema.members.imageUrl,
-        linkedinUrl: schema.members.linkedinUrl,
-        bio: schema.members.bio,
-        isActive: schema.members.isActive,
-        showPublic: schema.members.showPublic,
-        createdAt: schema.members.createdAt,
-        updatedAt: schema.members.updatedAt,
-        position: schema.positions.name,
-      })
-      .from(schema.members)
-      .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id));
+    const rows = await selectMembers({ generationId, publicOnly: !isAdmin });
+    const members = rows.map(normalizeMemberPosition);
 
-    if (generationId) {
-      query = query.where(eq(schema.members.generationId, generationId)) as any;
-    }
-    
-    // If not admin, only show public members
-    if (!isAdmin) {
-      const conditions = [eq(schema.members.showPublic, true)];
-      if (generationId) {
-        conditions.push(eq(schema.members.generationId, generationId));
-      }
-      query = db
-        .select({
-          id: schema.members.id,
-          generationId: schema.members.generationId,
-          positionId: schema.members.positionId,
-          name: schema.members.name,
-          division: schema.members.division,
-          university: schema.members.university,
-          email: schema.members.email,
-          imageUrl: schema.members.imageUrl,
-          linkedinUrl: schema.members.linkedinUrl,
-          bio: schema.members.bio,
-          isActive: schema.members.isActive,
-          showPublic: schema.members.showPublic,
-          createdAt: schema.members.createdAt,
-          updatedAt: schema.members.updatedAt,
-          position: schema.positions.name,
-        })
-        .from(schema.members)
-        .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
-        .where(eq(schema.members.showPublic, true)) as any;
-        
-      if (generationId) {
-        query = query.where(eq(schema.members.generationId, generationId)) as any;
-      }
-    }
-
-    const rows = await query.orderBy(schema.members.id);
-    const members = rows.map((row) => ({
-      ...row,
-      position: row.position || '',
-    }));
     return NextResponse.json({ success: true, data: members });
   } catch (err: any) {
     return NextResponse.json({ success: false, message: err.message || 'Failed to fetch members' }, { status: 500 });
