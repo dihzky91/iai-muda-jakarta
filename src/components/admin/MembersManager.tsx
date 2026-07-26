@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
-  Users, Sparkles, History, Plus, Trash2, FileSpreadsheet, Download, Upload,
-  AlertCircle, Check, ChevronRight, ChevronLeft, UserPlus,
+  Users, Sparkles, Trash2, FileSpreadsheet, Download, Upload,
+  Check, ChevronRight, ChevronLeft, UserPlus,
 } from 'lucide-react';
 import { Member, Generation } from '@/src/types';
 import { useToast } from '@/src/hooks/useToast';
@@ -12,12 +12,15 @@ import { useConfirm } from '@/src/hooks/useConfirm';
 import { useDebounce } from '@/src/hooks/useDebounce';
 import { useAuth } from '@/src/context/AuthContext';
 import { useFormDraft } from '@/src/hooks/useFormDraft';
+import { useMemberAccounts } from '@/src/hooks/useMemberAccounts';
+import { runWithConcurrency, REQUEST_CONCURRENCY } from '@/src/lib/concurrency';
+import { parseMembersCsv, downloadCsvTemplate } from './members/csv';
+import MemberFormFields from './members/MemberFormFields';
 import PageHeader from './PageHeader';
 import ListContainer from './ListContainer';
 import SearchFilterBar from './SearchFilterBar';
 import EmptyState from './EmptyState';
 import Drawer from './Drawer';
-import ImageUploader from '../ImageUploader';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import SkeletonCard from './SkeletonCard';
@@ -31,12 +34,6 @@ interface MembersManagerProps {
   generations: Generation[];
   divisionList: string[];
   activeGen?: Generation;
-}
-
-interface MemberAccountInfo {
-  memberId: number;
-  accountId: number | null;
-  isActive: boolean;
 }
 
 interface HistoryEntry {
@@ -90,40 +87,6 @@ function validateUrl(value: string): string | null {
   }
 }
 
-/** Jumlah request yang boleh jalan bersamaan saat operasi massal. */
-const REQUEST_CONCURRENCY = 5;
-
-/**
- * Jalankan sekumpulan request dengan batas konkurensi.
- *
- * Menggantikan pola `for (const x of items) { await fetch(...) }` yang
- * membuat N request berantai — impor 50 baris CSV berarti 50 round-trip
- * berurutan. Sekarang maksimal `limit` request jalan bersamaan.
- *
- * Limitnya sengaja tidak tak-terbatas: connection pool MySQL di server hanya
- * 5–10 koneksi, jadi membanjirinya justru memperlambat.
- *
- * Urutan hasil mengikuti urutan `items`.
- */
-async function runWithConcurrency<T, R>(
-  items: T[],
-  limit: number,
-  task: (item: T) => Promise<R>
-): Promise<R[]> {
-  const results = new Array<R>(items.length);
-  let cursor = 0;
-
-  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
-    while (cursor < items.length) {
-      const index = cursor++;
-      results[index] = await task(items[index]);
-    }
-  });
-
-  await Promise.all(workers);
-  return results;
-}
-
 export default function MembersManager({ members, setMembers, generations, divisionList, activeGen }: MembersManagerProps) {
   const { toasts, triggerToast, removeToast } = useToast();
   const { confirm, state: confirmState, handleConfirm, handleCancel } = useConfirm();
@@ -151,42 +114,16 @@ export default function MembersManager({ members, setMembers, generations, divis
   const [csvText, setCsvText] = useState('');
   const [csvError, setCsvError] = useState<string | null>(null);
 
-  // Member Accounts state
-  const [memberAccounts, setMemberAccounts] = useState<Map<number, MemberAccountInfo>>(new Map());
-  const [loadingAccounts, setLoadingAccounts] = useState(false);
+  // Dialog pembuatan akun portal — sisa state akun dikelola useMemberAccounts.
   const [showCreateAccount, setShowCreateAccount] = useState(false);
   const [selectedMemberForAccount, setSelectedMemberForAccount] = useState<Member | null>(null);
 
-  // Load member accounts
-  useEffect(() => {
-    const loadAccounts = async () => {
-      setLoadingAccounts(true);
-      try {
-        const response = await fetch('/api/admin/member-accounts', {
-          credentials: 'include',
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success && data.data) {
-            const accountsMap = new Map<number, MemberAccountInfo>();
-            data.data.forEach((item: any) => {
-              accountsMap.set(item.id, {
-                memberId: item.id,
-                accountId: item.accountId,
-                isActive: item.accountIsActive || false,
-              });
-            });
-            setMemberAccounts(accountsMap);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load member accounts:', err);
-      } finally {
-        setLoadingAccounts(false);
-      }
-    };
-    loadAccounts();
-  }, []);
+  const {
+    accounts: memberAccounts,
+    createAccount,
+    toggleAccountStatus,
+    deleteAccount,
+  } = useMemberAccounts({ notify: triggerToast });
 
   // Simulate initial loading state for skeleton demo
   useEffect(() => {
@@ -338,116 +275,15 @@ export default function MembersManager({ members, setMembers, generations, divis
     resetFormState();
   };
 
-  const getDivisionListString = () => JSON.stringify(divisionList.length > 0 ? divisionList : ['Badan Pengurus Harian (BPH)','Bidang Edukasi & Sertifikasi','Bidang Hubungan Masyarakat','Bidang Kewirausahaan & Kemitraan','Bidang Media & Desain Kreatif']);
-
-  const downloadCsvTemplate = () => {
-    const headers = "Nama,Jabatan,Divisi,Universitas,Email,Foto,LinkedIn,Generasi\n";
-    const rows = "Budi Santoso,Kepala Bidang Humas,Bidang Hubungan Masyarakat,Universitas Indonesia,budi@iai-dki.or.id,https://images.unsplash.com/photo-1535713875002-d1d0cf377fde,https://linkedin.com/in/budi,Generasi ke-2\n";
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "template_pendaftaran_pengurus.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const parseCsvLine = (line: string) => {
-    const result: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    for (let i = 0; i < line.length; i++) {
-      const char = line[i];
-      if (char === '"' || char === "'") {
-        inQuotes = !inQuotes;
-      } else if (char === ',' && !inQuotes) {
-        result.push(current.trim());
-        current = '';
-      } else {
-        current += char;
-      }
-    }
-    result.push(current.trim());
-    return result;
-  };
-
   const handleCsvImport = async (textToParse: string) => {
-    setCsvError(null);
-    if (!textToParse.trim()) {
-      setCsvError("Data teks CSV masih kosong.");
-      return;
-    }
+    const { members: importedMembers, error } = parseMembersCsv(textToParse, {
+      divisionList,
+      generations,
+      activeGen,
+    });
 
-    const lines = textToParse.split(/\r?\n/).filter(line => line.trim().length > 0);
-    if (lines.length <= 1) {
-      setCsvError("CSV harus berisi minimal satu baris tajuk (headers) dan satu baris data.");
-      return;
-    }
-
-    const headers = parseCsvLine(lines[0]).map(h => h.toLowerCase());
-    const importedMembers: Array<Omit<Member, 'id'>> = [];
-
-    for (let i = 1; i < lines.length; i++) {
-      const values = parseCsvLine(lines[i]);
-      if (values.length < 2) continue;
-
-      const rowData: any = {};
-      headers.forEach((header, idx) => {
-        const val = values[idx] || '';
-        if (header.includes('nama')) rowData.name = val;
-        else if (header.includes('jabatan')) rowData.position = val;
-        else if (header.includes('divisi')) rowData.division = val;
-        else if (header.includes('universitas') || header.includes('kampus')) rowData.university = val;
-        else if (header.includes('email')) rowData.email = val;
-        else if (header.includes('foto') || header.includes('image')) rowData.imageUrl = val;
-        else if (header.includes('linkedin')) rowData.linkedinUrl = val;
-        else if (header.includes('generasi')) rowData.generation = val;
-        else if (idx === 0) rowData.name = val;
-        else if (idx === 1) rowData.position = val;
-        else if (idx === 2) rowData.division = val;
-        else if (idx === 3) rowData.university = val;
-        else if (idx === 4) rowData.email = val;
-        else if (idx === 5) rowData.imageUrl = val;
-        else if (idx === 6) rowData.linkedinUrl = val;
-        else if (idx === 7) rowData.generation = val;
-      });
-
-      if (!rowData.name || !rowData.position) continue;
-
-      const allowedDivisions = divisionList.length > 0 ? divisionList : JSON.parse(getDivisionListString());
-      let divisionMatched = allowedDivisions.find((d: string) =>
-        d.toLowerCase().includes((rowData.division || '').toLowerCase()) ||
-        (rowData.division || '').toLowerCase().includes(d.toLowerCase())
-      );
-      if (!divisionMatched) divisionMatched = allowedDivisions[0] || 'Badan Pengurus Harian (BPH)';
-
-      let matchedGenId: number | '' = '';
-      if (rowData.generation) {
-        const matchedGen = generations.find(g =>
-          g.name.toLowerCase().includes(rowData.generation.toLowerCase()) ||
-          rowData.generation.toLowerCase().includes(g.name.toLowerCase())
-        );
-        if (matchedGen) matchedGenId = matchedGen.id;
-      }
-      if (matchedGenId === '') matchedGenId = activeGen?.id || generations[0]?.id || '';
-
-      importedMembers.push({
-        name: rowData.name,
-        position: rowData.position,
-        division: divisionMatched,
-        university: rowData.university || '',
-        generationId: matchedGenId as number,
-        email: rowData.email || '',
-        imageUrl: rowData.imageUrl || '',
-        linkedinUrl: rowData.linkedinUrl || '',
-      });
-    }
-
-    if (importedMembers.length === 0) {
-      setCsvError("Gagal mengimpor. Pastikan header kolom sesuai dan data valid.");
-      return;
-    }
+    setCsvError(error);
+    if (error) return;
 
     setIsLoading(true);
     const importResults = await runWithConcurrency(importedMembers, REQUEST_CONCURRENCY, async (m) => {
@@ -750,102 +586,6 @@ export default function MembersManager({ members, setMembers, generations, divis
     }
   };
 
-  // Handler untuk confirm create account
-  const handleConfirmCreateAccount = async (password: string) => {
-    if (!selectedMemberForAccount) return;
-
-    const response = await fetch('/api/admin/member-accounts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({
-        memberId: selectedMemberForAccount.id,
-        password,
-      }),
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      // Reload accounts
-      const accountsRes = await fetch('/api/admin/member-accounts', {
-        credentials: 'include',
-      });
-      if (accountsRes.ok) {
-        const data = await accountsRes.json();
-        if (data.success && data.data) {
-          const accountsMap = new Map<number, MemberAccountInfo>();
-          data.data.forEach((item: any) => {
-            accountsMap.set(item.id, {
-              memberId: item.id,
-              accountId: item.accountId,
-              isActive: item.accountIsActive || false,
-            });
-          });
-          setMemberAccounts(accountsMap);
-        }
-      }
-      triggerToast('Akun portal berhasil dibuat!');
-    } else {
-      throw new Error(result.message || 'Gagal membuat akun');
-    }
-  };
-
-  // Handler untuk toggle account status
-  const handleToggleAccountStatus = async (accountId: number, isActive: boolean) => {
-    try {
-      const response = await fetch(`/api/admin/member-accounts/${accountId}`, {
-        method: 'PUT',
-        credentials: 'include',
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setMemberAccounts(prev => {
-          const next = new Map(prev);
-          prev.forEach((info, memberId) => {
-            if (info.accountId === accountId) {
-              next.set(memberId, { ...info, isActive: result.isActive });
-            }
-          });
-          return next;
-        });
-        triggerToast(result.message);
-      } else {
-        triggerToast(`Gagal: ${result.message}`, 'error');
-      }
-    } catch (err) {
-      triggerToast('Terjadi kesalahan', 'error');
-    }
-  };
-
-  // Handler untuk delete account
-  const handleDeleteAccount = async (accountId: number) => {
-    try {
-      const response = await fetch(`/api/admin/member-accounts/${accountId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setMemberAccounts(prev => {
-          const next = new Map(prev);
-          prev.forEach((info, memberId) => {
-            if (info.accountId === accountId) {
-              next.set(memberId, { ...info, accountId: null, isActive: false });
-            }
-          });
-          return next;
-        });
-        triggerToast('Akun portal berhasil dihapus');
-      } else {
-        triggerToast(`Gagal: ${result.message}`, 'error');
-      }
-    } catch (err) {
-      triggerToast('Terjadi kesalahan', 'error');
-    }
-  };
-
   const nextStep = () => {
     if (isStepTransitioning) return;
     if (!validateStep(step)) return;
@@ -866,259 +606,6 @@ export default function MembersManager({ members, setMembers, generations, divis
     }
   };
 
-  const renderStepContent = () => {
-    if (step === 0) {
-      return (
-        <div className="space-y-4 animate-fade-in">
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Nama Lengkap & Gelar</label>
-            <input
-              type="text"
-              placeholder="Contoh: Budi Santoso, S.Ak., CA"
-              value={form.name}
-              onChange={(e) => setFormValue('name', e.target.value)}
-              onBlur={() => handleBlur('name')}
-              className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                touched.name && errors.name ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-              }`}
-            />
-            {touched.name && errors.name && (
-              <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> {errors.name}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Jabatan Komite</label>
-            <input
-              type="text"
-              placeholder="Contoh: Kepala Bidang Hubungan Masyarakat"
-              value={form.position}
-              onChange={(e) => setFormValue('position', e.target.value)}
-              onBlur={() => handleBlur('position')}
-              className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                touched.position && errors.position ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-              }`}
-            />
-            {touched.position && errors.position && (
-              <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> {errors.position}
-              </p>
-            )}
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Asal Universitas</label>
-            <input
-              type="text"
-              placeholder="Contoh: Universitas Indonesia"
-              value={form.university}
-              onChange={(e) => setFormValue('university', e.target.value)}
-              className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Bidang / Divisi Kerja</label>
-            <input
-              type="text"
-              list="member-division-list"
-              placeholder="Ketik atau pilih nama bidang..."
-              value={form.division}
-              onChange={(e) => setFormValue('division', e.target.value)}
-              onBlur={() => handleBlur('division')}
-              className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                touched.division && errors.division ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-              }`}
-            />
-            <datalist id="member-division-list">
-              {divisionList.map(div => <option key={div} value={div} />)}
-            </datalist>
-            {touched.division && errors.division && (
-              <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> {errors.division}
-              </p>
-            )}
-          </div>
-        </div>
-      );
-    }
-
-    if (step === 1) {
-      return (
-        <div className="space-y-4 animate-fade-in">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Email Resmi</label>
-              <input
-                type="email"
-                placeholder="nama@iai-dki.or.id"
-                value={form.email}
-                onChange={(e) => setFormValue('email', e.target.value)}
-                onBlur={() => handleBlur('email')}
-                className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                  touched.email && errors.email ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-                }`}
-              />
-              {touched.email && errors.email && (
-                <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" /> {errors.email}
-                </p>
-              )}
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-slate-700">Tautan LinkedIn</label>
-              <input
-                type="text"
-                placeholder="https://linkedin.com/in/..."
-                value={form.linkedinUrl}
-                onChange={(e) => setFormValue('linkedinUrl', e.target.value)}
-                onBlur={() => handleBlur('linkedinUrl')}
-                className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                  touched.linkedinUrl && errors.linkedinUrl ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-                }`}
-              />
-              {touched.linkedinUrl && errors.linkedinUrl && (
-                <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" /> {errors.linkedinUrl}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Periode Generasi</label>
-            <select
-              value={form.generationId}
-              onChange={(e) => setFormValue('generationId', e.target.value ? parseInt(e.target.value) : '')}
-              onBlur={() => handleBlur('generationId')}
-              className={`w-full rounded-xl bg-slate-50 border px-4 py-2.5 text-xs sm:text-sm text-slate-850 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all ${
-                touched.generationId && errors.generationId ? 'border-red-300 bg-red-50/30' : 'border-slate-200'
-              }`}
-            >
-              <option value="">-- Pilih Generasi --</option>
-              {generations.map(g => (
-                <option key={g.id} value={g.id}>{g.name} ({g.years}) {g.isActive ? '- Aktif' : ''}</option>
-              ))}
-            </select>
-            {touched.generationId && errors.generationId && (
-              <p className="text-[10px] text-red-600 font-semibold flex items-center gap-1">
-                <AlertCircle className="h-3 w-3" /> {errors.generationId}
-              </p>
-            )}
-          </div>
-
-          <ImageUploader
-            label="Foto Profil"
-            value={form.imageUrl || ''}
-            onChange={(url) => setFormValue('imageUrl', url)}
-            placeholder="https://images.unsplash.com/photo-..."
-            helperText="Unggah pasfoto resmi pengurus atau tempel link gambar."
-          />
-
-          {/* Large preview */}
-          {form.imageUrl && (
-            <div className="rounded-2xl border border-slate-100 p-3 bg-slate-50/50 space-y-2">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pratinjau Foto Profil</span>
-              <div className="flex justify-center">
-                <img
-                  src={form.imageUrl}
-                  alt="Pratinjau profil"
-                  className="h-40 w-40 rounded-2xl object-cover bg-slate-100 border border-slate-200 shadow-sm"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-4 animate-fade-in">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <History className="h-3.5 w-3.5 text-amber-500" />
-            <span className="text-xs font-bold text-slate-700">Riwayat Generasi Sebelumnya</span>
-            {previousHistory.length > 0 && (
-              <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-100 text-amber-700 border border-amber-200">{previousHistory.length} periode</span>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={() => setPreviousHistory(prev => [...prev, { generationId: '', position: '', division: divisionList[0] || '' }])}
-            className="flex items-center gap-1 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 hover:bg-amber-100 px-2.5 py-1.5 text-[11px] font-bold transition-all cursor-pointer"
-          >
-            <Plus className="h-3 w-3" /> Tambah Riwayat
-          </button>
-        </div>
-
-        {previousHistory.length === 0 && (
-          <p className="text-[11px] text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-xl px-3 py-2.5">
-            Jika pengurus ini pernah menjabat di generasi sebelumnya, tambahkan riwayatnya di sini.
-          </p>
-        )}
-
-        {previousHistory.map((hist, idx) => (
-          <div key={idx} className="relative bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2.5">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 flex items-center gap-1">
-                <History className="h-3 w-3" /> Periode #{idx + 1}
-              </span>
-              <button
-                type="button"
-                onClick={() => setPreviousHistory(prev => prev.filter((_, i) => i !== idx))}
-                className="p-1 rounded-lg hover:bg-red-100 text-slate-400 hover:text-red-500 transition-all cursor-pointer"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-amber-700">Generasi</label>
-              <select
-                value={String(hist.generationId)}
-                onChange={e => setPreviousHistory(prev => prev.map((h, i) => i === idx ? { ...h, generationId: e.target.value === '' ? '' : Number(e.target.value) } : h))}
-                className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none"
-              >
-                <option value="">-- Pilih Generasi --</option>
-                {generations.filter(g => g.id !== (form.generationId || activeGen?.id)).map(g => (
-                  <option key={g.id} value={g.id}>{g.name} ({g.years})</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-amber-700">Jabatan di Periode Tersebut</label>
-              <input
-                type="text"
-                placeholder="Contoh: Staf Bidang Edukasi"
-                value={hist.position}
-                onChange={e => setPreviousHistory(prev => prev.map((h, i) => i === idx ? { ...h, position: e.target.value } : h))}
-                className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 placeholder-slate-400"
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-amber-700">Bidang / Divisi</label>
-              <select
-                value={hist.division}
-                onChange={e => setPreviousHistory(prev => prev.map((h, i) => i === idx ? { ...h, division: e.target.value } : h))}
-                className="w-full rounded-lg bg-white border border-amber-200 px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-300/40 focus:border-amber-400 transition-all"
-              >
-                <option value="">-- Pilih Bidang / Divisi --</option>
-                {divisionList.map(div => (
-                  <option key={div} value={div}>{div}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  };
 
   return (
     <div className="space-y-8">
@@ -1293,8 +780,8 @@ export default function MembersManager({ members, setMembers, generations, divis
                     onDelete={() => handleDelete(m)}
                     onToggleVisibility={handleToggleVisibility}
                     onCreateAccount={handleCreateAccount}
-                    onToggleAccountStatus={handleToggleAccountStatus}
-                    onDeleteAccount={handleDeleteAccount}
+                    onToggleAccountStatus={(accountId) => toggleAccountStatus(accountId)}
+                    onDeleteAccount={deleteAccount}
                     hasAccount={!!accountInfo?.accountId}
                     accountIsActive={accountInfo?.isActive || false}
                     accountId={accountInfo?.accountId || undefined}
@@ -1331,7 +818,19 @@ export default function MembersManager({ members, setMembers, generations, divis
           <Stepper steps={STEPS} current={step} />
 
           <div className="pt-2">
-            {renderStepContent()}
+            <MemberFormFields
+              step={step}
+              form={form}
+              setFormValue={setFormValue}
+              handleBlur={handleBlur}
+              touched={touched}
+              errors={errors}
+              divisionList={divisionList}
+              generations={generations}
+              activeGen={activeGen}
+              previousHistory={previousHistory}
+              setPreviousHistory={setPreviousHistory}
+            />
           </div>
 
           <div className="pt-6 flex items-center gap-3 border-t border-slate-100">
@@ -1393,7 +892,7 @@ export default function MembersManager({ members, setMembers, generations, divis
           setShowCreateAccount(false);
           setSelectedMemberForAccount(null);
         }}
-        onConfirm={handleConfirmCreateAccount}
+        onConfirm={(password) => createAccount(selectedMemberForAccount!.id, password)}
       />
     </div>
   );
