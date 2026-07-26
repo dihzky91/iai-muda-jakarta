@@ -35,33 +35,32 @@ export default function PortalCalendarPage() {
   const fetchEvents = async () => {
     try {
       setLoading(true);
-      // scope=member → include event internal juga
-      const res = await fetch('/api/calendar/events?scope=member');
-      const data = await res.json();
-      if (data.success) {
-        // Merge dengan RSVP info dari API existing (kalau ada)
-        try {
-          const rsvpRes = await fetch('/api/member/events');
-          const rsvpData = await rsvpRes.json();
-          if (rsvpData.success && Array.isArray(rsvpData.data)) {
-            const rsvpMap = new Map<number, RsvpStatus>();
-            for (const e of rsvpData.data) {
-              if (e?.id && e?.myRsvpStatus) {
-                rsvpMap.set(e.id, e.myRsvpStatus);
-              }
-            }
-            const merged = (data.data as CalendarEvent[]).map((ev) => ({
-              ...ev,
-              myRsvpStatus: rsvpMap.get(ev.id) ?? null,
-            }));
-            setEvents(merged);
-            return;
+
+      // Dua request ini tidak saling bergantung. Sebelumnya yang kedua baru
+      // dimulai setelah yang pertama selesai, jadi latensinya berurutan.
+      // allSettled dipakai supaya kegagalan RSVP tidak ikut menjatuhkan
+      // kalender — sama seperti try/catch bersarang sebelumnya.
+      const [calendarResult, rsvpResult] = await Promise.allSettled([
+        fetch('/api/calendar/events?scope=member').then((r) => r.json()),
+        fetch('/api/member/events').then((r) => r.json()),
+      ]);
+
+      if (calendarResult.status !== 'fulfilled' || !calendarResult.value?.success) return;
+
+      const rsvpMap = new Map<number, RsvpStatus>();
+      if (rsvpResult.status === 'fulfilled' && rsvpResult.value?.success && Array.isArray(rsvpResult.value.data)) {
+        for (const e of rsvpResult.value.data) {
+          if (e?.id && e?.myRsvpStatus) {
+            rsvpMap.set(e.id, e.myRsvpStatus);
           }
-        } catch {
-          // ignore — fallback ke data tanpa RSVP
         }
-        setEvents(data.data as PortalCalendarEvent[]);
       }
+
+      const merged = (calendarResult.value.data as CalendarEvent[]).map((ev) => ({
+        ...ev,
+        myRsvpStatus: rsvpMap.get(ev.id) ?? null,
+      }));
+      setEvents(merged);
     } catch (err) {
       console.error('Failed to fetch calendar events:', err);
     } finally {
