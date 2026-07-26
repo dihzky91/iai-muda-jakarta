@@ -26,7 +26,7 @@ import { MemberLayout } from '@/src/components/member';
 
 export default function MemberProfile() {
   const router = useRouter();
-  const { member, loading: authLoading, isAuthenticated, refreshMember, token } = useMemberAuth();
+  const { member, loading: authLoading, isAuthenticated, refreshMember } = useMemberAuth();
 
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -75,7 +75,6 @@ export default function MemberProfile() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify(formData),
@@ -140,9 +139,6 @@ export default function MemberProfile() {
 
       const response = await fetch('/api/member/profile/image', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         credentials: 'include',
         body: uploadData,
       });

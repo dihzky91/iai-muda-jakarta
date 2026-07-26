@@ -26,7 +26,7 @@ const itemVariants = {
 
 export default function DirectoryPage() {
   const router = useRouter();
-  const { loading: authLoading, isAuthenticated, token } = useMemberAuth();
+  const { loading: authLoading, isAuthenticated } = useMemberAuth();
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -78,7 +78,7 @@ export default function DirectoryPage() {
 
         {/* Directory Component */}
         <motion.div variants={itemVariants}>
-          <MemberDirectory token={token} />
+          <MemberDirectory />
         </motion.div>
 
         {/* Footer Note */}

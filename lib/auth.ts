@@ -7,6 +7,10 @@ import type { NextRequest } from 'next/server';
 // dibuang; `bcryptjs` murni JS sehingga tidak perlu kompilasi saat deploy.
 // Hash $2a$/$2b$ yang dibuat paket native tetap terverifikasi di sini.
 import bcrypt from 'bcryptjs';
+import { ADMIN_COOKIE, MEMBER_COOKIE, LEGACY_COOKIE } from './cookies';
+
+// Di-re-export supaya route handler cukup import dari satu tempat.
+export { ADMIN_COOKIE, MEMBER_COOKIE, LEGACY_COOKIE, sessionCookieOptions } from './cookies';
 
 export type UserRole = 'superadmin' | 'admin' | 'editor';
 export type TokenType = 'admin' | 'member';
@@ -50,9 +54,13 @@ export function verifyToken(token: string): JwtPayload {
 
 export function getUserFromRequest(request: NextRequest): JwtPayload | null {
   const authHeader = request.headers.get('authorization');
+
   const token = authHeader?.startsWith('Bearer ')
     ? authHeader.slice(7)
-    : request.cookies.get('auth_token')?.value ?? null;
+    : request.cookies.get(ADMIN_COOKIE)?.value
+      ?? request.cookies.get(MEMBER_COOKIE)?.value
+      ?? request.cookies.get(LEGACY_COOKIE)?.value
+      ?? null;
 
   if (!token) return null;
 

@@ -19,7 +19,7 @@ import { MemberLayout } from '@/src/components/member';
 
 export default function MemberSettings() {
   const router = useRouter();
-  const { member, loading: authLoading, isAuthenticated, token } = useMemberAuth();
+  const { member, loading: authLoading, isAuthenticated } = useMemberAuth();
 
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -62,7 +62,6 @@ export default function MemberSettings() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         credentials: 'include',
         body: JSON.stringify({
