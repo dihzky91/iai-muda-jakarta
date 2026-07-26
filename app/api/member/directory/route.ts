@@ -1,7 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq, and, or, like, desc } from 'drizzle-orm';
-import { getUserFromRequest, requireMember } from '@/lib/auth';
+import { memberRoute, ok } from '@/lib/api';
 
 /**
  * Directory API for member portal (internal access only).
@@ -21,17 +20,7 @@ import { getUserFromRequest, requireMember } from '@/lib/auth';
  * Returns safe fields: id, name, division, imageUrl, linkedinUrl,
  * isAlumni (derived), generations (history array), position.
  */
-export async function GET(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-
-    if (!requireMember(user)) {
-      return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
+export const GET = memberRoute(async (request) => {
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search')?.trim() || '';
     const isAlumniFilter = searchParams.get('isAlumni');
@@ -172,15 +161,5 @@ export async function GET(request: NextRequest) {
       return a.name.localeCompare(b.name);
     });
 
-    return NextResponse.json({
-      success: true,
-      data: members,
-    });
-  } catch (err: any) {
-    console.error('[Member Directory API Error]', err);
-    return NextResponse.json(
-      { success: false, message: err.message || 'Failed to fetch directory' },
-      { status: 500 }
-    );
-  }
-}
+    return ok(members);
+}, 'Failed to fetch directory');

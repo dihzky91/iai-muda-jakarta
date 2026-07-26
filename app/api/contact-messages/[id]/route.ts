@@ -1,22 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { adminRoute, done } from '@/lib/api';
 
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+type Params = { id: string };
 
-    const { id } = await params;
-    const msgId = parseInt(id);
+export const DELETE = adminRoute<Params>(['superadmin', 'admin'], async (_request, { params }) => {
+  const { id } = await params;
 
-    await db.delete(schema.contactMessages).where(eq(schema.contactMessages.id, msgId));
+  await db.delete(schema.contactMessages).where(eq(schema.contactMessages.id, parseInt(id)));
 
-    return NextResponse.json({ success: true, message: 'Pesan dihapus.' });
-  } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message || 'Gagal menghapus pesan.' }, { status: 500 });
-  }
-}
+  return done('Pesan dihapus.');
+}, 'Gagal menghapus pesan.');

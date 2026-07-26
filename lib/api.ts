@@ -70,13 +70,19 @@ export function adminRoute<P = Record<string, string>>(
     context: RouteContext<P>,
     user: AdminJwtPayload
   ) => Promise<NextResponse>,
-  fallbackMessage: string
+  fallbackMessage: string,
+  /**
+   * Status saat otorisasi gagal. Default 403, seperti mayoritas route admin.
+   * Route /api/admin/member-accounts sudah terlanjur memakai 401; nilainya
+   * dipertahankan lewat opsi ini alih-alih diam-diam diubah.
+   */
+  unauthorizedStatus = 403
 ) {
   return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
     try {
       const user = getUserFromRequest(request);
       if (!requireRole(user, ...roles)) {
-        return fail('Unauthorized', 403);
+        return fail('Unauthorized', unauthorizedStatus);
       }
       return await handler(request, context, user as AdminJwtPayload);
     } catch (err: any) {
@@ -103,6 +109,46 @@ export function memberRoute<P = Record<string, string>>(
       return await handler(request, context, user);
     } catch (err: any) {
       return fail(err?.message || fallbackMessage, 500);
+    }
+  };
+}
+
+/** Respons gagal berbentuk `{ error }` — dipakai subset route portal. */
+export function errorBody(error: string, status: number): NextResponse {
+  return NextResponse.json({ error }, { status });
+}
+
+/**
+ * Varian `memberRoute` untuk route portal yang memakai envelope berbeda:
+ * `{ error }` saat gagal dan objek telanjang (`{ events }`, `{ attendees }`)
+ * saat sukses, bukan `{ success, data }`.
+ *
+ * Dipisah alih-alih diseragamkan karena bentuk itu sudah jadi kontrak dengan
+ * komponen portal yang memakainya; menyatukannya adalah perubahan API
+ * tersendiri, bukan bagian dari pembersihan ini.
+ *
+ * Error tak tertangani dicatat ke log sebelum dikembalikan, meniru
+ * `console.error` yang sebelumnya ada di tiap route ini.
+ */
+export function memberRouteRaw<P = Record<string, string>>(
+  handler: (
+    request: NextRequest,
+    context: RouteContext<P>,
+    member: MemberJwtPayload
+  ) => Promise<NextResponse>,
+  fallbackError: string,
+  logLabel: string
+) {
+  return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
+    try {
+      const user = getUserFromRequest(request);
+      if (!requireMember(user)) {
+        return errorBody('Unauthorized', 401);
+      }
+      return await handler(request, context, user);
+    } catch (err: any) {
+      console.error(logLabel, err);
+      return errorBody(fallbackError, 500);
     }
   };
 }

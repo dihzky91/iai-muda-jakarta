@@ -1,119 +1,76 @@
 /**
  * API: GET /api/member/events/internal
- * 
- * Get list of internal events (for member RSVP)
- * Filters by member status (active pengurus or alumni based on visibleToAlumni flag)
- * For Portal Anggota - Event Internal (A2)
+ *
+ * Daftar event internal untuk RSVP anggota.
+ * Alumni hanya melihat event dengan visibleToAlumni = true;
+ * pengurus aktif melihat seluruh event internal.
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { events, eventRsvps, members } from '@/db/schema';
-import { eq, and, or, desc } from 'drizzle-orm';
-import { verifyMemberToken } from '@/lib/auth';
+import { eq, and, inArray, desc } from 'drizzle-orm';
+import { memberRouteRaw, errorBody } from '@/lib/api';
 
-export async function GET(request: NextRequest) {
-  try {
-    // Verify member authentication
-    const authResult = await verifyMemberToken(request);
-    if (!authResult.valid || !authResult.memberId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+export const GET = memberRouteRaw(async (_request, _context, member) => {
+  const memberId = member.memberId;
 
-    const memberId = authResult.memberId;
+  const [currentMember] = await db
+    .select()
+    .from(members)
+    .where(eq(members.id, memberId))
+    .limit(1);
 
-    // Get current member info to check if alumni
-    const [currentMember] = await db
-      .select()
-      .from(members)
-      .where(eq(members.id, memberId))
-      .limit(1);
+  if (!currentMember) {
+    return errorBody('Member not found', 404);
+  }
 
-    if (!currentMember) {
-      return NextResponse.json(
-        { error: 'Member not found' },
-        { status: 404 }
-      );
-    }
+  const isAlumni = currentMember.isAlumni;
 
-    const isAlumni = currentMember.isAlumni;
-
-    // Get internal events
-    // If member is alumni, only show events with visibleToAlumni=true
-    // If member is active pengurus, show all internal events
-    const internalEventsQuery = db
-      .select()
-      .from(events)
-      .where(
-        and(
-          eq(events.eventType, 'internal'),
-          isAlumni 
-            ? eq(events.visibleToAlumni, true)
-            : undefined // Active pengurus can see all internal events
-        )
+  const internalEvents = await db
+    .select()
+    .from(events)
+    .where(
+      and(
+        eq(events.eventType, 'internal'),
+        isAlumni ? eq(events.visibleToAlumni, true) : undefined
       )
-      .orderBy(desc(events.date));
+    )
+    .orderBy(desc(events.date));
 
-    const internalEvents = await internalEventsQuery;
+  const eventIds = internalEvents.map(e => e.id);
 
-    // Get RSVPs for current member
-    const myRsvps = await db
-      .select()
-      .from(eventRsvps)
-      .where(
-        and(
-          eq(eventRsvps.memberId, memberId),
-          or(...internalEvents.map(e => eq(eventRsvps.eventId, e.id)))
-        )
-      );
+  // inArray, bukan or(...map(eq)) — satu predikat IN (...) alih-alih rantai OR
+  // sepanjang jumlah event. Tanpa event sama sekali, query dilewati: or() dan
+  // inArray() dengan daftar kosong sama-sama bermasalah.
+  const allRsvps = eventIds.length
+    ? await db.select().from(eventRsvps).where(inArray(eventRsvps.eventId, eventIds))
+    : [];
 
-    // Get RSVP stats for each event
-    const allRsvps = await db
-      .select()
-      .from(eventRsvps)
-      .where(
-        or(...internalEvents.map(e => eq(eventRsvps.eventId, e.id)))
-      );
+  const enrichedEvents = internalEvents.map(event => {
+    const eventRsvpList = allRsvps.filter(r => r.eventId === event.id);
+    const myRsvp = eventRsvpList.find(r => r.memberId === memberId);
 
-    // Build enriched events with RSVP data
-    const enrichedEvents = internalEvents.map(event => {
-      const myRsvp = myRsvps.find(r => r.eventId === event.id);
-      const eventRsvpList = allRsvps.filter(r => r.eventId === event.id);
-
-      const stats = {
+    return {
+      ...event,
+      myRsvpStatus: myRsvp?.status || null,
+      stats: {
         totalAttending: eventRsvpList.filter(r => r.status === 'attending').length,
         totalNotAttending: eventRsvpList.filter(r => r.status === 'not_attending').length,
         totalMaybe: eventRsvpList.filter(r => r.status === 'maybe').length,
         totalResponded: eventRsvpList.length,
-      };
-
-      return {
-        ...event,
-        myRsvpStatus: myRsvp?.status || null,
-        stats,
-        myRsvp: myRsvp ? {
-          status: myRsvp.status,
-          respondedAt: myRsvp.respondedAt?.toISOString() || '',
-        } : null,
-      };
-    });
-
-    return NextResponse.json({ 
-      events: enrichedEvents,
-      memberInfo: {
-        isAlumni,
-        canSeeAllInternal: !isAlumni,
       },
-    });
+      myRsvp: myRsvp
+        ? { status: myRsvp.status, respondedAt: myRsvp.respondedAt?.toISOString() || '' }
+        : null,
+    };
+  });
 
-  } catch (error) {
-    console.error('Error fetching internal events:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch internal events' },
-      { status: 500 }
-    );
-  }
-}
+  return NextResponse.json({
+    events: enrichedEvents,
+    memberInfo: {
+      isAlumni,
+      canSeeAllInternal: !isAlumni,
+    },
+  });
+}, 'Failed to fetch internal events', 'Error fetching internal events:');

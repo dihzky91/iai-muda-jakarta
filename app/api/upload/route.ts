@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
-import { getUserFromRequest, requireRole } from '@/lib/auth';
+import { adminRoute, fail } from '@/lib/api';
 
 export const maxDuration = 60;
 
@@ -33,42 +33,32 @@ function uploadToCloudinary(buffer: Buffer, mimetype: string): Promise<any> {
   });
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const user = getUserFromRequest(request);
-    if (!requireRole(user, 'superadmin', 'admin', 'editor')) {
-      return NextResponse.json({ success: false, message: 'Unauthorized' }, { status: 403 });
-    }
+export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
+  const formData = await request.formData();
+  const file = formData.get('image') as File | null;
 
-    const formData = await request.formData();
-    const file = formData.get('image') as File | null;
-
-    if (!file) {
-      return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 });
-    }
-
-    if (!file.type.startsWith('image/')) {
-      return NextResponse.json({ success: false, message: 'Only image files are allowed!' }, { status: 400 });
-    }
-
-    if (file.size > 20 * 1024 * 1024) {
-      return NextResponse.json({ success: false, message: 'Ukuran file maksimal 20MB' }, { status: 400 });
-    }
-
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const result = await uploadToCloudinary(buffer, file.type);
-
-    return NextResponse.json({
-      success: true,
-      url: result.secure_url,
-      publicId: result.public_id,
-      originalName: file.name,
-      size: result.bytes,
-      width: result.width,
-      height: result.height,
-    });
-  } catch (err: any) {
-    console.error('[Upload Error]', err);
-    return NextResponse.json({ success: false, message: err.message || 'File upload failed' }, { status: 500 });
+  if (!file) {
+    return fail('No file uploaded', 400);
   }
-}
+
+  if (!file.type.startsWith('image/')) {
+    return fail('Only image files are allowed!', 400);
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    return fail('Ukuran file maksimal 20MB', 400);
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await uploadToCloudinary(buffer, file.type);
+
+  return NextResponse.json({
+    success: true,
+    url: result.secure_url,
+    publicId: result.public_id,
+    originalName: file.name,
+    size: result.bytes,
+    width: result.width,
+    height: result.height,
+  });
+}, 'File upload failed');
