@@ -1,5 +1,5 @@
 import { and, eq, type SQL } from 'drizzle-orm';
-import { db, schema } from './db';
+import { db, schema, insertedId } from './db';
 
 /**
  * Query anggota + nama jabatan, dipakai bersama oleh homepage dan
@@ -112,5 +112,5 @@ export async function resolvePositionId(
     category: divisionName || 'Lainnya',
     sortOrder: 100,
   });
-  return (result as any).insertId;
+  return insertedId(result);
 }

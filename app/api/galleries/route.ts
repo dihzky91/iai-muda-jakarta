@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 export const GET = publicRoute(async () => {
@@ -27,5 +27,5 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     images: images ? JSON.stringify(images) : null,
   });
 
-  return done('Gallery created successfully', { id: (result as any).insertId });
+  return done('Gallery created successfully', { id: insertedId(result) });
 }, 'Failed to create gallery');

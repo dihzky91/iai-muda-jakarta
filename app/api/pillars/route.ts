@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
 export const GET = publicRoute(async () => {
@@ -19,5 +19,5 @@ export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
     sortOrder: sortOrder || 0,
   });
 
-  return done('Pillar created successfully', { id: (result as any).insertId });
+  return done('Pillar created successfully', { id: insertedId(result) });
 }, 'Failed to create pillar');

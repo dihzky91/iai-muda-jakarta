@@ -89,7 +89,7 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
         status: evt.status,
         eventType: (evt.eventType as 'public' | 'internal') || 'public',
         color: evt.color || 'blue',
-        generationId: (evt as any).generationId || null,
+        generationId: evt.generationId || null,
       })),
     [filteredEvents],
   );

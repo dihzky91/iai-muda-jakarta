@@ -1,6 +1,7 @@
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { selectMembers, normalizeMemberPosition } from '@/lib/members';
+import type { Generation, Member, Event, Article, GalleryItem, Pillar } from '@/src/types';
 import HomeClient from './HomeClient';
 
 /**
@@ -13,18 +14,32 @@ import HomeClient from './HomeClient';
  */
 export const revalidate = 300;
 
-function serialize(obj: any): any {
-  if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) return obj.toISOString();
-  if (Array.isArray(obj)) return obj.map(serialize);
+/** Bentuk sebuah tipe setelah setiap Date di dalamnya jadi string ISO. */
+type Serialized<T> =
+  T extends Date ? string
+  : T extends (infer U)[] ? Serialized<U>[]
+  : T extends object ? { [K in keyof T]: Serialized<T[K]> }
+  : T;
+
+/**
+ * Ubah baris hasil query jadi objek polos yang aman dikirim ke client
+ * component (Date → string ISO).
+ *
+ * Sebelumnya bertanda tangan `(obj: any): any`, jadi pemanggil tidak tahu
+ * apa pun tentang hasilnya.
+ */
+function serialize<T>(obj: T): Serialized<T> {
+  if (obj === null || obj === undefined) return obj as Serialized<T>;
+  if (obj instanceof Date) return obj.toISOString() as Serialized<T>;
+  if (Array.isArray(obj)) return obj.map(serialize) as Serialized<T>;
   if (typeof obj === 'object') {
-    const plain: Record<string, any> = {};
+    const plain: Record<string, unknown> = {};
     for (const [key, val] of Object.entries(obj)) {
       plain[key] = serialize(val);
     }
-    return plain;
+    return plain as Serialized<T>;
   }
-  return obj;
+  return obj as Serialized<T>;
 }
 
 async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 500): Promise<T> {
@@ -79,15 +94,23 @@ export default async function HomePage() {
       images: g.images ? JSON.parse(g.images) : [],
     }));
 
+    /**
+     * Cast di bawah menandai batas nyata, bukan tipe yang malas: tipe klien di
+     * `src/types.ts` sengaja lebih sempit daripada baris tabel — tidak memuat
+     * createdAt/updatedAt, dan beberapa kolom nullable dinyatakan non-null di
+     * sana. Menghilangkannya butuh fungsi pemetaan eksplisit per entitas
+     * (baris DB → tipe klien), pekerjaan tersendiri yang mengubah bentuk data
+     * yang dikirim ke komponen.
+     */
     return (
       <HomeClient
         settings={serialize(settings)}
-        pillars={serialize(pillars) as any}
-        events={serialize(events) as any}
-        members={membersWithPos as any}
-        generations={serialize(generations) as any}
-        articles={serialize(articles) as any}
-        galleries={galleriesWithImages as any}
+        pillars={serialize(pillars) as unknown as Pillar[]}
+        events={serialize(events) as unknown as Event[]}
+        members={membersWithPos as unknown as Member[]}
+        generations={serialize(generations) as unknown as Generation[]}
+        articles={serialize(articles) as unknown as Article[]}
+        galleries={galleriesWithImages as unknown as GalleryItem[]}
       />
     );
   } catch (err) {

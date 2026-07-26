@@ -42,6 +42,7 @@ export interface Event {
   visibleToAlumni?: boolean; // untuk event internal, apakah visible ke alumni?
   allDay?: boolean;     // true = sepanjang hari
   color?: string;       // nama warna chip: 'blue' | 'emerald' | 'purple' | 'amber' | 'slate' (default 'blue')
+  generationId?: number | null; // generasi kepengurusan penyelenggara, ada di tabel events
 }
 
 // Extended Event untuk portal anggota (include RSVP info)

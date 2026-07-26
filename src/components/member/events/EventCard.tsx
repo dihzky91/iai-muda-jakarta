@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Calendar, MapPin, Users, Globe, Check, X, HelpCircle, ArrowRight, ExternalLink, Clock, Sparkles } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import type { Event, RsvpStatus } from '@/src/types';
 
 type MemberEvent = Event & { myRsvpStatus?: RsvpStatus | null };
@@ -11,7 +12,7 @@ interface EventCardProps {
   variant?: 'card' | 'grid' | 'list';
 }
 
-const RSVP_BADGE: Record<RsvpStatus, { label: string; cls: string; icon: any }> = {
+const RSVP_BADGE: Record<RsvpStatus, { label: string; cls: string; icon: LucideIcon }> = {
   attending: { label: 'Hadir', cls: 'bg-emerald-50 text-emerald-700 border-emerald-200/80', icon: Check },
   maybe: { label: 'Mungkin', cls: 'bg-amber-50 text-amber-700 border-amber-200/80', icon: HelpCircle },
   not_attending: { label: 'Tidak Hadir', cls: 'bg-rose-50 text-rose-700 border-rose-200/80', icon: X },
@@ -199,7 +200,7 @@ function TypeBadge({ type }: { type: 'public' | 'internal' }) {
   );
 }
 
-function RsvpBadge({ rsvp }: { rsvp: { label: string; cls: string; icon: any } }) {
+function RsvpBadge({ rsvp }: { rsvp: { label: string; cls: string; icon: LucideIcon } }) {
   const Icon = rsvp.icon;
   return (
     <span className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border ${rsvp.cls}`}>

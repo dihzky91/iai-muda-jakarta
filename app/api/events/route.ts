@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, insertedId } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
@@ -79,5 +79,5 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     generationId: generationId || null,
   });
 
-  return done('Event created successfully', { id: (result as any).insertId });
+  return done('Event created successfully', { id: insertedId(result) });
 }, 'Failed to create event');
