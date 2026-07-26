@@ -37,10 +37,6 @@ interface DirectoryMember {
   } | null;
 }
 
-interface MemberDirectoryProps {
-  token: string | null;
-}
-
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
@@ -60,15 +56,13 @@ const itemVariants = {
 
 type AlumniFilter = 'all' | 'active' | 'alumni';
 
-export default function MemberDirectory({ token }: MemberDirectoryProps) {
+export default function MemberDirectory() {
   const [members, setMembers] = useState<DirectoryMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [alumniFilter, setAlumniFilter] = useState<AlumniFilter>('all');
 
   const fetchMembers = useCallback(async () => {
-    if (!token) return;
-
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -77,9 +71,6 @@ export default function MemberDirectory({ token }: MemberDirectoryProps) {
       if (alumniFilter === 'active') params.append('isAlumni', 'false');
 
       const response = await fetch(`/api/member/directory?${params.toString()}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
         credentials: 'include',
       });
 
@@ -94,7 +85,7 @@ export default function MemberDirectory({ token }: MemberDirectoryProps) {
     } finally {
       setLoading(false);
     }
-  }, [token, search, alumniFilter]);
+  }, [search, alumniFilter]);
 
   useEffect(() => {
     const debounce = setTimeout(() => {

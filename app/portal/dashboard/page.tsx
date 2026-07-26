@@ -58,7 +58,7 @@ interface DashboardData {
 
 export default function MemberDashboard() {
   const router = useRouter();
-  const { member, loading: authLoading, isAuthenticated, token } = useMemberAuth();
+  const { member, loading: authLoading, isAuthenticated } = useMemberAuth();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [dataLoading, setDataLoading] = useState(true);
 
@@ -69,14 +69,11 @@ export default function MemberDashboard() {
   }, [authLoading, isAuthenticated, router]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     const fetchDashboardData = async () => {
       try {
         const response = await fetch('/api/member/dashboard', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
           credentials: 'include',
         });
 
@@ -94,7 +91,7 @@ export default function MemberDashboard() {
     };
 
     fetchDashboardData();
-  }, [token]);
+  }, [isAuthenticated]);
 
   if (authLoading || dataLoading) {
     return (

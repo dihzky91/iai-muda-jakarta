@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { signAdminToken, comparePassword } from '@/lib/auth';
+import { signAdminToken, comparePassword, ADMIN_COOKIE, sessionCookieOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,15 +30,7 @@ export async function POST(request: NextRequest) {
       token,
     });
 
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      // 'lax' agar cookie tetap terkirim pada request same-origin (termasuk fetch DELETE/PUT dari CMS).
-      // 'strict' akan memblokir cookie pada fetch non-navigation → muncul 401/403 acak di aksi admin.
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 8 * 60 * 60,
-    });
+    response.cookies.set(ADMIN_COOKIE, token, sessionCookieOptions(8 * 60 * 60));
 
     return response;
   } catch (err: any) {

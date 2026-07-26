@@ -31,7 +31,6 @@ interface Member {
 
 interface MemberAuthContextType {
   member: Member | null;
-  token: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
@@ -41,46 +40,48 @@ interface MemberAuthContextType {
 
 const MemberAuthContext = createContext<MemberAuthContextType | undefined>(undefined);
 
+/** Nama key localStorage dari versi sebelumnya, dibersihkan sekali saat mount. */
+const LEGACY_STORAGE_KEYS = ['member_token', 'member'];
+
+/**
+ * Sesi portal anggota bersandar sepenuhnya pada cookie httpOnly.
+ *
+ * Sebelumnya token JWT yang sama juga disimpan di localStorage dan dikirim
+ * sebagai header Authorization. Itu meniadakan gunanya httpOnly: skrip apa pun
+ * yang berhasil dijalankan di halaman ini bisa membaca token utuh dan
+ * memakainya sampai kedaluwarsa. Cookie-nya sendiri sudah bekerja untuk semua
+ * request /api ke origin yang sama, jadi salinan di localStorage memang tidak
+ * dibutuhkan.
+ */
 export function MemberAuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [member, setMember] = useState<Member | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   // Check authentication on mount
   useEffect(() => {
+    // Buang sisa token dari versi lama yang masih menempel di browser.
+    for (const key of LEGACY_STORAGE_KEYS) {
+      localStorage.removeItem(key);
+    }
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      const storedToken = localStorage.getItem('member_token');
-      const storedMember = localStorage.getItem('member');
+      // Cookie dikirim otomatis; identitas selalu berasal dari server,
+      // tidak dari salinan yang bisa diutak-atik di sisi klien.
+      const response = await fetch('/api/member/auth/me', { credentials: 'include' });
 
-      if (storedToken && storedMember) {
-        setToken(storedToken);
-        setMember(JSON.parse(storedMember));
-
-        // Verify token with server
-        const response = await fetch('/api/member/auth/me', {
-          headers: {
-            Authorization: `Bearer ${storedToken}`,
-          },
-          credentials: 'include',
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setMember(data.member);
-          localStorage.setItem('member', JSON.stringify(data.member));
-        } else {
-          // Token invalid, clear auth
-          clearAuth();
-        }
+      if (response.ok) {
+        const data = await response.json();
+        setMember(data.member);
+      } else {
+        setMember(null);
       }
     } catch (error) {
       console.error('Auth check error:', error);
-      clearAuth();
+      setMember(null);
     } finally {
       setLoading(false);
     }
@@ -98,10 +99,8 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
 
       if (data.success) {
+        // Token dari body response sengaja diabaikan — sesi dibawa cookie.
         setMember(data.member);
-        setToken(data.token);
-        localStorage.setItem('member_token', data.token);
-        localStorage.setItem('member', JSON.stringify(data.member));
         return { success: true };
       } else {
         return { success: false, message: data.message };
@@ -121,49 +120,33 @@ export function MemberAuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      clearAuth();
+      setMember(null);
       router.push('/portal/login');
     }
   };
 
   const refreshMember = async () => {
-    if (!token) return;
-
     try {
-      const response = await fetch('/api/member/auth/me', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: 'include',
-      });
+      const response = await fetch('/api/member/auth/me', { credentials: 'include' });
 
       if (response.ok) {
         const data = await response.json();
         setMember(data.member);
-        localStorage.setItem('member', JSON.stringify(data.member));
       } else {
-        clearAuth();
+        setMember(null);
       }
     } catch (error) {
       console.error('Refresh member error:', error);
     }
   };
 
-  const clearAuth = () => {
-    setMember(null);
-    setToken(null);
-    localStorage.removeItem('member_token');
-    localStorage.removeItem('member');
-  };
-
   const value: MemberAuthContextType = {
     member,
-    token,
     loading,
     login,
     logout,
     refreshMember,
-    isAuthenticated: !!member && !!token,
+    isAuthenticated: !!member,
   };
 
   return (

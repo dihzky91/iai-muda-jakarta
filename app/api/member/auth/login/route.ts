@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { signMemberToken, comparePassword } from '@/lib/auth';
+import { signMemberToken, comparePassword, MEMBER_COOKIE, sessionCookieOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,12 +88,7 @@ export async function POST(request: NextRequest) {
     });
 
     // 7. Set cookie
-    response.cookies.set('auth_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 8 * 60 * 60, // 8 hours
-    });
+    response.cookies.set(MEMBER_COOKIE, token, sessionCookieOptions(8 * 60 * 60));
 
     return response;
   } catch (err: any) {
