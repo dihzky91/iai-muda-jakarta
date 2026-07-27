@@ -210,7 +210,7 @@ export default function UserManagement() {
               {users.map(u => (
                 <div key={u.id} className="pt-4 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-sm flex-shrink-0">
+                    <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-blue-100 to-indigo-100 flex items-center justify-center text-blue-600 font-bold text-sm shrink-0">
                       {u.username.slice(0, 2).toUpperCase()}
                     </div>
                     <div>
@@ -225,7 +225,7 @@ export default function UserManagement() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
+                  <div className="flex items-center gap-1 shrink-0">
                     <button onClick={() => handleEdit(u)}
                       className="p-2 hover:bg-slate-50 rounded-lg text-blue-600 hover:text-blue-700 transition-all cursor-pointer"
                       title="Edit User">

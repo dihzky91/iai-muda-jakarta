@@ -37,7 +37,7 @@ export default function ThingsToDo({ member }: ThingsToDoProps) {
     return (
       <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-sm">
         <div className="flex items-start gap-4">
-          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
             <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           </div>
           <div>
@@ -75,7 +75,7 @@ export default function ThingsToDo({ member }: ThingsToDoProps) {
               href={task.href}
               className="group flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100 hover:border-blue-300 hover:bg-blue-50/50 transition-all"
             >
-              <Circle className="w-5 h-5 text-slate-300 group-hover:text-blue-500 flex-shrink-0 transition-colors" />
+              <Circle className="w-5 h-5 text-slate-300 group-hover:text-blue-500 shrink-0 transition-colors" />
               <span className="flex-1 text-sm font-medium text-slate-700 group-hover:text-slate-900">
                 {task.label}
               </span>

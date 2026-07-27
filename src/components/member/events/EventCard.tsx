@@ -41,7 +41,7 @@ export default function EventCard({ event, variant = 'card' }: EventCardProps) {
       <Wrapper className="group flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200/80 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300">
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
           {/* Date Badge */}
-          <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex flex-col items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
+          <div className="shrink-0 w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex flex-col items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-200 leading-none">
               {eventDate.toLocaleDateString('id-ID', { month: 'short' })}
             </span>
@@ -150,13 +150,13 @@ export default function EventCard({ event, variant = 'card' }: EventCardProps) {
           <div className="space-y-1 text-xs text-slate-500 font-medium">
             {event.time && (
               <div className="flex items-center gap-1.5 text-slate-600">
-                <Clock className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+                <Clock className="h-3.5 w-3.5 text-blue-500 shrink-0" />
                 <span>{event.time} WIB</span>
               </div>
             )}
             {event.location && (
               <div className="flex items-center gap-1.5 text-slate-600">
-                <MapPin className="h-3.5 w-3.5 text-rose-500 flex-shrink-0" />
+                <MapPin className="h-3.5 w-3.5 text-rose-500 shrink-0" />
                 <span className="truncate">{event.location}</span>
               </div>
             )}

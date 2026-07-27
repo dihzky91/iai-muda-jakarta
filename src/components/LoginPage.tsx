@@ -53,7 +53,7 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 space-y-5">
           {error && (
             <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-xs font-semibold text-red-700">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}

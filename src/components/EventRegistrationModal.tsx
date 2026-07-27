@@ -106,7 +106,7 @@ export default function EventRegistrationModal({ event, onClose }: EventRegistra
             </div>
 
             <div className="flex items-start gap-2 bg-blue-50 p-3 rounded-xl border border-blue-100 text-blue-800 text-[11px] leading-relaxed">
-              <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
               <span>
                 E-Sertifikat bernilai SKP IAI akan diterbitkan otomatis bagi peserta yang menghadiri sekurangnya 80% dari durasi kegiatan.
               </span>

@@ -54,7 +54,7 @@ export default function ProfileSummary({ member }: ProfileSummaryProps) {
             key={item.label}
             className="flex items-start gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100"
           >
-            <div className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${item.color}`}>
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${item.color}`}>
               <item.icon className="w-4 h-4" />
             </div>
             <div className="min-w-0">

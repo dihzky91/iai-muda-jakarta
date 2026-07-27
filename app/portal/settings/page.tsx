@@ -150,9 +150,9 @@ export default function MemberSettings() {
             }`}
           >
             {message.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             )}
             <p className="text-sm font-medium">{message.text}</p>
           </motion.div>
@@ -183,7 +183,7 @@ export default function MemberSettings() {
                   'Jangan pakai ulang password',
                 ].map((tip) => (
                   <li key={tip} className="flex items-start gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 shrink-0" />
                     {tip}
                   </li>
                 ))}

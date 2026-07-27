@@ -72,7 +72,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
 
           <div className="space-y-4">
             <div className="flex items-start gap-3">
-              <MapPin className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+              <MapPin className="h-5 w-5 text-blue-600 shrink-0 mt-1" />
               <div>
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Alamat Grha Akuntan</h4>
                 <p className="text-sm text-slate-600">{settings.address}</p>
@@ -80,7 +80,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
             </div>
 
             <div className="flex items-start gap-3">
-              <Mail className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+              <Mail className="h-5 w-5 text-blue-600 shrink-0 mt-1" />
               <div>
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Email Resmi</h4>
                 <p className="text-sm text-slate-600 font-medium">{settings.email}</p>
@@ -89,7 +89,7 @@ export default function ContactSection({ settings }: ContactSectionProps) {
 
             {settings.showPhone && settings.phone && (
               <div className="flex items-start gap-3 animate-fade-in">
-                <Phone className="h-5 w-5 text-blue-600 flex-shrink-0 mt-1" />
+                <Phone className="h-5 w-5 text-blue-600 shrink-0 mt-1" />
                 <div>
                   <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Hotline Hubungan Publik</h4>
                   <p className="text-sm text-slate-600 font-medium">{settings.phone}</p>

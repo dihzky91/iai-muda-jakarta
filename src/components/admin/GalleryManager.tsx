@@ -320,7 +320,7 @@ export default function GalleryManager({ gallery, setGallery }: GalleryManagerPr
                 <img
                   src={item.imageUrl}
                   alt={item.title}
-                  className="h-14 w-14 rounded-xl object-cover bg-slate-100 shadow-sm flex-shrink-0"
+                  className="h-14 w-14 rounded-xl object-cover bg-slate-100 shadow-sm shrink-0"
                   referrerPolicy="no-referrer"
                 />
                 <div>
