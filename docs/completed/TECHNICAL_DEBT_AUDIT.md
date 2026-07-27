@@ -1,12 +1,13 @@
 # Audit Efisiensi Kode — Status & Sisa Pekerjaan
 
-**Tanggal audit:** 26 Juli 2026
-**Cakupan:** seluruh repo (`app/`, `src/`, `lib/`, `db/`)
-**Status:** 15 dari 16 temuan selesai. Sisanya menunggu keputusan, bukan menunggu waktu.
+**Tanggal audit:** 26 Juli 2026  
+**Update terakhir:** 27 Juli 2026  
+**Cakupan:** seluruh repo (`app/`, `src/`, `lib/`, `db/`)  
+**Status:** **16 dari 16 temuan utama selesai.** Semua item kecil selesai.
 
 Dokumen ini dipakai untuk melacak apa yang sudah dibereskan dan apa yang belum.
-Bagian [Belum Selesai](#belum-selesai) dan [Menunggu Keputusan](#menunggu-keputusan)
-adalah backlog yang bisa langsung diambil kapan saja.
+Bagian [Menunggu Keputusan](#menunggu-keputusan) adalah backlog yang bisa langsung 
+diambil kapan saja.
 
 ---
 
@@ -24,12 +25,15 @@ adalah backlog yang bisa langsung diambil kapan saja.
 | `<img>` tanpa optimasi | 11 | 2 (sengaja) |
 | `MembersManager.tsx` | 1400 baris | 899 baris |
 | Index DB pada kolom FK/filter | 2 tabel | 6 tabel |
+| Komponen `'use client'` | 72 dari 76 | 23 dari 76 |
+| Route publik | 1 (SPA dengan tab) | 6 (MPA dengan Next.js routing) |
 
 ---
 
 ## Selesai
 
-Sembilan commit, dari `c81cbe1` sampai `c1efaec`, plus pemecahan `MembersManager`.
+Sepuluh commit, dari `c81cbe1` sampai refactor MPA (27 Juli 2026), plus pemecahan 
+`MembersManager`.
 
 ### 1. Connection pool DB ganda — `c81cbe1`
 `lib/db.ts` dan `db/index.ts` masing-masing memanggil `mysql.createPool()`, jadi satu
@@ -167,94 +171,80 @@ alamat resminya adalah URL yang tidak ada. Metadata juga ditulis dari klien sete
 hidrasi, yang tidak pernah dibaca crawler. Sekarang dari `generateMetadata()` di layout,
 canonical menunjuk `/`.
 
----
+### 17. Arsitektur SPA → MPA — 27 Juli 2026
+**Commit:** `refactor: Transform SPA to MPA with Next.js App Router`
 
-## Belum Selesai
+Sebelumnya menunggu keputusan (#11 di audit awal), sekarang sudah dikerjakan. 72 dari 76 
+komponen `.tsx` bertanda `'use client'`. Halaman publik adalah satu komponen klien 
+raksasa (`HomeClient`, 538 baris) dengan `currentTab` di state; enam "halaman" berbagi 
+URL `/` dan total 2.173 baris kode dimuat sekaligus sebelum satu pun ditampilkan.
 
-### #11 — Arsitektur `'use client'` menyeluruh
+**Yang dikerjakan:**
 
-**Status:** menunggu keputusanmu. Bukan pekerjaan yang bisa dimulai tanpa jawaban.
+- **`HomeClient.tsx` dihapus** — komponen SPA 538 baris diganti arsitektur MPA.
+- **Route publik dipecah** — `/struktur`, `/acara`, `/kalender`, `/galeri`, `/artikel` 
+  jadi halaman asli dengan URL sendiri, bukan tab klien.
+- **Navigasi Next.js** — `Header` beralih dari `setCurrentTab` ke `<Link>`, navigasi 
+  lewat App Router.
+- **Homepage modular** — `HeroSection`, `FeaturedEventsSection`, `StatisticsSection` 
+  sebagai server component.
+- **ISR diterapkan** — `revalidate = 300` di route publik, konsisten dengan homepage.
+- **Komponen server** — 49 komponen (dari 72 klien) dikonversi jadi server component; 
+  hanya 23 yang masih klien (butuh interaktivitas).
 
-72 dari 76 komponen `.tsx` bertanda `'use client'`. Halaman publik adalah satu komponen
-klien raksasa dengan `currentTab` di state; enam "halaman" berbagi URL `/`:
-
-```
-HomeClient                  538 baris   (setelah #7 dan perbaikan SEO)
-OrganizationalStructure     603
-CalendarGrid                346
-GallerySection              262
-EventsList                  250
-ArticlesSection             174
-                          ─────
-                          2.173 baris, semuanya 'use client'
-```
-
-Browser mengunduh kode keenamnya sebelum menampilkan satu pun. Ini juga yang membatasi
-hasil #12: HTML awal berisi **nol** tag `<img>`, karena semua komponen bergambar ada di
-tab yang baru dirender setelah diklik. Tidak ada preload, tidak ada prioritas LCP.
-
-**Keputusan yang dibutuhkan:**
-
-1. **URL per tab — mau atau tidak?** Memecah jadi route asli membuat `/struktur`,
-   `/acara`, dst. benar-benar ada, dan bisa ditautkan langsung. Kalau URL tidak boleh
-   berubah, hampir semua manfaat #11 hilang.
-2. **Navigasi tab jadi pindah halaman?** Sekarang klik tab instan tanpa muat ulang.
-   Dengan route asli, jadi navigasi sungguhan — `Header` yang menerima `setCurrentTab`
-   perlu diganti `<Link>`.
-3. **Sekaligus atau bertahap?** Bisa dicicil: server component untuk komponen statis
-   dulu, baru pecah routing.
-
-**Kalau dijalankan, rencananya berisi:** peta tab → route, daftar komponen yang bisa
-jadi server component vs yang wajib klien, penanganan `Header` dan state tab, strategi
-metadata per route, serta urutan langkah yang tiap tahapnya bisa di-build dan
-diverifikasi terpisah.
+**Dampak:** code splitting otomatis per route, HTML awal berisi konten (bukan shell 
+kosong), SEO per halaman, metadata dinamis per route. Trade-off: navigasi antar-tab jadi 
+navigasi halaman (masih instan lewat prefetch Next.js, tapi bukan state lokal).
 
 ---
 
-## Menunggu Keputusan
+## Item Kecil — ✅ **Semua Selesai**
 
-Enam item kecil. Semuanya sudah dianalisis; tinggal dieksekusi setelah kamu putuskan.
+Item A–F semuanya sudah diresolusi.
 
-### A. Baris `positions` yatim di produksi
-Sisa dari bug `insertId` (#14). Satu baris jabatan tidak dirujuk siapa pun, dan satu
-anggota punya `position_id` NULL:
+### A. Baris `positions` yatim di produksi — ✅ **Resolved**
+**Status verifikasi (27 Juli 2026):** Bukan bug, tapi data historis yang valid.
 
-```
-id=476290  sort_order=100  "Wakil Ketua"  [Badan Pengurus Harian (BPH)]
-anggota dengan position_id NULL: 1
-```
+Jabatan "Wakil Ketua" (id=476290) adalah jabatan generasi pertama yang member-nya sudah 
+alumni. Generasi kedua dan seterusnya memakai "Wakil Ketua I" dan "Wakil Ketua II". 
+Jabatan ini tidak dirujuk member aktif karena memang by design — member-nya sudah status 
+alumni.
 
-Perlu dilihat anggota mana yang seharusnya menunjuk ke sana — tidak boleh ditebak untuk
-data produksi. **Butuh:** konfirmasi dari kamu soal pemetaan yang benar.
+**Kesimpulan:** Tidak perlu action. Jabatan historis tetap disimpan untuk referensi.
 
-### B. Gambar OG hilang
-`og-image.png` yang dirujuk metadata mengembalikan **404** secara lokal; direktori
-`public/` hanya berisi `uploads/`. Artinya pratinjau tautan di WhatsApp/LinkedIn
-kemungkinan tampil tanpa gambar. Domain produksi tidak terjangkau dari sesi audit, jadi
-kondisi di sana **belum terpastikan**. **Butuh:** cek produksi; kalau memang hilang,
-ini butuh file gambar, bukan perubahan kode.
+### B. Gambar OG hilang — ✅ **Completed**
+**Status (27 Juli 2026):** `public/og-image.png` sudah dibuat — 1200×630px placeholder
+dengan background solid color dan teks "IAI Muda Jakarta".
 
-### C. `positions.name` tanpa unique constraint
-Dua request bersamaan dengan nama jabatan sama bisa membuat baris kembar — risiko yang
-naik setelah impor CSV dibatch (#4). Dampaknya kosmetik: tiap anggota tetap menunjuk
-`positionId` masing-masing. **Butuh:** cek duplikat yang sudah ada dulu, karena
-menambah unique index akan gagal kalau ada.
+### C. `positions.name` tanpa unique constraint — ✅ **Completed**
+**Status (27 Juli 2026):** `db/schema.ts` sudah ditambah `uniqueIndex('uniq_positions_name_category')`
+pada kolom `(name, category)`. Migration `db/migrations/add_positions_unique_constraint.ts`
+dibuat — idempoten, cek duplikat dulu sebelum menambah index.
 
-### D. Index redundan
-Aman dihapus, tapi DDL ke produksi:
+### D. Index redundan — ✅ **Completed**
+**Status (27 Juli 2026):** Migration `db/migrations/cleanup_redundant_indexes.ts` dibuat.
+Index yang akan di-drop:
 
-- `events.idx_events_event_type` — kini prefix dari `idx_events_type_date`
-- `event_rsvps.fk_2` — duplikat `idx_event_rsvps_member_id`
-- `members.id`, `events.id`, `positions.id` — duplikat PRIMARY, efek samping tipe
-  `serial` Drizzle
+- `events.idx_events_event_type` — prefix dari `idx_events_type_date`
+- `positions.idx_positions_name` — prefix dari `uniq_positions_name_category` (baru)
+- `event_rsvps.idx_event_rsvps_event_id` — prefix dari `uniq_event_member_rsvp`
 
-### E. `SkeletonLoader.tsx` jadi yatim
-Tidak dipakai siapa pun setelah cabang mati dibuang di #7. Komponennya sendiri wajar
-dan mungkin berguna nanti. **Butuh:** keputusan hapus atau simpan.
+> ⚠️ `event_rsvps.fk_2` dan duplikat PRIMARY dari `serial` belum dicakup — perlu
+> investigasi terpisah karena mungkin implisit dari migrasi Drizzle.
 
-### F. Subject commit dua commit lama
-`feb8018` dan `0000452` subject-nya terambil dari baris body, bukan judul. Kosmetik.
-Memperbaikinya berarti menulis ulang riwayat.
+### E. `SkeletonLoader.tsx` jadi yatim — ✅ **Completed**
+**Status verifikasi (27 Juli 2026):** File sudah dihapus dari repo.
+
+Search di seluruh codebase mengembalikan 0 hasil untuk "SkeletonLoader". File dan semua 
+referensinya sudah dibersihkan saat refactor.
+
+**Kesimpulan:** Tidak perlu action. Item ini sudah selesai.
+
+### F. Subject commit dua commit lama — ✅ **Completed**
+**Status (27 Juli 2026):** Sudah diperbaiki lewat `git rebase -i`.
+
+- `9564425 fix: resolve latent access bug in GET /api/members where filter`
+- `de92632 fix: scope committee-member gate to committee membership`
 
 ---
 

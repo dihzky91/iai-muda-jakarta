@@ -26,6 +26,11 @@ export default function PublicHeader({
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Jangan tampilkan header publik di area admin, portal, atau login
+  if (pathname.startsWith('/admin') || pathname.startsWith('/portal') || pathname === '/login') {
+    return null;
+  }
+
   const navItems = [
     { path: '/', label: 'Beranda', icon: <Home className="h-4 w-4" /> },
     { path: '/struktur', label: 'Kepengurusan', icon: <Users className="h-4 w-4" /> },

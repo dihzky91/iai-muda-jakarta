@@ -4,7 +4,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import {
   Users, Sparkles, Trash2, FileSpreadsheet, Download, Upload,
-  Check, ChevronRight, ChevronLeft, UserPlus,
+  Check, ChevronRight, ChevronLeft, UserPlus, Pencil, Trash, Eye, EyeOff,
+  Lock, Key, Mail, Building2, GraduationCap, Linkedin,
 } from 'lucide-react';
 import { Member, Generation } from '@/src/types';
 import { useToast } from '@/src/hooks/useToast';
@@ -24,9 +25,9 @@ import Drawer from './Drawer';
 import Toast from './Toast';
 import ConfirmDialog from './ConfirmDialog';
 import SkeletonCard from './SkeletonCard';
-import MemberCard from './MemberCard';
 import Stepper from './Stepper';
 import CreateAccountDialog from './CreateAccountDialog';
+import { getPersonKey } from '@/lib/member-helpers';
 
 interface MembersManagerProps {
   members: Member[];
@@ -765,27 +766,136 @@ export default function MembersManager({ members, setMembers, generations, divis
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredMembers.map(m => {
-                const gen = generations.find(g => g.id === m.generationId);
-                const accountInfo = memberAccounts.get(m.id);
+              {Array.from(
+                filteredMembers.reduce((groups, m) => {
+                  const key = getPersonKey(m);
+                  if (!groups.has(key)) groups.set(key, []);
+                  groups.get(key)!.push(m);
+                  return groups;
+                }, new Map<string, Member[]>())
+              ).map(([personKey, personMembers]) => {
+                const primary = personMembers[0];
+                const accountInfo = memberAccounts.get(primary.id);
+                const hasAccount = personMembers.some(m => !!memberAccounts.get(m.id)?.accountId);
+                const anyAccountActive = personMembers.some(m => memberAccounts.get(m.id)?.isActive);
+                const firstAccountId = personMembers.map(m => memberAccounts.get(m.id)?.accountId).find(Boolean);
+
+                // Selection: all records for this person
+                const allSelected = personMembers.every(m => selectedIds.has(m.id));
+                const someSelected = personMembers.some(m => selectedIds.has(m.id));
+
                 return (
-                  <MemberCard
-                    key={m.id}
-                    member={m}
-                    generation={gen}
-                    keyword={debouncedSearch}
-                    selected={selectedIds.has(m.id)}
-                    onSelect={(checked) => toggleSelectOne(m.id, checked)}
-                    onEdit={() => handleOpenEdit(m)}
-                    onDelete={() => handleDelete(m)}
-                    onToggleVisibility={handleToggleVisibility}
-                    onCreateAccount={handleCreateAccount}
-                    onToggleAccountStatus={(accountId) => toggleAccountStatus(accountId)}
-                    onDeleteAccount={deleteAccount}
-                    hasAccount={!!accountInfo?.accountId}
-                    accountIsActive={accountInfo?.isActive || false}
-                    accountId={accountInfo?.accountId || undefined}
-                  />
+                  <div key={personKey} className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+                    {/* Person Header */}
+                    <div className="flex items-start gap-4">
+                      <input
+                        type="checkbox"
+                        checked={allSelected}
+                        onChange={(e) => {
+                          personMembers.forEach(m => toggleSelectOne(m.id, e.target.checked));
+                        }}
+                        className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500/20 cursor-pointer"
+                      />
+                      <div className="shrink-0">
+                        {primary.imageUrl ? (
+                          <img src={primary.imageUrl} alt={primary.name} className="h-14 w-14 rounded-xl object-cover bg-slate-100 shadow-sm" referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className="h-14 w-14 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center text-slate-300 border border-slate-100">
+                            <Users className="h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <h4 className="text-sm font-bold text-slate-900 leading-tight">{primary.name}</h4>
+                        </div>
+                        {primary.email && (
+                          <div className="flex items-center gap-1.5 mt-1 text-[11px] text-slate-500">
+                            <Mail className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{primary.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Period badge */}
+                    <div className="mt-3 flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100">
+                        1 orang · {personMembers.length} periode
+                      </span>
+                    </div>
+
+                    {/* Generation Records */}
+                    <div className="mt-3 space-y-2">
+                      {personMembers.map(m => {
+                        const gen = generations.find(g => g.id === m.generationId);
+                        const acc = memberAccounts.get(m.id);
+                        return (
+                          <div key={m.id} className={`flex items-center justify-between gap-2 p-2 rounded-lg border ${someSelected ? 'bg-blue-50/30 border-blue-100' : 'bg-slate-50 border-slate-100'}`}>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="text-xs font-semibold text-blue-600 truncate">{m.position}</span>
+                              <span className="text-[10px] font-mono font-bold text-slate-500 px-1.5 py-0.5 rounded bg-slate-100 shrink-0">{gen?.name || 'Lama'}</span>
+                              {gen?.isActive && (
+                                <span className="text-[10px] font-mono font-bold text-emerald-600 px-1.5 py-0.5 rounded bg-emerald-50 border border-emerald-100 shrink-0">Aktif</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              {acc?.accountId ? (
+                                <span className="text-[10px] text-blue-600 font-semibold flex items-center gap-1">
+                                  <Lock className="h-3 w-3" /> Akun
+                                </span>
+                              ) : null}
+                              <button onClick={() => handleOpenEdit(m)} className="p-1 text-slate-400 hover:text-blue-600 transition-colors" title="Ubah">
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button onClick={() => handleDelete(m)} className="p-1 text-slate-400 hover:text-red-600 transition-colors" title="Hapus">
+                                <Trash className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Portal Account Controls */}
+                    <div className="mt-3 pt-3 border-t border-slate-100">
+                      {hasAccount ? (
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 text-blue-600" />
+                            <span className="text-xs text-slate-600">Akun Portal</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => firstAccountId && toggleAccountStatus(firstAccountId)}
+                              className={`text-[10px] font-medium px-2 py-1 rounded border transition-colors ${
+                                anyAccountActive
+                                  ? 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100'
+                                  : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                              }`}
+                            >
+                              {anyAccountActive ? 'Aktif' : 'Nonaktif'}
+                            </button>
+                            <button
+                              onClick={() => firstAccountId && deleteAccount(firstAccountId)}
+                              className="text-[10px] font-medium px-2 py-1 rounded bg-red-50 text-red-700 border-red-200 hover:bg-red-100 transition-colors"
+                              title="Hapus akun portal"
+                            >
+                              <Trash className="h-3 w-3" />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleCreateAccount(primary.id)}
+                          className="w-full flex items-center justify-center gap-1.5 text-[10px] font-medium px-2 py-1.5 rounded bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors"
+                        >
+                          <Key className="h-3 w-3" />
+                          Buat Akun Portal
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
