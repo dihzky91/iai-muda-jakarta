@@ -1,6 +1,7 @@
 import { db, schema } from '@/lib/db';
 import { eq, and, or, like, desc } from 'drizzle-orm';
 import { memberRoute, ok } from '@/lib/api';
+import { getPersonKey } from '@/lib/member-helpers';
 
 /**
  * Directory API for member portal (internal access only).
@@ -61,7 +62,7 @@ export const GET = memberRoute(async (request) => {
       .where(and(...conditions))
       .orderBy(desc(schema.members.generationId), schema.members.name);
 
-    // Group by email (or name if email is null) to merge multiple generation records
+    // Group by person (email-first, name-fallback) using consistent helper
     const groupedMap = new Map<string, {
       id: number;
       name: string;
@@ -83,8 +84,8 @@ export const GET = memberRoute(async (request) => {
     }>();
 
     for (const record of rawMembers) {
-      // Use email as key if available, otherwise use name
-      const key = record.email || record.name;
+      // Use consistent person key (email-first, name-fallback)
+      const key = getPersonKey({ email: record.email, name: record.name });
 
       const genInfo = record.generationId ? {
         id: record.generationId,

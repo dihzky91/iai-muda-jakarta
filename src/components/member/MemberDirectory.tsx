@@ -237,10 +237,10 @@ export default function MemberDirectory() {
                     <img
                       src={member.imageUrl}
                       alt={member.name}
-                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm flex-shrink-0"
+                      className="w-14 h-14 rounded-full object-cover border-2 border-white shadow-sm shrink-0"
                     />
                   ) : (
-                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-red-900 flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow-sm flex-shrink-0">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-600 to-red-900 flex items-center justify-center text-white text-sm font-bold border-2 border-white shadow-sm shrink-0">
                       {getInitials(member.name)}
                     </div>
                   )}
@@ -271,19 +271,19 @@ export default function MemberDirectory() {
               <div className="px-5 pb-5 space-y-2.5">
                 {member.division && (
                   <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <Briefcase className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <Briefcase className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">{member.division}</span>
                   </div>
                 )}
                 {member.university && (
                   <div className="flex items-center gap-2 text-xs text-slate-600">
-                    <School className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <School className="w-3.5 h-3.5 text-slate-400 shrink-0" />
                     <span className="truncate">{member.university}</span>
                   </div>
                 )}
                 {member.generations.length > 0 && (
                   <div className="flex items-start gap-2 text-xs text-slate-600">
-                    <GraduationCap className="w-3.5 h-3.5 text-slate-400 flex-shrink-0 mt-0.5" />
+                    <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
                     <div className="flex flex-wrap gap-1">
                       {member.generations.map((gen) => (
                         <span

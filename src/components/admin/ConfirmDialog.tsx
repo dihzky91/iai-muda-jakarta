@@ -33,7 +33,7 @@ export default function ConfirmDialog({ state, onConfirm, onCancel }: ConfirmDia
       />
       <div className="relative w-full max-w-md bg-white rounded-3xl border border-slate-100 shadow-2xl p-6 animate-scale-up">
         <div className="flex items-start gap-4">
-          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${iconStyles[state.variant || 'primary']}`}>
+          <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 ${iconStyles[state.variant || 'primary']}`}>
             <AlertTriangle className="h-6 w-6" />
           </div>
           <div className="flex-1 min-w-0">

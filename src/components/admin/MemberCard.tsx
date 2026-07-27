@@ -83,7 +83,7 @@ export default function MemberCard({
         </div>
 
         {/* Photo */}
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           {member.imageUrl ? (
             <img
               src={member.imageUrl}
@@ -120,7 +120,7 @@ export default function MemberCard({
           <div className="mt-3 space-y-1.5">
             {member.division && (
               <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                <Building2 className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                 <span className="truncate">
                   <HighlightText text={member.division} keyword={keyword} />
                 </span>
@@ -128,13 +128,13 @@ export default function MemberCard({
             )}
             {member.university && (
               <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                <GraduationCap className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <GraduationCap className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                 <span className="truncate">{member.university}</span>
               </div>
             )}
             {member.email && (
               <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                <Mail className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
+                <Mail className="h-3.5 w-3.5 text-slate-400 shrink-0" />
                 <a
                   href={`mailto:${member.email}`}
                   className="truncate hover:text-blue-600 transition-colors"

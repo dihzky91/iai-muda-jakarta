@@ -15,7 +15,7 @@ export default function SkeletonCard({ count = 6 }: SkeletonCardProps) {
           className="rounded-2xl border border-slate-100 bg-white p-4 space-y-3 animate-pulse"
         >
           <div className="flex items-start gap-3">
-            <div className="h-16 w-16 rounded-xl bg-slate-200 flex-shrink-0" />
+            <div className="h-16 w-16 rounded-xl bg-slate-200 shrink-0" />
             <div className="flex-1 space-y-2 pt-1">
               <div className="h-3.5 w-3/4 rounded bg-slate-200" />
               <div className="h-2.5 w-1/2 rounded bg-slate-200" />

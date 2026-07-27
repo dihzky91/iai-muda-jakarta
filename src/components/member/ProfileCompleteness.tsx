@@ -65,9 +65,9 @@ export default function ProfileCompleteness({ member }: ProfileCompletenessProps
         {checks.map((check) => (
           <div key={check.label} className="flex items-center gap-2">
             {check.filled ? (
-              <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+              <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
             ) : (
-              <Circle className="w-4 h-4 text-slate-300 flex-shrink-0" />
+              <Circle className="w-4 h-4 text-slate-300 shrink-0" />
             )}
             <span className={`text-xs font-medium ${check.filled ? 'text-slate-700' : 'text-slate-400'}`}>
               {check.label}

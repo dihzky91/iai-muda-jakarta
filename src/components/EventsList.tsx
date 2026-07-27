@@ -186,7 +186,7 @@ export default function EventsList({ events }: EventsListProps) {
                       </p>
 
                       <div className="flex items-center gap-1.5 text-xs text-slate-600 font-semibold bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <MapPin className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                        <MapPin className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                         <span className="truncate">{evt.location}</span>
                       </div>
 

@@ -51,7 +51,7 @@ export default function Toast({ toasts, onRemove, duration = 4000 }: ToastProps)
             role="status"
             aria-live="polite"
           >
-            <Icon className="h-5 w-5 bg-white/20 p-0.5 rounded-full flex-shrink-0" aria-hidden="true" />
+            <Icon className="h-5 w-5 bg-white/20 p-0.5 rounded-full shrink-0" aria-hidden="true" />
             <span className="max-w-xs">{toast.message}</span>
             <button
               onClick={() => onRemove(toast.id)}

@@ -181,7 +181,7 @@ export default function AdminCMS({
     <div className={`p-4 md:p-6 space-y-6 ${sidebarCollapsed ? 'md:px-3' : ''}`}>
       {/* Brand */}
       <div className={`flex items-center gap-3 ${sidebarCollapsed ? 'md:justify-center' : ''}`}>
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold shadow-lg shadow-blue-500/20 flex-shrink-0">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold shadow-lg shadow-blue-500/20 shrink-0">
           <ShieldCheck className="h-5.5 w-5.5" />
         </div>
         {!sidebarCollapsed && (
@@ -323,7 +323,7 @@ export default function AdminCMS({
       <aside
         className={`${
           sidebarCollapsed ? 'md:w-20' : 'md:w-64'
-        } hidden md:flex bg-white border-r border-slate-200 flex-col justify-between flex-shrink-0 transition-all duration-300`}
+        } hidden md:flex bg-white border-r border-slate-200 flex-col justify-between shrink-0 transition-all duration-300`}
       >
         <SidebarContent />
 
@@ -335,7 +335,7 @@ export default function AdminCMS({
             title={sidebarCollapsed ? 'Lihat Halaman Depan' : undefined}
             className={`w-full flex items-center justify-center ${sidebarCollapsed ? 'md:px-2' : 'gap-2'} rounded-xl bg-blue-600 hover:bg-blue-700 text-white py-3 text-xs font-bold transition-all cursor-pointer shadow-md shadow-blue-600/10 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40`}
           >
-            <Globe className="h-4 w-4 flex-shrink-0" />
+            <Globe className="h-4 w-4 shrink-0" />
             {!sidebarCollapsed && <span>Lihat Halaman Depan</span>}
           </button>
           <button
@@ -343,7 +343,7 @@ export default function AdminCMS({
             title={sidebarCollapsed ? 'Keluar Portal Admin' : undefined}
             className={`w-full flex items-center justify-center ${sidebarCollapsed ? 'md:px-2' : 'gap-2'} rounded-xl bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 py-3 text-xs font-bold transition-all border border-slate-200 cursor-pointer shadow-sm hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40`}
           >
-            <LogOut className="h-4 w-4 flex-shrink-0" />
+            <LogOut className="h-4 w-4 shrink-0" />
             {!sidebarCollapsed && <span>Keluar Portal Admin</span>}
           </button>
           <div className={`text-[10px] text-slate-500 text-center font-mono font-medium ${sidebarCollapsed ? 'md:hidden' : ''}`}>

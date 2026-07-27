@@ -342,7 +342,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
               <div className="space-y-2">
                 {divisionList.map((div, idx) => (
                   <div key={idx} className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 group hover:border-blue-200 hover:bg-blue-50/40 transition-all">
-                    <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">{idx + 1}</span>
+                    <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0">{idx + 1}</span>
                     {editingIndex === idx ? (
                       <input
                         autoFocus
@@ -375,7 +375,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
                 ))}
                 {editingIndex === 'add' && (
                   <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 animate-fade-in">
-                    <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center flex-shrink-0">{divisionList.length + 1}</span>
+                    <span className="h-6 w-6 rounded-full bg-blue-100 text-blue-600 text-[10px] font-bold flex items-center justify-center shrink-0">{divisionList.length + 1}</span>
                     <input
                       autoFocus
                       type="text"

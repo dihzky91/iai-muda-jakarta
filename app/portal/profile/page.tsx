@@ -256,9 +256,9 @@ export default function MemberProfile() {
             }`}
           >
             {message.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
             ) : (
-              <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+              <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
             )}
             <p className="text-sm font-medium">{message.text}</p>
           </motion.div>
@@ -309,7 +309,7 @@ export default function MemberProfile() {
 
                 <div className="w-full bg-amber-50 border border-amber-200 rounded-xl p-4">
                   <div className="flex items-start gap-3">
-                    <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                     <div>
                       <h3 className="text-sm font-semibold text-amber-900">Ketentuan Foto</h3>
                       <ul className="mt-2 text-xs text-amber-800 space-y-1 list-disc list-inside">
@@ -370,7 +370,7 @@ export default function MemberProfile() {
                 {/* Managed by Admin */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-5 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-start gap-3">
-                    <Crown className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <Crown className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
                     <div>
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Angkatan</label>
                       <p className="text-slate-900 font-medium">{member.generation?.name || '-'}</p>
@@ -378,7 +378,7 @@ export default function MemberProfile() {
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
-                    <Building2 className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
+                    <Building2 className="w-5 h-5 text-blue-500 shrink-0 mt-0.5" />
                     <div>
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Divisi & Jabatan</label>
                       <p className="text-slate-900 font-medium">{member.division || '-'}</p>
@@ -522,9 +522,9 @@ export default function MemberProfile() {
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 bg-slate-50 rounded-xl border border-slate-100">
                     <div className="flex items-start gap-3">
                       {formData.showPublic ? (
-                        <Eye className="w-5 h-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+                        <Eye className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                       ) : (
-                        <EyeOff className="w-5 h-5 text-slate-400 flex-shrink-0 mt-0.5" />
+                        <EyeOff className="w-5 h-5 text-slate-400 shrink-0 mt-0.5" />
                       )}
                       <div>
                         <label className="text-sm font-semibold text-slate-900">

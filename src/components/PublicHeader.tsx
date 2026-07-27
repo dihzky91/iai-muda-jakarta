@@ -42,21 +42,21 @@ export default function PublicHeader({
         {/* Brand Logo & Name */}
         <Link 
           href="/"
-          className="flex items-center gap-3 group flex-shrink-0"
+          className="flex items-center gap-3 group shrink-0"
           id="brand-logo-container"
         >
           {logoUrl ? (
             <img 
               src={logoUrl} 
               alt="Logo IAI Muda DKI" 
-              className="h-10 w-10 rounded-xl object-contain group-hover:scale-105 transition-transform flex-shrink-0" 
+              className="h-10 w-10 rounded-xl object-contain group-hover:scale-105 transition-transform shrink-0" 
             />
           ) : (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform flex-shrink-0">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white font-bold shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform shrink-0">
               <Landmark className="h-5 w-5" />
             </div>
           )}
-          <div className="flex-shrink-0">
+          <div className="shrink-0">
             <div className="flex items-center gap-2">
               <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950 whitespace-nowrap">
                 IAI Muda <span className="text-blue-600">DKI Jakarta</span>
@@ -72,14 +72,14 @@ export default function PublicHeader({
         </Link>
 
         {/* Desktop Navigation Links */}
-        <nav className="hidden md:flex items-center gap-1 flex-shrink-0" id="desktop-navigation">
+        <nav className="hidden md:flex items-center gap-1 shrink-0" id="desktop-navigation">
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             return (
               <Link
                 key={item.path}
                 href={item.path}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex-shrink-0 whitespace-nowrap ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold transition-all shrink-0 whitespace-nowrap ${
                   isActive
                     ? 'bg-blue-50 text-blue-600 shadow-sm'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/60'
@@ -93,7 +93,7 @@ export default function PublicHeader({
         </nav>
 
         {/* Mobile Menu Button & Admin Link */}
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 shrink-0">
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -106,9 +106,9 @@ export default function PublicHeader({
           {/* Admin CMS Link */}
           <Link
             href="/admin"
-            className="flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md flex-shrink-0 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
+            className="flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md shrink-0 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
           >
-            <ShieldAlert className="h-4 w-4 flex-shrink-0" />
+            <ShieldAlert className="h-4 w-4 shrink-0" />
             <span className="hidden sm:inline whitespace-nowrap">Akses CMS Admin</span>
           </Link>
         </div>

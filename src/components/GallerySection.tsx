@@ -217,7 +217,7 @@ export default function GallerySection({ galleryItems }: GallerySectionProps) {
                     <button
                       key={idx}
                       onClick={() => setCurrentImgIndex(idx)}
-                      className={`relative h-14 w-20 rounded-xl overflow-hidden cursor-pointer flex-shrink-0 transition-all border-2 ${
+                      className={`relative h-14 w-20 rounded-xl overflow-hidden cursor-pointer shrink-0 transition-all border-2 ${
                         currentImgIndex === idx 
                           ? 'border-blue-600 ring-2 ring-blue-500/20 scale-105' 
                           : 'border-transparent opacity-60 hover:opacity-100'

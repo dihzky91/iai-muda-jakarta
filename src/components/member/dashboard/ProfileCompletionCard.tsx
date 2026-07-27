@@ -72,9 +72,9 @@ export default function ProfileCompletionCard({ member }: ProfileCompletionCardP
         {checks.map((check) => (
           <div key={check.label} className="flex items-center gap-2 p-1.5 rounded-lg bg-slate-50 border border-slate-100">
             {check.filled ? (
-              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" />
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             ) : (
-              <Circle className="w-3.5 h-3.5 text-slate-300 flex-shrink-0" />
+              <Circle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             )}
             <span className={`text-xs font-medium truncate ${check.filled ? 'text-slate-700' : 'text-slate-400'}`}>
               {check.label}
@@ -91,7 +91,7 @@ export default function ProfileCompletionCard({ member }: ProfileCompletionCardP
           <ul className="space-y-1">
             {remaining.slice(0, 3).map((item) => (
               <li key={item.label} className="flex items-center gap-2 text-xs text-slate-700">
-                <span className="w-1.5 h-1.5 rounded-full bg-red-700 flex-shrink-0" />
+                <span className="w-1.5 h-1.5 rounded-full bg-red-700 shrink-0" />
                 Lengkapi {item.label}
               </li>
             ))}

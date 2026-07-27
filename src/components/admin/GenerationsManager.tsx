@@ -119,7 +119,7 @@ export default function GenerationsManager({ generations, setGenerations, member
       />
 
       <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-5 text-amber-800">
-        <AlertTriangle className="h-6 w-6 flex-shrink-0 text-amber-500 mt-0.5" />
+        <AlertTriangle className="h-6 w-6 shrink-0 text-amber-500 mt-0.5" />
         <div className="space-y-1">
           <h4 className="font-display font-bold text-slate-900 text-base">Alur Transisi Kepengurusan Tahunan (1 Tahun Periode)</h4>
           <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
@@ -224,7 +224,7 @@ export default function GenerationsManager({ generations, setGenerations, member
           </div>
 
           <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 text-[11px] text-slate-500 flex items-start gap-2 leading-relaxed">
-            <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+            <Info className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
             <span>
               Mengaktifkan generasi baru akan memperbarui diagram organisasi komite utama di laman publik, serta merubah total keanggotaan aktif secara instan.
             </span>

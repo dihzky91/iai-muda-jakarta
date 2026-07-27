@@ -30,7 +30,7 @@ export default function ActionButtons({
   }, []);
 
   return (
-    <div className="relative flex-shrink-0" ref={containerRef}>
+    <div className="relative shrink-0" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen(v => !v)}

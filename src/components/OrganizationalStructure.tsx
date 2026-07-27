@@ -9,6 +9,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Image from 'next/image';
 import { Generation, Member, Settings } from '../types';
 import { Mail, Linkedin, Users, Filter, Award, History, Search, X, Clock, ImageOff, Camera } from 'lucide-react';
+import { getPersonKey } from '@/lib/member-helpers';
 
 interface OrganizationalStructureProps {
   generations: Generation[];
@@ -87,13 +88,25 @@ export default function OrganizationalStructure({ generations, members, settings
   }, [filteredByGenMembers]);
 
   // Final filtered list of members based on division and search query
+  // Deduplicated: 1 person = 1 card (prioritizes email, falls back to name)
   const finalMembersList = useMemo(() => {
-    return filteredByGenMembers.filter(m => {
+    const filtered = filteredByGenMembers.filter(m => {
       const matchDivision = selectedDivision === 'all' || m.division === selectedDivision;
       const matchSearch = (m.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) || 
                           (m.position ?? '').toLowerCase().includes(searchQuery.toLowerCase());
       return matchDivision && matchSearch;
     });
+    
+    // Deduplicate by person key (email-first, name-fallback)
+    const seen = new Map<string, Member>();
+    for (const member of filtered) {
+      const key = getPersonKey(member);
+      if (!seen.has(key)) {
+        seen.set(key, member);
+      }
+    }
+    
+    return Array.from(seen.values());
   }, [filteredByGenMembers, selectedDivision, searchQuery]);
 
   // Count members in selected division (placed after finalMembersList)
@@ -104,14 +117,15 @@ export default function OrganizationalStructure({ generations, members, settings
     return generations.find(g => g.id === selectedMember.generationId);
   }, [generations, selectedMember]);
 
-  // Detect if this person has served in multiple generations (same name across records)
+  // Member history: find all records for this person across ALL generations
+  // Uses email-first matching (more reliable than name-only)
   const memberHistory = useMemo(() => {
     if (!selectedMember) return [];
-    const normalizedName = (selectedMember.name ?? '').trim().toLowerCase();
-    // Find all records matching this name across ALL generations
-    const allRecords = members.filter(
-      m => (m.name ?? '').trim().toLowerCase() === normalizedName
-    );
+    const personKey = getPersonKey(selectedMember);
+    
+    // Find all records matching this person's identity
+    const allRecords = members.filter(m => getPersonKey(m) === personKey);
+    
     // Map each record to its generation details, sorted by generation id ascending
     return allRecords
       .map(m => ({
@@ -305,7 +319,7 @@ export default function OrganizationalStructure({ generations, members, settings
                   </div>
                   <button
                     onClick={() => setBannerDismissed(true)}
-                    className="flex-shrink-0 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all"
+                    className="shrink-0 p-2 rounded-full bg-white/10 hover:bg-white/25 text-white transition-all"
                     title="Tutup banner"
                   >
                     <X className="h-4 w-4" />
@@ -557,7 +571,7 @@ export default function OrganizationalStructure({ generations, members, settings
                             {rec.position}{rec.division ? ` · ${rec.division}` : ''}
                           </p>
                         </div>
-                        <span className="text-[11px] font-mono font-bold text-blue-600 bg-white border border-blue-100 px-2 py-1 rounded-lg whitespace-nowrap flex-shrink-0">
+                        <span className="text-[11px] font-mono font-bold text-blue-600 bg-white border border-blue-100 px-2 py-1 rounded-lg whitespace-nowrap shrink-0">
                           {rec.gen?.years}
                         </span>
                       </div>

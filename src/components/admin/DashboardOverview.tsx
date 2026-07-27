@@ -194,7 +194,7 @@ export default function DashboardOverview({
 
       {/* Quick alert for active generation */}
       <div className={`rounded-2xl border p-4 flex items-start gap-3 ${activeGeneration ? 'bg-blue-50 border-blue-100' : 'bg-amber-50 border-amber-100'}`}>
-        <History className={`h-5 w-5 flex-shrink-0 mt-0.5 ${activeGeneration ? 'text-blue-600' : 'text-amber-600'}`} />
+        <History className={`h-5 w-5 shrink-0 mt-0.5 ${activeGeneration ? 'text-blue-600' : 'text-amber-600'}`} />
         <div>
           <h4 className={`text-sm font-bold ${activeGeneration ? 'text-blue-900' : 'text-amber-900'}`}>
             {activeGeneration ? `Kepengurusan Aktif: ${activeGeneration.name}` : 'Generasi Belum Diaktifkan'}

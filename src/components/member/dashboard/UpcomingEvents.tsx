@@ -43,7 +43,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
             <h2 className="text-lg font-semibold text-slate-900">Acara Mendatang</h2>
             <p className="text-sm text-slate-500 mt-0.5">Jangan lewatkan kegiatan organisasi</p>
           </div>
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
             <Calendar className="w-5 h-5 text-blue-600" />
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                 return (
                   <li key={event.id}>
                     <Wrapper className="group flex items-start gap-4 p-4 rounded-xl hover:bg-slate-50 transition-colors">
-                      <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center text-center">
+                      <div className="shrink-0 w-14 h-14 rounded-xl bg-blue-50 border border-blue-100 flex flex-col items-center justify-center text-center">
                         <span className="text-[10px] font-semibold text-blue-600 uppercase">
                           {new Date(event.date + 'T00:00:00').toLocaleDateString('id-ID', { month: 'short' })}
                         </span>
@@ -99,7 +99,7 @@ export default function UpcomingEvents({ events }: UpcomingEventsProps) {
                             {event.title}
                           </h3>
                           {isInternal && (
-                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 flex-shrink-0">
+                            <span className="inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 shrink-0">
                               <Users className="h-2.5 w-2.5" /> Internal
                             </span>
                           )}
