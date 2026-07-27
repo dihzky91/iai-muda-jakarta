@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import Providers from './providers';
+import PublicHeader from '@/src/components/PublicHeader';
 
 async function getFaviconUrl(): Promise<string | null> {
   try {
@@ -10,6 +11,24 @@ async function getFaviconUrl(): Promise<string | null> {
     return rows[0]?.faviconUrl || null;
   } catch {
     return null;
+  }
+}
+
+async function getHeaderData(): Promise<{ logoUrl: string | null; currentGenName: string }> {
+  try {
+    const { db, schema } = await import('@/lib/db');
+    const { eq } = await import('drizzle-orm');
+    const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
+    const settings = rows[0];
+    return {
+      logoUrl: settings?.logoUrl || null,
+      currentGenName: 'Gen 2 (2024-2026)',
+    };
+  } catch {
+    return {
+      logoUrl: null,
+      currentGenName: 'Gen 2',
+    };
   }
 }
 
@@ -47,14 +66,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-  // <link rel="canonical"> tidak lagi ditulis manual di sini — Next.js yang
-  // memancarkannya dari `alternates.canonical` di atas, sehingga sudah ada
-  // di HTML awal dan tidak bergantung pada JavaScript.
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const headerData = await getHeaderData();
+  
   return (
     <html lang="id" suppressHydrationWarning>
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <PublicHeader 
+            logoUrl={headerData.logoUrl} 
+            currentGenName={headerData.currentGenName} 
+          />
+          {children}
+        </Providers>
       </body>
     </html>
   );

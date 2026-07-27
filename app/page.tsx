@@ -1,8 +1,12 @@
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
-import { selectMembers, normalizeMemberPosition } from '@/lib/members';
-import type { Generation, Member, Event, Article, GalleryItem, Pillar } from '@/src/types';
-import HomeClient from './HomeClient';
+import { selectMembers } from '@/lib/members';
+import type { Settings, Event } from '@/src/types';
+import HeroSection from '@/src/components/home/HeroSection';
+import FeaturedEventSection from '@/src/components/home/FeaturedEventSection';
+import PillarsSection from '@/src/components/home/PillarsSection';
+import ContactSection from '@/src/components/home/ContactSection';
+import BrandFooter from '@/src/components/home/BrandFooter';
 
 /**
  * Halaman ini di-cache 5 menit (ISR), bukan `force-dynamic`.
@@ -57,64 +61,69 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 50
 
 export default async function HomePage() {
   try {
-    // Ketujuh query saling independen — dijalankan paralel supaya latency
-    // total = query paling lambat, bukan jumlah 7 round-trip berurutan.
-    const [settingsRows, pillars, events, members, generations, articles, galleries] =
-      await Promise.all([
-        fetchWithRetry(() =>
-          db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1)
-        ),
-        fetchWithRetry(() =>
-          db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder)
-        ),
-        fetchWithRetry(() =>
-          db.select().from(schema.events).orderBy(schema.events.date)
-        ),
-        fetchWithRetry(() => selectMembers({ publicOnly: true })),
-        fetchWithRetry(() =>
-          db.select().from(schema.generations).orderBy(schema.generations.id)
-        ),
-        fetchWithRetry(() =>
-          db.select().from(schema.articles).orderBy(schema.articles.date)
-        ),
-        fetchWithRetry(() =>
-          db.select().from(schema.galleries).orderBy(schema.galleries.date)
-        ),
-      ]);
+    // Homepage hanya perlu 4 query: settings, events (untuk featured), pillars, members (untuk count)
+    const [settingsRows, events, pillars, members] = await Promise.all([
+      fetchWithRetry(() =>
+        db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1)
+      ),
+      fetchWithRetry(() =>
+        db.select().from(schema.events).orderBy(schema.events.date).limit(10)
+      ),
+      fetchWithRetry(() =>
+        db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder)
+      ),
+      fetchWithRetry(() => selectMembers({ publicOnly: true })),
+    ]);
 
     const settings = settingsRows[0];
 
     if (!settings) {
-      return <HomeClient settings={null} pillars={[]} events={[]} members={[]} generations={[]} articles={[]} galleries={[]} />;
+      return (
+        <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+          <p className="text-slate-600">Data tidak tersedia.</p>
+        </div>
+      );
     }
 
-    const membersWithPos = members.map(m => serialize(normalizeMemberPosition(m)));
-    const galleriesWithImages = galleries.map(g => ({
-      ...serialize(g),
-      images: g.images ? JSON.parse(g.images) : [],
-    }));
+    // Cari featured event (upcoming atau ongoing)
+    const featuredEvent = events.find(e => e.status === 'upcoming' || e.status === 'ongoing') || events[0];
 
-    /**
-     * Cast di bawah menandai batas nyata, bukan tipe yang malas: tipe klien di
-     * `src/types.ts` sengaja lebih sempit daripada baris tabel — tidak memuat
-     * createdAt/updatedAt, dan beberapa kolom nullable dinyatakan non-null di
-     * sana. Menghilangkannya butuh fungsi pemetaan eksplisit per entitas
-     * (baris DB → tipe klien), pekerjaan tersendiri yang mengubah bentuk data
-     * yang dikirim ke komponen.
-     */
+    // Hitung member count dan generation years
+    const memberCount = members.length;
+    const activeGenYears = '2024-2026'; // Hardcoded untuk saat ini, bisa dipindah ke settings nanti
+
     return (
-      <HomeClient
-        settings={serialize(settings)}
-        pillars={serialize(pillars) as unknown as Pillar[]}
-        events={serialize(events) as unknown as Event[]}
-        members={membersWithPos as unknown as Member[]}
-        generations={serialize(generations) as unknown as Generation[]}
-        articles={serialize(articles) as unknown as Article[]}
-        galleries={galleriesWithImages as unknown as GalleryItem[]}
-      />
+      <div className="min-h-screen bg-[#f8fafc]">
+        <HeroSection 
+          memberCount={memberCount} 
+          activeGenYears={activeGenYears} 
+        />
+        
+        <div className="space-y-20 py-12">
+          <FeaturedEventSection 
+            event={serialize(featuredEvent) as unknown as Event} 
+          />
+          
+          <PillarsSection 
+            pillars={serialize(pillars)} 
+          />
+          
+          <ContactSection 
+            settings={serialize(settings) as unknown as Settings} 
+          />
+        </div>
+        
+        <BrandFooter 
+          settings={serialize(settings) as unknown as Settings} 
+        />
+      </div>
     );
   } catch (err) {
     console.error('Failed to fetch data:', err);
-    return <HomeClient settings={null} pillars={[]} events={[]} members={[]} generations={[]} articles={[]} galleries={[]} />;
+    return (
+      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
+        <p className="text-slate-600">Terjadi kesalahan saat memuat halaman.</p>
+      </div>
+    );
   }
 }
