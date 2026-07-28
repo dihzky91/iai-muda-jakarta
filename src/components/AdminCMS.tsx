@@ -9,7 +9,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, History, BookOpen, Image as ImageIcon,
   ShieldCheck, Settings as SettingsIcon, LogOut, UserCog, Globe,
-  PanelLeftClose, PanelLeft, Menu, X, FileText,
+  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
@@ -24,8 +24,9 @@ import SettingsManager from './admin/SettingsManager';
 import OnboardingManager from './admin/OnboardingManager';
 import UserManagement from './UserManagement';
 import DashboardOverview from './admin/DashboardOverview';
+import HRManager from './admin/hr/HRManager';
 
-export type CmsTab = 'dashboard' | 'events' | 'members' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
+export type CmsTab = 'dashboard' | 'events' | 'members' | 'hr' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -57,6 +58,7 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'events', label: 'Agenda Acara', icon: Calendar, count: p => p.events.length },
   { key: 'members', label: 'Kepengurusan', icon: Users, count: p => p.members.length },
+  { key: 'hr', label: 'HR Command Center', icon: ClipboardList },
   { key: 'onboarding', label: 'Onboarding Library', icon: FileText },
   { key: 'articles', label: 'Artikel & Berita', icon: BookOpen, count: p => p.articles.length },
   { key: 'gallery', label: 'Galeri Kegiatan', icon: ImageIcon, count: p => p.gallery?.length || 0 },
@@ -124,6 +126,7 @@ export default function AdminCMS({
     dashboard: 'Dashboard',
     events: 'Agenda Acara',
     members: 'Kepengurusan',
+    hr: 'HR Command Center',
     onboarding: 'Onboarding Library',
     articles: 'Artikel & Berita',
     gallery: 'Galeri Kegiatan',
@@ -158,6 +161,8 @@ export default function AdminCMS({
             activeGen={activeGen}
           />
         );
+      case 'hr':
+        return <HRManager />;
       case 'onboarding':
         return <OnboardingManager />;
       case 'articles':

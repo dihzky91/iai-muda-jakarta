@@ -1,0 +1,1 @@
+ALTER TABLE `event_rsvps` MODIFY COLUMN `member_id` bigint unsigned NOT NULL;

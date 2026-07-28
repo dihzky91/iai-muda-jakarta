@@ -15,6 +15,7 @@ import {
   RecentActivity,
   ProfileSummary,
 } from '@/src/components/member/dashboard';
+import { HRCards } from '@/src/components/member/dashboard/HRCards';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -198,6 +199,11 @@ export default function MemberDashboard() {
             {/* Compact Profile Completion Widget */}
             <motion.div variants={itemVariants}>
               <ProfileCompletionCard member={member} />
+            </motion.div>
+
+            {/* HR Cards */}
+            <motion.div variants={itemVariants}>
+              <HRCards />
             </motion.div>
           </div>
         </div>

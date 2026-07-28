@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1785226851339,
+      "tag": "0000_abandoned_arachne",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1785229027114,
+      "tag": "0001_special_proudstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1785229200783,
+      "tag": "0002_tense_vertigo",
+      "breakpoints": true
+    }
+  ]
+}

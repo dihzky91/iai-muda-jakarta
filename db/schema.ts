@@ -1,4 +1,4 @@
-import { mysqlTable, varchar, text, int, boolean, timestamp, serial, mysqlEnum, uniqueIndex, index } from 'drizzle-orm/mysql-core';
+import { mysqlTable, varchar, text, int, bigint, boolean, timestamp, serial, mysqlEnum, uniqueIndex, index } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 
 export const users = mysqlTable('users', {
@@ -74,7 +74,7 @@ export const events = mysqlTable('events', {
   imageUrl: varchar('image_url', { length: 500 }),
   registrationUrl: varchar('registration_url', { length: 500 }),
   status: mysqlEnum('status', ['ongoing', 'upcoming', 'completed']).default('upcoming').notNull(),
-  eventType: mysqlEnum('event_type', ['public', 'internal']).default('public').notNull(),
+  eventType: varchar('event_type', { length: 20 }).default('public').notNull(),
   visibleToAlumni: boolean('visible_to_alumni').default(false).notNull(),
   allDay: boolean('all_day').default(false).notNull(),
   color: varchar('color', { length: 20 }).default('blue').notNull(),
@@ -93,7 +93,7 @@ export const events = mysqlTable('events', {
 export const eventRsvps = mysqlTable('event_rsvps', {
   id: serial('id').primaryKey(),
   eventId: int('event_id').notNull(),
-  memberId: int('member_id').notNull(),
+  memberId: bigint('member_id', { mode: 'number', unsigned: true }).notNull(),
   status: mysqlEnum('status', ['attending', 'not_attending', 'maybe']).default('attending').notNull(),
   respondedAt: timestamp('responded_at').defaultNow().notNull(),
 }, (table) => ({
@@ -231,7 +231,7 @@ export const galleries = mysqlTable('galleries', {
  * Kolom `slug` untuk identifikasi internal; `name` untuk tampilan.
  */
 export const galleryCategories = mysqlTable('gallery_categories', {
-  id: serial('id').primaryKey(),
+  id: int('id').primaryKey().autoincrement(),
   name: varchar('name', { length: 100 }).notNull().unique(),
   slug: varchar('slug', { length: 100 }).notNull().unique(),
   color: varchar('color', { length: 20 }).default('blue').notNull(),
@@ -338,5 +338,203 @@ export const resourceReadsRelations = relations(resourceReads, ({ one }) => ({
     fields: [resourceReads.memberId],
     references: [members.id],
   }),
+}));
+
+// ============================================================================
+// HR COMMAND CENTER TABLES
+// ============================================================================
+
+/**
+ * Tabel status anggota (Hijau/Kuning/Merah/Biru)
+ * Append-only log untuk tracking perubahan status dari waktu ke waktu.
+ */
+export const memberStatuses = mysqlTable('member_statuses', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  status: mysqlEnum('status', ['hijau', 'kuning', 'merah', 'biru']).notNull(),
+  reason: text('reason'),
+  changedBy: int('changed_by').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  // Query status history per member, sorted by time
+  idxMemberCreated: index('idx_member_statuses_member_created').on(table.memberId, table.createdAt),
+  // Dashboard filter: ambil semua member dengan status tertentu (latest)
+  idxStatus: index('idx_member_statuses_status').on(table.status),
+  // FK untuk join ke users (admin yang ubah)
+  idxChangedBy: index('idx_member_statuses_changed_by').on(table.changedBy),
+}));
+
+/**
+ * Tabel academic load anggota (self-reported)
+ * Anggota bisa update beban akademik mingguan (UTS, UAS, Quiz, Project, Sick, etc.)
+ */
+export const memberAcademicLoads = mysqlTable('member_academic_loads', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  weekStart: varchar('week_start', { length: 10 }).notNull(), // Format: YYYY-MM-DD (Senin)
+  loadType: mysqlEnum('load_type', ['uts', 'uas', 'quiz', 'project', 'sick', 'personal', 'other']).notNull(),
+  description: text('description'),
+  intensity: mysqlEnum('intensity', ['low', 'medium', 'high']).default('medium').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Query load per member per minggu
+  idxMemberWeek: index('idx_member_academic_loads_member_week').on(table.memberId, table.weekStart),
+  // Dashboard: cari member yang belum update minggu ini
+  idxWeekStart: index('idx_member_academic_loads_week_start').on(table.weekStart),
+}));
+
+/**
+ * Tabel leave request (cuti)
+ * Max 7 hari per 2 bulan, harus submit H-10 (kecuali emergency)
+ */
+export const leaveRequests = mysqlTable('leave_requests', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  startDate: varchar('start_date', { length: 10 }).notNull(), // YYYY-MM-DD
+  endDate: varchar('end_date', { length: 10 }).notNull(), // YYYY-MM-DD
+  reason: text('reason').notNull(),
+  leaveType: mysqlEnum('leave_type', ['regular', 'emergency']).default('regular').notNull(),
+  status: mysqlEnum('status', ['pending', 'approved', 'rejected']).default('pending').notNull(),
+  reviewedBy: int('reviewed_by'),
+  reviewedAt: timestamp('reviewed_at'),
+  reviewNotes: text('review_notes'),
+  submittedAt: timestamp('submitted_at').defaultNow().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Query leave per member
+  idxMember: index('idx_leave_requests_member').on(table.memberId),
+  // Dashboard: filter pending leaves
+  idxStatus: index('idx_leave_requests_status').on(table.status),
+  // Validasi: cek approved leaves dalam 2 bulan terakhir
+  idxMemberStatus: index('idx_leave_requests_member_status').on(table.memberId, table.status),
+  // FK ke admin yang review
+  idxReviewedBy: index('idx_leave_requests_reviewed_by').on(table.reviewedBy),
+}));
+
+/**
+ * Tabel intervention log (SOP tracking H+1 to H+21)
+ * Log setiap step intervention untuk member yang butuh perhatian
+ */
+export const interventionLogs = mysqlTable('intervention_logs', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  stage: mysqlEnum('stage', ['h1', 'h3', 'h3_h7', 'h7_zoom', 'h7_h14', 'h14_h21', 'post_h21']).notNull(),
+  notes: text('notes'),
+  actionTaken: text('action_taken'),
+  performedBy: int('performed_by').notNull(),
+  scheduledDate: varchar('scheduled_date', { length: 10 }), // YYYY-MM-DD
+  completedDate: varchar('completed_date', { length: 10 }), // YYYY-MM-DD
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  // Query intervention history per member
+  idxMember: index('idx_intervention_logs_member').on(table.memberId),
+  // Track progress: list interventions by stage
+  idxMemberStage: index('idx_intervention_logs_member_stage').on(table.memberId, table.stage),
+  // Dashboard: ongoing interventions (scheduled but not completed)
+  idxScheduledCompleted: index('idx_intervention_logs_scheduled_completed').on(table.scheduledDate, table.completedDate),
+  // FK ke admin yang perform
+  idxPerformedBy: index('idx_intervention_logs_performed_by').on(table.performedBy),
+}));
+
+/**
+ * Tabel monthly evaluations
+ * HR evaluasi bulanan per anggota
+ */
+export const monthlyEvaluations = mysqlTable('monthly_evaluations', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  month: varchar('month', { length: 7 }).notNull(), // Format: YYYY-MM
+  evaluationNotes: text('evaluation_notes'),
+  actionItems: text('action_items'),
+  rating: int('rating'), // 1-5
+  evaluatedBy: int('evaluated_by').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  // Prevent duplicate evaluations per member per month
+  uniqMemberMonth: uniqueIndex('uniq_monthly_evaluations_member_month').on(table.memberId, table.month),
+  // Query evaluations by member
+  idxMember: index('idx_monthly_evaluations_member').on(table.memberId),
+  // Query evaluations by month (for reporting)
+  idxMonth: index('idx_monthly_evaluations_month').on(table.month),
+  // FK ke admin yang evaluasi
+  idxEvaluatedBy: index('idx_monthly_evaluations_evaluated_by').on(table.evaluatedBy),
+}));
+
+// ============================================================================
+// HR RELATIONS
+// ============================================================================
+
+export const memberStatusesRelations = relations(memberStatuses, ({ one }) => ({
+  member: one(members, {
+    fields: [memberStatuses.memberId],
+    references: [members.id],
+  }),
+  changedByUser: one(users, {
+    fields: [memberStatuses.changedBy],
+    references: [users.id],
+  }),
+}));
+
+export const memberAcademicLoadsRelations = relations(memberAcademicLoads, ({ one }) => ({
+  member: one(members, {
+    fields: [memberAcademicLoads.memberId],
+    references: [members.id],
+  }),
+}));
+
+export const leaveRequestsRelations = relations(leaveRequests, ({ one }) => ({
+  member: one(members, {
+    fields: [leaveRequests.memberId],
+    references: [members.id],
+  }),
+  reviewer: one(users, {
+    fields: [leaveRequests.reviewedBy],
+    references: [users.id],
+  }),
+}));
+
+export const interventionLogsRelations = relations(interventionLogs, ({ one }) => ({
+  member: one(members, {
+    fields: [interventionLogs.memberId],
+    references: [members.id],
+  }),
+  performer: one(users, {
+    fields: [interventionLogs.performedBy],
+    references: [users.id],
+  }),
+}));
+
+export const monthlyEvaluationsRelations = relations(monthlyEvaluations, ({ one }) => ({
+  member: one(members, {
+    fields: [monthlyEvaluations.memberId],
+    references: [members.id],
+  }),
+  evaluator: one(users, {
+    fields: [monthlyEvaluations.evaluatedBy],
+    references: [users.id],
+  }),
+}));
+
+// Update members relations to include HR tables
+export const membersRelationsExtended = relations(members, ({ one, many }) => ({
+  generation: one(generations, {
+    fields: [members.generationId],
+    references: [generations.id],
+  }),
+  position: one(positions, {
+    fields: [members.positionId],
+    references: [positions.id],
+  }),
+  rsvps: many(eventRsvps),
+  committees: many(eventCommittees),
+  uploadedMaterials: many(eventMaterials),
+  statuses: many(memberStatuses),
+  academicLoads: many(memberAcademicLoads),
+  leaveRequests: many(leaveRequests),
+  interventionLogs: many(interventionLogs),
+  evaluations: many(monthlyEvaluations),
 }));
 
