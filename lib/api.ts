@@ -86,7 +86,8 @@ export function adminRoute<P = Record<string, string>>(
       }
       return await handler(request, context, user as AdminJwtPayload);
     } catch (err: any) {
-      return fail(err?.message || fallbackMessage, 500);
+      const causeMsg = err?.cause?.sqlMessage || err?.cause?.message;
+      return fail(causeMsg ? `${err?.message} — ${causeMsg}` : (err?.message || fallbackMessage), 500);
     }
   };
 }
