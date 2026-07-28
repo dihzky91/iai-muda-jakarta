@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { MessageSquare, ThumbsUp, Lightbulb, PartyPopper, Heart, Pin, Trash2, Send, CornerDownRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import ConfirmDeleteModal from './ConfirmDeleteModal';
 
 export interface PostItem {
   id: number;
@@ -89,6 +90,7 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
   const [replyToName, setReplyToName] = useState<string | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   const canDelete = isAdmin || (currentMemberId && post.memberId === currentMemberId);
 
@@ -159,25 +161,24 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
       setCommentsCount((prev) => prev + 1);
       fetchComments();
     } catch (err: any) {
-      alert(err.message || 'Gagal mengirim komentar');
+      console.error(err.message || 'Gagal mengirim komentar');
     } finally {
       setIsSubmittingComment(false);
     }
   };
 
-  const handleDeletePost = async () => {
-    if (!confirm('Apakah Anda yakin ingin menghapus postingan ini?')) return;
-
+  const handleConfirmDelete = async () => {
     setIsDeleting(true);
     try {
       const res = await fetch(`/api/member/community/posts/${post.id}`, {
         method: 'DELETE',
       });
-      if (res.ok && onPostDeleted) {
-        onPostDeleted(post.id);
+      if (res.ok) {
+        setShowDeleteModal(false);
+        if (onPostDeleted) onPostDeleted(post.id);
       }
     } catch {
-      alert('Gagal menghapus postingan');
+      console.error('Gagal menghapus postingan');
     } finally {
       setIsDeleting(false);
     }
@@ -217,7 +218,7 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
         {canDelete && (
           <button
             type="button"
-            onClick={handleDeletePost}
+            onClick={() => setShowDeleteModal(true)}
             disabled={isDeleting}
             className="p-2 rounded-xl text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
             title="Hapus Postingan"
@@ -381,6 +382,14 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
           )}
         </div>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmDeleteModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
