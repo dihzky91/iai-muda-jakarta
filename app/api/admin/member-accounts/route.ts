@@ -70,6 +70,30 @@ export const POST = adminRoute(
       return fail('Akun portal sudah ada untuk member ini', 400);
     }
 
+    // Cek apakah email member ini sudah dipakai akun portal lain.
+    const member = members[0];
+    if (member.email) {
+      const emailOwners = await db
+        .select({
+          id: schema.members.id,
+          name: schema.members.name,
+          accountId: schema.memberAccounts.id,
+        })
+        .from(schema.members)
+        .leftJoin(schema.memberAccounts, eq(schema.members.id, schema.memberAccounts.memberId))
+        .where(eq(schema.members.email, member.email));
+
+      const existingPortalOwners = emailOwners.filter(
+        (r) => r.id !== memberId && r.accountId != null
+      );
+
+      if (existingPortalOwners.length > 0) {
+        return fail(
+          `Email ${member.email} sudah terdaftar sebagai akun portal atas nama "${existingPortalOwners[0].name}". Gunakan email lain atau hapus akun portal yang lama.`,
+          400
+        );
+      }
+    }
     await db.insert(schema.memberAccounts).values({
       memberId,
       passwordHash: await hashPassword(password),

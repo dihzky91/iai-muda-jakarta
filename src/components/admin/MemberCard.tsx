@@ -21,6 +21,7 @@ interface MemberCardProps {
   hasAccount?: boolean;
   accountIsActive?: boolean;
   accountId?: number;
+  periodCount?: number;
 }
 
 export default function MemberCard({
@@ -38,6 +39,7 @@ export default function MemberCard({
   hasAccount = false,
   accountIsActive = false,
   accountId,
+  periodCount,
 }: MemberCardProps) {
   const [togglingVisibility, setTogglingVisibility] = useState(false);
   const [togglingAccount, setTogglingAccount] = useState(false);
@@ -153,6 +155,11 @@ export default function MemberCard({
             {generation?.isActive && (
               <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-100">
                 Aktif
+              </span>
+            )}
+            {periodCount && periodCount > 1 && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-100" title={`Anggota ini tercatat di ${periodCount} periode`}>
+                {periodCount} periode
               </span>
             )}
             {member.linkedinUrl && (

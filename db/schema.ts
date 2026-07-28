@@ -31,6 +31,8 @@ export const positions = mysqlTable('positions', {
 }, (table) => ({
   // Dipakai resolvePositionId() di POST /api/members untuk lookup by name.
   idxName: index('idx_positions_name').on(table.name),
+  // Mencegah duplikasi posisi dengan nama dan kategori yang sama.
+  uniqNameCategory: uniqueIndex('uniq_positions_name_category').on(table.name, table.category),
 }));
 
 export const members = mysqlTable('members', {
