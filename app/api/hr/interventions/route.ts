@@ -1,5 +1,5 @@
 import { db, schema } from '@/lib/db';
-import { eq, desc } from 'drizzle-orm';
+import { eq, desc, and, lte, isNull, SQL } from 'drizzle-orm';
 import { adminRoute, ok, done, fail } from '@/lib/api';
 
 /**
@@ -8,56 +8,70 @@ import { adminRoute, ok, done, fail } from '@/lib/api';
  */
 export const GET = adminRoute(
   ['superadmin', 'admin'],
-  async (request, _context, _user) => {
+  async (request, _context, user) => {
     const { searchParams } = new URL(request.url);
     const memberIdParam = searchParams.get('memberId');
+    const showAll = searchParams.get('showAll') === 'true';
 
-    let interventions;
+    // Auto-close: intervention yang scheduledDate > 30 hari lalu tanpa completedDate
+    const wibNow = new Date(Date.now() + (new Date().getTimezoneOffset() + 420) * 60 * 1000);
+    wibNow.setDate(wibNow.getDate() - 30);
+    const y = wibNow.getFullYear();
+    const m = String(wibNow.getMonth() + 1).padStart(2, '0');
+    const d = String(wibNow.getDate()).padStart(2, '0');
+    const cutoffDate = `${y}-${m}-${d}`;
 
+    await db
+      .update(schema.interventionLogs)
+      .set({ isActive: false, completedDate: cutoffDate })
+      .where(
+        and(
+          eq(schema.interventionLogs.isActive, true),
+          isNull(schema.interventionLogs.completedDate),
+          lte(schema.interventionLogs.scheduledDate, cutoffDate)
+        )
+      );
+
+    let memberIdFilter: number | undefined;
     if (memberIdParam) {
-      const memberId = parseInt(memberIdParam, 10);
-      if (isNaN(memberId)) {
+      memberIdFilter = parseInt(memberIdParam, 10);
+      if (isNaN(memberIdFilter)) {
         return fail('Invalid member ID', 400);
       }
-
-      interventions = await db
-        .select({
-          id: schema.interventionLogs.id,
-          memberId: schema.interventionLogs.memberId,
-          memberName: schema.members.name,
-          stage: schema.interventionLogs.stage,
-          notes: schema.interventionLogs.notes,
-          actionTaken: schema.interventionLogs.actionTaken,
-          scheduledDate: schema.interventionLogs.scheduledDate,
-          completedDate: schema.interventionLogs.completedDate,
-          createdAt: schema.interventionLogs.createdAt,
-          performedBy: schema.users.username,
-        })
-        .from(schema.interventionLogs)
-        .innerJoin(schema.members, eq(schema.interventionLogs.memberId, schema.members.id))
-        .leftJoin(schema.users, eq(schema.interventionLogs.performedBy, schema.users.id))
-        .where(eq(schema.interventionLogs.memberId, memberId))
-        .orderBy(desc(schema.interventionLogs.createdAt));
-    } else {
-      interventions = await db
-        .select({
-          id: schema.interventionLogs.id,
-          memberId: schema.interventionLogs.memberId,
-          memberName: schema.members.name,
-          stage: schema.interventionLogs.stage,
-          notes: schema.interventionLogs.notes,
-          actionTaken: schema.interventionLogs.actionTaken,
-          scheduledDate: schema.interventionLogs.scheduledDate,
-          completedDate: schema.interventionLogs.completedDate,
-          createdAt: schema.interventionLogs.createdAt,
-          performedBy: schema.users.username,
-        })
-        .from(schema.interventionLogs)
-        .innerJoin(schema.members, eq(schema.interventionLogs.memberId, schema.members.id))
-        .leftJoin(schema.users, eq(schema.interventionLogs.performedBy, schema.users.id))
-        .orderBy(desc(schema.interventionLogs.createdAt))
-        .limit(50);
     }
+
+    const whereConditions: SQL[] = [];
+    if (memberIdFilter !== undefined) {
+      whereConditions.push(eq(schema.interventionLogs.memberId, memberIdFilter));
+    }
+    if (!showAll) {
+      whereConditions.push(eq(schema.interventionLogs.isActive, true));
+    }
+
+    const baseQuery = db
+      .select({
+        id: schema.interventionLogs.id,
+        memberId: schema.interventionLogs.memberId,
+        memberName: schema.members.name,
+        stage: schema.interventionLogs.stage,
+        notes: schema.interventionLogs.notes,
+        actionTaken: schema.interventionLogs.actionTaken,
+        scheduledDate: schema.interventionLogs.scheduledDate,
+        completedDate: schema.interventionLogs.completedDate,
+        isActive: schema.interventionLogs.isActive,
+        createdAt: schema.interventionLogs.createdAt,
+        performedBy: schema.users.username,
+      })
+      .from(schema.interventionLogs)
+      .innerJoin(schema.members, eq(schema.interventionLogs.memberId, schema.members.id))
+      .leftJoin(schema.users, eq(schema.interventionLogs.performedBy, schema.users.id))
+      .where(whereConditions.length > 0 ? and(...whereConditions) : undefined)
+      .orderBy(desc(schema.interventionLogs.createdAt));
+
+    const interventions = await (memberIdFilter === undefined
+      ? baseQuery.limit(50)
+      : baseQuery
+    );
 
     return ok(interventions);
   },

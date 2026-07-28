@@ -42,7 +42,7 @@ export const GET = publicRoute(async (request) => {
   return ok(rows.map(normalizeMemberPosition));
 }, 'Failed to fetch members');
 
-export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
+export const POST = adminRoute(['superadmin', 'admin'], async (request, _context, user) => {
   const { generationId, positionId, position, name, division, university, email, imageUrl, linkedinUrl, bio, isActive } = await request.json();
 
   const err = validate({
@@ -70,5 +70,15 @@ export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
     isActive: isActive !== false,
   });
 
-  return done('Member created successfully', { id: insertedId(result) });
+  const memberId = insertedId(result);
+
+  // Auto-insert default status 'hijau' untuk member baru
+  await db.insert(schema.memberStatuses).values({
+    memberId,
+    status: 'hijau',
+    reason: 'Default status for new member',
+    changedBy: user.userId,
+  });
+
+  return done('Member created successfully', { id: memberId });
 }, 'Failed to create member');

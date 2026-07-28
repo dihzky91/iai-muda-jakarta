@@ -1,5 +1,5 @@
 import { db, schema } from '@/lib/db';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { adminRoute, ok } from '@/lib/api';
 
 /**
@@ -28,8 +28,8 @@ export const GET = adminRoute(
       .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
       .orderBy(schema.members.name);
 
-    // Get latest status for each member
-    const allStatuses = await db
+    // Get latest status for each member via subquery
+    const latestStatuses = await db
       .select({
         memberId: schema.memberStatuses.memberId,
         status: schema.memberStatuses.status,
@@ -37,21 +37,21 @@ export const GET = adminRoute(
         createdAt: schema.memberStatuses.createdAt,
       })
       .from(schema.memberStatuses)
-      .orderBy(desc(schema.memberStatuses.createdAt));
+      .where(
+        sql`(${schema.memberStatuses.memberId}, ${schema.memberStatuses.createdAt}) IN (
+          SELECT ms2.member_id, MAX(ms2.created_at)
+          FROM member_statuses ms2
+          GROUP BY ms2.member_id
+        )`
+      );
 
-    // Map latest status per member
-    const statusMap = new Map();
-    for (const status of allStatuses) {
-      if (!statusMap.has(status.memberId)) {
-        statusMap.set(status.memberId, {
-          status: status.status,
-          reason: status.reason,
-          lastUpdated: status.createdAt,
-        });
-      }
-    }
+    const statusMap = new Map(
+      latestStatuses.map(s => [
+        s.memberId,
+        { status: s.status, reason: s.reason, lastUpdated: s.createdAt },
+      ])
+    );
 
-    // Combine members with their status
     const membersWithStatus = members.map(member => ({
       ...member,
       currentStatus: statusMap.get(member.id) || null,

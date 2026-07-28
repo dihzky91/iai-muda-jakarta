@@ -141,6 +141,11 @@ export const membersRelations = relations(members, ({ one, many }) => ({
   rsvps: many(eventRsvps),
   committees: many(eventCommittees),
   uploadedMaterials: many(eventMaterials),
+  statuses: many(memberStatuses),
+  academicLoads: many(memberAcademicLoads),
+  leaveRequests: many(leaveRequests),
+  interventionLogs: many(interventionLogs),
+  evaluations: many(monthlyEvaluations),
 }));
 
 export const positionsRelations = relations(positions, ({ many }) => ({
@@ -382,6 +387,8 @@ export const memberAcademicLoads = mysqlTable('member_academic_loads', {
   idxMemberWeek: index('idx_member_academic_loads_member_week').on(table.memberId, table.weekStart),
   // Dashboard: cari member yang belum update minggu ini
   idxWeekStart: index('idx_member_academic_loads_week_start').on(table.weekStart),
+  // Mencegah duplikasi: 1 member hanya boleh 1 record per minggu
+  uniqMemberWeek: uniqueIndex('uniq_member_academic_loads_member_week').on(table.memberId, table.weekStart),
 }));
 
 /**
@@ -426,6 +433,7 @@ export const interventionLogs = mysqlTable('intervention_logs', {
   performedBy: int('performed_by').notNull(),
   scheduledDate: varchar('scheduled_date', { length: 10 }), // YYYY-MM-DD
   completedDate: varchar('completed_date', { length: 10 }), // YYYY-MM-DD
+  isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
   // Query intervention history per member
@@ -518,23 +526,5 @@ export const monthlyEvaluationsRelations = relations(monthlyEvaluations, ({ one 
   }),
 }));
 
-// Update members relations to include HR tables
-export const membersRelationsExtended = relations(members, ({ one, many }) => ({
-  generation: one(generations, {
-    fields: [members.generationId],
-    references: [generations.id],
-  }),
-  position: one(positions, {
-    fields: [members.positionId],
-    references: [positions.id],
-  }),
-  rsvps: many(eventRsvps),
-  committees: many(eventCommittees),
-  uploadedMaterials: many(eventMaterials),
-  statuses: many(memberStatuses),
-  academicLoads: many(memberAcademicLoads),
-  leaveRequests: many(leaveRequests),
-  interventionLogs: many(interventionLogs),
-  evaluations: many(monthlyEvaluations),
-}));
+
 
