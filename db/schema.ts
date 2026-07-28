@@ -213,6 +213,7 @@ export const articles = mysqlTable('articles', {
   date: varchar('date', { length: 20 }).notNull(),
   author: varchar('author', { length: 255 }).notNull(),
   imageUrl: varchar('image_url', { length: 500 }),
+  category: varchar('category', { length: 50 }).default('public').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
@@ -262,6 +263,7 @@ export const settings = mysqlTable('settings', {
   footerDescription: text('footer_description'),
   logoUrl: varchar('logo_url', { length: 500 }),
   faviconUrl: varchar('favicon_url', { length: 500 }),
+  heroBannerUrl: varchar('hero_banner_url', { length: 500 }),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
 
@@ -523,6 +525,108 @@ export const monthlyEvaluationsRelations = relations(monthlyEvaluations, ({ one 
   evaluator: one(users, {
     fields: [monthlyEvaluations.evaluatedBy],
     references: [users.id],
+  }),
+}));
+
+// ============================================================================
+// TABEL RUANG KOMUNITAS & NOTIFIKASI PORTAL
+// ============================================================================
+
+export const communityPosts = mysqlTable('community_posts', {
+  id: serial('id').primaryKey(),
+  memberId: int('member_id').notNull(),
+  content: text('content').notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
+  attachmentUrl: varchar('attachment_url', { length: 500 }),
+  attachmentName: varchar('attachment_name', { length: 255 }),
+  scope: mysqlEnum('scope', ['all', 'division', 'generation']).default('all').notNull(),
+  targetDivision: varchar('target_division', { length: 255 }),
+  isPinned: boolean('is_pinned').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxMemberScopeCreatedAt: index('idx_posts_member_scope_created').on(table.memberId, table.scope, table.createdAt),
+  idxCreatedAt: index('idx_posts_created_at').on(table.createdAt),
+}));
+
+export const communityComments = mysqlTable('community_comments', {
+  id: serial('id').primaryKey(),
+  postId: int('post_id').notNull(),
+  parentId: int('parent_id'),
+  memberId: int('member_id').notNull(),
+  content: text('content').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxPostParentCreated: index('idx_comments_post_parent_created').on(table.postId, table.parentId, table.createdAt),
+}));
+
+export const communityReactions = mysqlTable('community_reactions', {
+  id: serial('id').primaryKey(),
+  postId: int('post_id').notNull(),
+  memberId: int('member_id').notNull(),
+  reactionType: mysqlEnum('reaction_type', ['like', 'insightful', 'congrats', 'appreciate']).default('like').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqPostMember: uniqueIndex('uniq_reaction_post_member').on(table.postId, table.memberId),
+  idxPostReaction: index('idx_reaction_post').on(table.postId),
+}));
+
+export const communityMentions = mysqlTable('community_mentions', {
+  id: serial('id').primaryKey(),
+  postId: int('post_id').notNull(),
+  commentId: int('comment_id'),
+  mentionedMemberId: int('mentioned_member_id').notNull(),
+  authorMemberId: int('author_member_id').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  idxMentionedMember: index('idx_mentions_mentioned_member').on(table.mentionedMemberId),
+}));
+
+export const portalNotifications = mysqlTable('portal_notifications', {
+  id: serial('id').primaryKey(),
+  recipientMemberId: int('recipient_member_id').notNull(),
+  actorMemberId: int('actor_member_id').notNull(),
+  type: mysqlEnum('type', ['mention', 'comment', 'reply', 'reaction']).notNull(),
+  targetPostId: int('target_post_id').notNull(),
+  isRead: boolean('is_read').default(false).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+}, (table) => ({
+  idxRecipientIsReadCreated: index('idx_notif_recipient_read_created').on(table.recipientMemberId, table.isRead, table.createdAt),
+}));
+
+export const communityPostsRelations = relations(communityPosts, ({ one, many }) => ({
+  author: one(members, {
+    fields: [communityPosts.memberId],
+    references: [members.id],
+  }),
+  comments: many(communityComments),
+  reactions: many(communityReactions),
+}));
+
+export const communityCommentsRelations = relations(communityComments, ({ one }) => ({
+  post: one(communityPosts, {
+    fields: [communityComments.postId],
+    references: [communityPosts.id],
+  }),
+  author: one(members, {
+    fields: [communityComments.memberId],
+    references: [members.id],
+  }),
+}));
+
+export const portalNotificationsRelations = relations(portalNotifications, ({ one }) => ({
+  recipient: one(members, {
+    fields: [portalNotifications.recipientMemberId],
+    references: [members.id],
+  }),
+  actor: one(members, {
+    fields: [portalNotifications.actorMemberId],
+    references: [members.id],
+  }),
+  post: one(communityPosts, {
+    fields: [portalNotifications.targetPostId],
+    references: [communityPosts.id],
   }),
 }));
 

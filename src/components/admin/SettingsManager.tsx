@@ -37,6 +37,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
     footerDescription: settings.footerDescription || '',
     logoUrl: settings.logoUrl || '',
     faviconUrl: settings.faviconUrl || '',
+    heroBannerUrl: settings.heroBannerUrl || '/images/hero-card-asset.png',
   });
 
   useEffect(() => {
@@ -56,6 +57,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
         footerDescription: settings.footerDescription || '',
         logoUrl: settings.logoUrl || '',
         faviconUrl: settings.faviconUrl || '',
+        heroBannerUrl: settings.heroBannerUrl || '/images/hero-card-asset.png',
       });
     }
   }, [settings]);
@@ -158,7 +160,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
     { key: 'social', label: 'Media Sosial', icon: '🔗' },
     { key: 'divisions', label: 'Kelola Bidang', icon: '🏷️' },
     { key: 'photos', label: 'Foto Divisi', icon: '🖼️' },
-    { key: 'branding', label: 'Logo & Favicon', icon: '🎨' },
+    { key: 'branding', label: 'Logo & Hero Banner', icon: '🎨' },
   ] as const;
 
   return (
@@ -396,41 +398,113 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
           )}
 
           {subTab === 'branding' && (
-            <div className="space-y-5">
-              <div className="grid grid-cols-1 gap-5">
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">URL Logo Organisasi</label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com/logo.png"
-                    value={form.logoUrl}
-                    onChange={(e) => setForm(prev => ({ ...prev, logoUrl: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
+            <div className="space-y-6">
+              <div>
+                <h4 className="text-sm font-bold text-slate-800">Identitas Visual & Hero Banner</h4>
+                <p className="text-[11px] text-slate-500 mt-0.5">Kelola logo organisasi, favicon, dan banner utama portal anggota.</p>
+              </div>
+
+              {/* Hero Banner Manager Section */}
+              <div className="p-5 rounded-2xl bg-gradient-to-br from-blue-50/50 to-indigo-50/40 border border-blue-100 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-xs font-bold text-blue-950 flex items-center gap-2">
+                      <span className="text-base">💳</span> Hero Banner Portal Anggota
+                    </label>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Tampil sebagai gambar latar/aset di bagian header Dashboard Portal Anggota.</p>
+                  </div>
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm">
+                    Fitur Baru ✨
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-slate-700 block">Preset Pilihan Banner:</label>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, heroBannerUrl: '/images/hero-card-asset.png' }))}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        form.heroBannerUrl === '/images/hero-card-asset.png' || !form.heroBannerUrl
+                          ? 'border-blue-500 bg-white ring-2 ring-blue-500/20 shadow-sm'
+                          : 'border-slate-200 bg-white/70 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <img src="/images/hero-card-asset.png" alt="Preset Kartu 3D" className="w-12 h-10 object-cover rounded-lg border border-slate-200 shadow-sm" />
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">Desain Kartu 3D (Default)</p>
+                          <p className="text-[10px] text-slate-500">Kartu Anggota IAI dengan Ornamen Batik & Wayang</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, heroBannerUrl: 'gradient' }))}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
+                        form.heroBannerUrl === 'gradient'
+                          ? 'border-blue-500 bg-white ring-2 ring-blue-500/20 shadow-sm'
+                          : 'border-slate-200 bg-white/70 hover:bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-10 rounded-lg bg-gradient-to-r from-blue-700 via-blue-600 to-indigo-700 border border-slate-200 shadow-sm" />
+                        <div>
+                          <p className="text-xs font-bold text-slate-800">Gradient Minimalis</p>
+                          <p className="text-[10px] text-slate-500">Gradient Biru Khas IAI tanpa gambar latar</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2">
+                  <ImageUploader
+                    label="Unggah File Gambar Banner Custom:"
+                    value={form.heroBannerUrl === 'gradient' ? '' : form.heroBannerUrl}
+                    onChange={(url) => setForm(prev => ({ ...prev, heroBannerUrl: url }))}
+                    placeholder="Unggah dari komputer atau tempel URL gambar..."
+                    helperText="Pilih/seret file gambar (JPG, PNG, WebP) dari perangkat Anda untuk diunggah langsung ke server."
                   />
-                  <p className="text-[10px] text-slate-400">Ditampilkan di pojok kiri header (mengganti ikon default). Kosongkan untuk menggunakan ikon default.</p>
-                  {form.logoUrl && (
-                    <div className="mt-2">
-                      <p className="text-[10px] font-semibold text-slate-500 mb-1">Pratinjau:</p>
-                      {/* Sengaja <img>: ini pratinjau URL bebas yang sedang
-                          diketik admin. Host apa pun harus bisa tampil, dan
-                          onError di bawah menangani URL yang tidak valid —
-                          next/image justru akan gagal keras untuk host di luar
-                          remotePatterns. */}
-                      <img src={form.logoUrl} alt="Preview logo" className="h-12 w-12 rounded-xl border border-slate-200 object-contain bg-white" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                </div>
+
+                {form.heroBannerUrl && form.heroBannerUrl !== 'gradient' && (
+                  <div className="mt-3 p-3 bg-white rounded-xl border border-slate-200">
+                    <p className="text-[10px] font-semibold text-slate-500 mb-1.5">Pratinjau Tampilan Banner Portal:</p>
+                    <div className="relative h-28 rounded-xl overflow-hidden border border-slate-200 bg-slate-900 shadow-inner flex items-center justify-center">
+                      <img
+                        src={form.heroBannerUrl}
+                        alt="Preview Hero Banner"
+                        className="w-full h-full object-cover opacity-80"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-blue-900/60 to-transparent flex items-center p-4">
+                        <span className="text-xs font-bold text-white tracking-wide flex items-center gap-2">
+                          <span>✨</span> Pratinjau Tampilan Header Portal Anggota
+                        </span>
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-slate-700">URL Favicon</label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com/favicon.ico"
-                    value={form.faviconUrl}
-                    onChange={(e) => setForm(prev => ({ ...prev, faviconUrl: e.target.value }))}
-                    className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
-                  />
-                  <p className="text-[10px] text-slate-400">Ikon tab browser. Biarkan kosong untuk tidak menggunakan favicon kustom.</p>
-                </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 pt-2 border-t border-slate-100">
+                <ImageUploader
+                  label="Logo Organisasi:"
+                  value={form.logoUrl || ''}
+                  onChange={(url) => setForm(prev => ({ ...prev, logoUrl: url }))}
+                  placeholder="Unggah logo dari komputer atau tempel URL..."
+                  helperText="Ditampilkan di pojok kiri header (mengganti ikon default)."
+                />
+
+                <ImageUploader
+                  label="Favicon Website:"
+                  value={form.faviconUrl || ''}
+                  onChange={(url) => setForm(prev => ({ ...prev, faviconUrl: url }))}
+                  placeholder="Unggah favicon (.ico/.png) dari komputer..."
+                  helperText="Ikon tab browser. Biarkan kosong untuk menggunakan favicon default."
+                />
               </div>
             </div>
           )}

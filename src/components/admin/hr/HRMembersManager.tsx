@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Search, Filter } from 'lucide-react';
 
 interface Member {
@@ -41,7 +42,7 @@ export default function HRMembersManager({ onRefresh }: { onRefresh: () => void 
   };
 
   const getStatusBadge = (status: string | null) => {
-    if (!status) return <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-600">No Status</span>;
+    if (!status) return <span className="px-2 py-1 rounded text-xs bg-slate-100 text-slate-600">Tanpa Status</span>;
     const colors = {
       hijau: 'bg-green-100 text-green-700',
       kuning: 'bg-yellow-100 text-yellow-700',
@@ -57,7 +58,7 @@ export default function HRMembersManager({ onRefresh }: { onRefresh: () => void 
     return matchSearch && matchStatus;
   });
 
-  if (loading) return <div className="text-center py-12">Loading...</div>;
+  if (loading) return <div className="text-center py-12 text-slate-500">Memuat daftar anggota...</div>;
 
   return (
     <div className="space-y-4">
@@ -66,18 +67,18 @@ export default function HRMembersManager({ onRefresh }: { onRefresh: () => void 
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search members..."
+            placeholder="Cari anggota..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg"
+            className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm"
           />
         </div>
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-slate-300 rounded-lg"
+          className="px-4 py-2 border border-slate-300 rounded-lg text-sm"
         >
-          <option value="all">All Status</option>
+          <option value="all">Semua Status</option>
           <option value="hijau">Hijau</option>
           <option value="kuning">Kuning</option>
           <option value="merah">Merah</option>
@@ -85,33 +86,46 @@ export default function HRMembersManager({ onRefresh }: { onRefresh: () => void 
         </select>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <table className="w-full">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+        <table className="w-full text-left">
           <thead className="bg-slate-50 border-b border-slate-200">
             <tr>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-700">Name</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-700">Division</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-700">University</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-700">Status</th>
-              <th className="text-left px-4 py-3 text-sm font-medium text-slate-700">Action</th>
+              <th className="px-4 py-3 text-sm font-medium text-slate-700">Nama</th>
+              <th className="px-4 py-3 text-sm font-medium text-slate-700">Bidang / Divisi</th>
+              <th className="px-4 py-3 text-sm font-medium text-slate-700">Universitas</th>
+              <th className="px-4 py-3 text-sm font-medium text-slate-700">Status</th>
+              <th className="px-4 py-3 text-sm font-medium text-slate-700">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200">
-            {filtered.map((member) => (
-              <tr key={member.id} className="hover:bg-slate-50">
-                <td className="px-4 py-3 text-sm">{member.name}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{member.division || '-'}</td>
-                <td className="px-4 py-3 text-sm text-slate-600">{member.university || '-'}</td>
-                <td className="px-4 py-3">{getStatusBadge(member.currentStatus?.status || null)}</td>
-                <td className="px-4 py-3">
-                  <a href={`/admin/hr/members/${member.id}`} className="text-blue-600 hover:underline text-sm">View Detail</a>
+            {filtered.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-8 text-slate-500 text-sm">
+                  Tidak ada anggota yang cocok dengan pencarian.
                 </td>
               </tr>
-            ))}
+            ) : (
+              filtered.map((member) => (
+                <tr key={member.id} className="hover:bg-slate-50">
+                  <td className="px-4 py-3 text-sm font-medium text-slate-900">{member.name}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{member.division || '-'}</td>
+                  <td className="px-4 py-3 text-sm text-slate-600">{member.university || '-'}</td>
+                  <td className="px-4 py-3">{getStatusBadge(member.currentStatus?.status || null)}</td>
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/admin/hr/members/${member.id}`}
+                      className="text-blue-600 hover:text-blue-800 font-medium hover:underline text-sm inline-flex items-center gap-1"
+                    >
+                      Lihat Detail ↗
+                    </Link>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
-      <div className="text-sm text-slate-600">Showing {filtered.length} of {members.length} members</div>
+      <div className="text-sm text-slate-600">Menampilkan {filtered.length} dari {members.length} anggota</div>
     </div>
   );
 }

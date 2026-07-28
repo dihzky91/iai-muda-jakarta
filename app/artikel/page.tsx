@@ -1,4 +1,5 @@
 import { db, schema } from '@/lib/db';
+import { ne, sql } from 'drizzle-orm';
 import type { Article } from '@/src/types';
 import ArticlesSection from '@/src/components/ArticlesSection';
 import type { Metadata } from 'next';
@@ -57,8 +58,20 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function ArtikelPage() {
   try {
+    // Pastikan kolom category ada di DB
+    try {
+      await db.execute(sql`ALTER TABLE articles ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'public'`);
+    } catch (_e) {
+      // Column already exists
+    }
+
+    // Hanya ambil artikel berstatus publik (bukan pengumuman internal)
     const articles = await fetchWithRetry(() =>
-      db.select().from(schema.articles).orderBy(schema.articles.date)
+      db
+        .select()
+        .from(schema.articles)
+        .where(ne(schema.articles.category, 'internal'))
+        .orderBy(schema.articles.date)
     );
 
     return (

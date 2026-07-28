@@ -46,7 +46,7 @@ function normalize(row: typeof schema.events.$inferSelect): CalendarEventType {
     imageUrl: row.imageUrl ?? null,
     registrationUrl: row.registrationUrl ?? null,
     status: row.status,
-    eventType: row.eventType,
+    eventType: (row.eventType === 'internal' ? 'internal' : 'public') as 'public' | 'internal',
     color: row.color || 'blue',
     generationId: row.generationId ?? null,
   };

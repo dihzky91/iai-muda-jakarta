@@ -9,7 +9,7 @@ export const GET = publicRoute(async () => {
 }, 'Failed to fetch settings');
 
 export const PUT = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
-  const { contactTitle, contactDescription, address, email, phone, showPhone, instagramUrl, linkedinUrl, youtubeUrl, divisionPhotos, divisions, footerDescription, logoUrl, faviconUrl } = await request.json();
+  const { contactTitle, contactDescription, address, email, phone, showPhone, instagramUrl, linkedinUrl, youtubeUrl, divisionPhotos, divisions, footerDescription, logoUrl, faviconUrl, heroBannerUrl } = await request.json();
   const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
 
   if (rows.length === 0) {
@@ -29,6 +29,7 @@ export const PUT = adminRoute(['superadmin', 'admin', 'editor'], async (request)
       footerDescription: footerDescription || null,
       logoUrl: logoUrl || null,
       faviconUrl: faviconUrl || null,
+      heroBannerUrl: heroBannerUrl || null,
     });
   } else {
     await db.update(schema.settings).set({
@@ -46,6 +47,7 @@ export const PUT = adminRoute(['superadmin', 'admin', 'editor'], async (request)
       footerDescription: footerDescription !== undefined ? footerDescription : undefined,
       logoUrl: logoUrl !== undefined ? logoUrl : undefined,
       faviconUrl: faviconUrl !== undefined ? faviconUrl : undefined,
+      heroBannerUrl: heroBannerUrl !== undefined ? heroBannerUrl : undefined,
     }).where(eq(schema.settings.id, 1));
   }
 

@@ -9,7 +9,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, History, BookOpen, Image as ImageIcon,
   ShieldCheck, Settings as SettingsIcon, LogOut, UserCog, Globe,
-  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList,
+  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList, MessageSquare,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
@@ -25,8 +25,9 @@ import OnboardingManager from './admin/OnboardingManager';
 import UserManagement from './UserManagement';
 import DashboardOverview from './admin/DashboardOverview';
 import HRManager from './admin/hr/HRManager';
+import CommunityModerationManager from './admin/CommunityModerationManager';
 
-export type CmsTab = 'dashboard' | 'events' | 'members' | 'hr' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
+export type CmsTab = 'dashboard' | 'events' | 'members' | 'hr' | 'community' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -59,6 +60,7 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'events', label: 'Agenda Acara', icon: Calendar, count: p => p.events.length },
   { key: 'members', label: 'Kepengurusan', icon: Users, count: p => p.members.length },
   { key: 'hr', label: 'HR Command Center', icon: ClipboardList },
+  { key: 'community', label: 'Moderasi Feed', icon: MessageSquare },
   { key: 'onboarding', label: 'Onboarding Library', icon: FileText },
   { key: 'articles', label: 'Artikel & Berita', icon: BookOpen, count: p => p.articles.length },
   { key: 'gallery', label: 'Galeri Kegiatan', icon: ImageIcon, count: p => p.gallery?.length || 0 },
@@ -127,6 +129,7 @@ export default function AdminCMS({
     events: 'Agenda Acara',
     members: 'Kepengurusan',
     hr: 'HR Command Center',
+    community: 'Moderasi Feed',
     onboarding: 'Onboarding Library',
     articles: 'Artikel & Berita',
     gallery: 'Galeri Kegiatan',
@@ -163,6 +166,8 @@ export default function AdminCMS({
         );
       case 'hr':
         return <HRManager />;
+      case 'community':
+        return <CommunityModerationManager />;
       case 'onboarding':
         return <OnboardingManager />;
       case 'articles':

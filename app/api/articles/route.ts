@@ -1,5 +1,17 @@
 import { db, schema, insertedId } from '@/lib/db';
+import { eq, sql } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
+
+let categoryColumnChecked = false;
+async function ensureCategoryColumn() {
+  if (categoryColumnChecked) return;
+  try {
+    await db.execute(sql`ALTER TABLE articles ADD COLUMN category VARCHAR(50) NOT NULL DEFAULT 'public'`);
+  } catch (_e) {
+    // Column already exists or table alter ignored
+  }
+  categoryColumnChecked = true;
+}
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; enum?: string[]; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
@@ -25,13 +37,30 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
   return null;
 }
 
-export const GET = publicRoute(async () => {
-  const articles = await db.select().from(schema.articles).orderBy(schema.articles.date);
+export const GET = publicRoute(async (request) => {
+  await ensureCategoryColumn();
+
+  const url = new URL(request.url);
+  const categoryParam = url.searchParams.get('category');
+
+  let articles;
+  if (categoryParam) {
+    articles = await db
+      .select()
+      .from(schema.articles)
+      .where(eq(schema.articles.category, categoryParam))
+      .orderBy(schema.articles.date);
+  } else {
+    articles = await db.select().from(schema.articles).orderBy(schema.articles.date);
+  }
+
   return ok(articles);
 }, 'Failed to fetch articles');
 
 export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
-  const { title, excerpt, content, date, author, imageUrl } = await request.json();
+  await ensureCategoryColumn();
+
+  const { title, excerpt, content, date, author, imageUrl, category } = await request.json();
 
   const err = validate({
     title:   { value: title,   type: 'string', minLen: 5, maxLen: 255,  label: 'Judul artikel' },
@@ -41,6 +70,8 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
   });
   if (err) return fail(err, 400);
 
+  const validCategory = ['public', 'internal', 'agenda'].includes(category) ? category : 'public';
+
   const result = await db.insert(schema.articles).values({
     title,
     excerpt: excerpt || null,
@@ -48,6 +79,7 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     date,
     author,
     imageUrl: imageUrl || null,
+    category: validCategory,
   });
 
   return done('Article created successfully', { id: insertedId(result) });

@@ -19,14 +19,18 @@ import {
   HelpCircle,
   Briefcase,
   BookOpenCheck,
+  Megaphone,
+  MessageSquare,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
+import NotificationCenter from './community/NotificationCenter';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
   external?: boolean;
+  hasBadge?: boolean;
 }
 
 interface NavGroup {
@@ -39,6 +43,8 @@ const navGroups: NavGroup[] = [
     title: 'Menu Utama',
     items: [
       { href: '/portal/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/portal/feed', label: 'Ruang Komunitas', icon: MessageSquare },
+      { href: '/portal/announcements', label: 'Pengumuman & Edaran', icon: Megaphone, hasBadge: true },
     ],
   },
   {
@@ -104,6 +110,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       <>
         <item.icon className={`w-5 h-5 ${active ? 'text-blue-700' : 'text-slate-400'}`} />
         <span className="flex-1 truncate">{item.label}</span>
+        {item.hasBadge && (
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-red-600" />
+          </span>
+        )}
         {active && (
           <motion.div
             layoutId="activeIndicator"
@@ -195,7 +207,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
           </div>
           <button
             onClick={handleLogout}
-            className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 transition-colors"
+            className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
             Keluar
@@ -203,7 +215,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         </div>
       </aside>
 
-      {/* Mobile Header */}
+      {/* Mobile Header Bar */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-40 flex items-center justify-between px-4">
         <Link href="/portal/dashboard" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-700 to-red-900 flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -214,15 +226,18 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             <p className="text-[10px] text-slate-500">IAI Muda Jakarta</p>
           </div>
         </Link>
-        <button
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
-        >
-          {mobileMenuOpen ? <X className="w-6 h-6 text-slate-700" /> : <Menu className="w-6 h-6 text-slate-700" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <NotificationCenter />
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+          >
+            {mobileMenuOpen ? <X className="w-6 h-6 text-slate-700" /> : <Menu className="w-6 h-6 text-slate-700" />}
+          </button>
+        </div>
       </header>
 
-      {/* Mobile Menu */}
+      {/* Mobile Navigation Drawer */}
       <AnimatePresence>
         {mobileMenuOpen && (
           <motion.div
@@ -256,7 +271,10 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
                           className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
                         >
                           <item.icon className={`w-5 h-5 ${active ? 'text-blue-700' : 'text-slate-400'}`} />
-                          {item.label}
+                          <span className="flex-1">{item.label}</span>
+                          {item.hasBadge && (
+                            <span className="w-2 h-2 rounded-full bg-red-600" />
+                          )}
                           {item.external && <ChevronRight className="w-4 h-4 ml-auto text-slate-400" />}
                         </Link>
                       );
@@ -266,7 +284,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
               ))}
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50"
+                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 cursor-pointer"
               >
                 <LogOut className="w-5 h-5" />
                 Keluar
@@ -276,9 +294,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <main className="lg:pl-72 pt-16 lg:pt-0 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-10">
+        <div className="hidden lg:flex items-center justify-end px-8 py-3 bg-white/50 backdrop-blur-sm border-b border-slate-200/60 sticky top-0 z-20">
+          <NotificationCenter />
+        </div>
+        <div className="max-w-[1600px] w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
           {children}
         </div>
       </main>

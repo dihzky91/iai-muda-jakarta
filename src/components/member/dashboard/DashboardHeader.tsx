@@ -1,7 +1,17 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { User, Users, ShieldCheck, Building2, GraduationCap, ArrowRight } from 'lucide-react';
+import {
+  User,
+  Users,
+  ShieldCheck,
+  Building2,
+  GraduationCap,
+  ArrowRight,
+  Megaphone,
+  ChevronRight,
+} from 'lucide-react';
 
 interface DashboardHeaderProps {
   name: string;
@@ -13,6 +23,14 @@ interface DashboardHeaderProps {
   isAlumni?: boolean;
 }
 
+interface AnnouncementItem {
+  id: number;
+  title: string;
+  date: string;
+  category?: string;
+  excerpt?: string;
+}
+
 export default function DashboardHeader({
   name,
   role,
@@ -22,6 +40,35 @@ export default function DashboardHeader({
   imageUrl,
   isAlumni,
 }: DashboardHeaderProps) {
+  const [announcements, setAnnouncements] = useState<AnnouncementItem[]>([]);
+  const [heroBannerUrl, setHeroBannerUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/api/articles')
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && Array.isArray(result.data)) {
+          const sorted = result.data.sort(
+            (a: AnnouncementItem, b: AnnouncementItem) =>
+              new Date(b.date).getTime() - new Date(a.date).getTime()
+          );
+          setAnnouncements(sorted.slice(0, 3));
+        }
+      })
+      .catch(console.error);
+
+    fetch('/api/settings')
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && result.data?.heroBannerUrl) {
+          setHeroBannerUrl(result.data.heroBannerUrl);
+        } else {
+          setHeroBannerUrl('/images/hero-card-asset.png');
+        }
+      })
+      .catch(() => setHeroBannerUrl('/images/hero-card-asset.png'));
+  }, []);
+
   const hour = new Date().getHours();
   let greeting = 'Selamat Datang';
   let greetingIcon = '✨';
@@ -48,32 +95,49 @@ export default function DashboardHeader({
     .toUpperCase() || '?';
 
   const badgeLabel = isAlumni ? 'Anggota Alumni' : 'Pengurus Aktif';
+  const latestAnnouncement = announcements[0];
+
+  const activeBanner = heroBannerUrl || '/images/hero-card-asset.png';
+  const isCustomImage = activeBanner && activeBanner !== 'gradient';
 
   return (
-    <section 
-      className="relative overflow-hidden rounded-3xl p-6 sm:p-8 md:p-9 text-white shadow-xl shadow-blue-600/25 border border-blue-300/40 backdrop-blur-[20px]"
+    <section
+      className="relative overflow-hidden rounded-3xl p-6 sm:p-8 md:p-9 text-white shadow-2xl shadow-blue-600/20 border border-blue-300/40 backdrop-blur-[20px] group transition-all"
       style={{
-        background: 'linear-gradient(135deg, #1D4ED8 0%, #2563EB 50%, #60A5FA 100%)',
+        background: 'linear-gradient(135deg, #1E40AF 0%, #1D4ED8 40%, #2563EB 70%, #4F46E5 100%)',
       }}
     >
+      {/* Dynamic Background Image Overlay if activeBanner is set */}
+      {isCustomImage && (
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <img
+            src={activeBanner}
+            alt="Hero Banner Artwork"
+            className="w-full h-full object-cover object-right opacity-30 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950/90 via-blue-900/70 to-indigo-900/40" />
+        </div>
+      )}
+
       {/* Decorative Ambient Light Glow Spots */}
-      <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/15 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-900/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-cyan-200/10 rounded-full blur-2xl pointer-events-none" />
+      <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/15 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-blue-900/30 rounded-full blur-3xl pointer-events-none z-0" />
+      <div className="absolute top-1/2 left-1/3 w-64 h-64 bg-cyan-200/10 rounded-full blur-2xl pointer-events-none z-0" />
 
       {/* Subtle Background Geometric Mesh Overlay */}
-      <div 
-        className="absolute inset-0 opacity-10 pointer-events-none" 
+      <div
+        className="absolute inset-0 opacity-10 pointer-events-none z-0"
         style={{
           backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.6) 1px, transparent 0)`,
-          backgroundSize: '24px 24px'
+          backgroundSize: '24px 24px',
         }}
       />
 
       <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
         {/* Left Column: Greeting & Info */}
         <div className="space-y-3.5 max-w-2xl">
-          {/* Status & Greeting Badges */}
+          {/* Top Badges Row */}
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-white/20 text-white border border-white/30 backdrop-blur-md shadow-sm">
               <span>{greetingIcon}</span>
@@ -98,6 +162,24 @@ export default function DashboardHeader({
             Halo, {name} 👋
           </h1>
 
+          {/* Latest Announcement Highlight Ticker */}
+          {latestAnnouncement && (
+            <div className="pt-0.5">
+              <Link
+                href={`/portal/announcements/${latestAnnouncement.id}`}
+                className="group inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/15 hover:bg-white/25 border border-white/25 backdrop-blur-md text-xs font-medium text-white transition-all max-w-full truncate shadow-sm"
+              >
+                <span className="flex items-center gap-1 shrink-0 px-2 py-0.5 rounded-full bg-amber-400 text-slate-900 font-bold text-[10px] uppercase tracking-wider">
+                  <Megaphone className="w-3 h-3" /> INFO TERBARU
+                </span>
+                <span className="truncate group-hover:underline text-blue-50">
+                  {latestAnnouncement.title}
+                </span>
+                <ChevronRight className="w-3.5 h-3.5 text-blue-200 group-hover:translate-x-0.5 transition-transform shrink-0" />
+              </Link>
+            </div>
+          )}
+
           {/* Role, Generation & University details */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs sm:text-sm font-medium">
             {role && (
@@ -110,9 +192,7 @@ export default function DashboardHeader({
             {role && generation && <span className="text-blue-200/70">|</span>}
 
             {generation && (
-              <span className="text-blue-50 font-medium">
-                {generation}
-              </span>
+              <span className="text-blue-50 font-medium">{generation}</span>
             )}
 
             {university && (
@@ -147,29 +227,42 @@ export default function DashboardHeader({
           </div>
         </div>
 
-        {/* Right Column: User Avatar Frame */}
-        <div className="flex sm:flex-col items-center md:items-end justify-between sm:justify-center gap-4 shrink-0">
+        {/* Right Column: 3D Membership Card & User Avatar Frame */}
+        <div className="flex items-center gap-4 shrink-0">
+          {activeBanner === '/images/hero-card-asset.png' && (
+            <div className="hidden lg:block relative group/card">
+              <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 opacity-40 blur-md group-hover/card:opacity-80 transition duration-500" />
+              <img
+                src="/images/hero-card-asset.png"
+                alt="Kartu Anggota IAI"
+                className="relative w-36 sm:w-44 h-auto object-contain rounded-xl shadow-2xl transition-all duration-500 hover:scale-105 hover:-rotate-2 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white/20"
+              />
+            </div>
+          )}
+
           <Link
             href="/portal/profile"
             className="relative group cursor-pointer"
             title="Ke Profil Saya"
           >
-            <div className="relative p-1 rounded-2xl bg-gradient-to-br from-white/40 via-white/20 to-blue-200/30 backdrop-blur-md shadow-2xl ring-2 ring-white/30 border border-white/40 group-hover:scale-105 transition-transform duration-300">
+            <div className="relative p-1.5 rounded-2xl bg-gradient-to-br from-white/40 via-white/20 to-blue-200/30 backdrop-blur-md shadow-2xl ring-2 ring-white/30 border border-white/40 group-hover:scale-105 transition-transform duration-300">
               {imageUrl ? (
                 <img
                   src={imageUrl}
                   alt={name}
-                  className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl object-cover border border-white/40 shadow-inner"
+                  className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl object-cover border border-white/40 shadow-inner"
                 />
               ) : (
-                <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-900 flex items-center justify-center text-white text-2xl font-bold border border-white/40 shadow-inner">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl bg-gradient-to-br from-blue-700 to-indigo-900 flex items-center justify-center text-white text-2xl md:text-3xl font-bold border border-white/40 shadow-inner">
                   {initials}
                 </div>
               )}
               {/* Online Indicator Badge */}
               <div className="absolute -bottom-1 -right-1 px-2.5 py-0.5 rounded-full bg-slate-950/90 border border-emerald-400/50 flex items-center gap-1 shadow-lg backdrop-blur-md">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Aktif</span>
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
+                  Aktif
+                </span>
               </div>
             </div>
           </Link>

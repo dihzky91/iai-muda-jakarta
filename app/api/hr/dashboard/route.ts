@@ -1,5 +1,5 @@
 import { db, schema } from '@/lib/db';
-import { eq, desc, sql, and, or, isNull, gte, lte } from 'drizzle-orm';
+import { eq, desc, sql, and, or, isNull, gte } from 'drizzle-orm';
 import { adminRoute, ok } from '@/lib/api';
 
 /**
@@ -20,36 +20,58 @@ function getMondayWIB(): string {
 }
 
 /**
- * Ambil semua member aktif dengan status TERAKHIR masing-masing (via subquery).
- * Member tanpa status tetap muncul (default 'hijau').
+ * Ambil semua member aktif dengan status TERAKHIR masing-masing.
+ * Dilakukan dalam dua query terpisah karena Drizzle tidak mendukung
+ * subquery di dalam ON condition JOIN.
  */
-const activeMembersWithLatestStatus = db
-  .select({
-    memberId: schema.members.id,
-    memberName: schema.members.name,
-    memberDivision: schema.members.division,
-    status: schema.memberStatuses.status,
-    reason: schema.memberStatuses.reason,
-    createdAt: schema.memberStatuses.createdAt,
-  })
-  .from(schema.members)
-  .leftJoin(
-    schema.memberStatuses,
-    and(
-      eq(schema.members.id, schema.memberStatuses.memberId),
+async function getActiveMembersWithLatestStatus() {
+  // Step 1: Semua anggota aktif (bukan alumni)
+  const activeMembers = await db
+    .select({
+      memberId: schema.members.id,
+      memberName: schema.members.name,
+      memberDivision: schema.members.division,
+    })
+    .from(schema.members)
+    .where(
+      and(
+        eq(schema.members.isActive, true),
+        eq(schema.members.isAlumni, false)
+      )
+    );
+
+  // Step 2: Status terakhir tiap anggota via WHERE subquery (didukung Drizzle)
+  const latestStatuses = await db
+    .select({
+      memberId: schema.memberStatuses.memberId,
+      status: schema.memberStatuses.status,
+      reason: schema.memberStatuses.reason,
+      createdAt: schema.memberStatuses.createdAt,
+    })
+    .from(schema.memberStatuses)
+    .where(
       sql`(${schema.memberStatuses.memberId}, ${schema.memberStatuses.createdAt}) IN (
         SELECT ms2.member_id, MAX(ms2.created_at)
         FROM member_statuses ms2
         GROUP BY ms2.member_id
       )`
-    )
-  )
-  .where(
-    and(
-      eq(schema.members.isActive, true),
-      eq(schema.members.isAlumni, false)
-    )
-  );
+    );
+
+  // Step 3: Gabungkan di JavaScript
+  const statusMap = new Map(latestStatuses.map(s => [s.memberId, s]));
+
+  return activeMembers.map(m => {
+    const s = statusMap.get(m.memberId);
+    return {
+      memberId: m.memberId,
+      memberName: m.memberName,
+      memberDivision: m.memberDivision,
+      status: s?.status ?? null,
+      reason: s?.reason ?? null,
+      createdAt: s?.createdAt ?? null,
+    };
+  });
+}
 
 /**
  * GET /api/hr/dashboard
@@ -66,7 +88,7 @@ export const GET = adminRoute(
     const weekStartStr = getMondayWIB();
 
     // 1. All active members with their latest status
-    const membersWithStatus = await activeMembersWithLatestStatus;
+    const membersWithStatus = await getActiveMembersWithLatestStatus();
 
     // 2. Status counts — member tanpa status dianggap 'hijau'
     const statusCounts = { hijau: 0, kuning: 0, merah: 0, biru: 0 };

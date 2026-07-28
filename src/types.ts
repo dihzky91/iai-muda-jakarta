@@ -107,6 +107,7 @@ export interface Article {
   date: string;
   author: string;
   imageUrl?: string;
+  category?: 'public' | 'internal' | 'agenda';
 }
 
 export interface GalleryItem {
@@ -158,6 +159,7 @@ export interface Settings {
   footerDescription: string | null;
   logoUrl?: string | null;
   faviconUrl?: string | null;
+  heroBannerUrl?: string | null;
 }
 
 export type ResourceVisibility = 'pengurus' | 'alumni' | 'both';

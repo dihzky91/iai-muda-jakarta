@@ -30,4 +30,5 @@ export const DEFAULT_SETTINGS: Settings = {
     'IAI Muda Wilayah DKI Jakarta merupakan badan kelengkapan Ikatan Akuntan Indonesia (IAI) Wilayah DKI Jakarta yang menjadi wadah pengembangan kompetensi, kolaborasi, dan jejaring profesional bagi generasi akuntan muda.',
   logoUrl: null,
   faviconUrl: null,
+  heroBannerUrl: '/images/hero-card-asset.png',
 };

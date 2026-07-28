@@ -24,38 +24,57 @@ export function HRStatusCard() {
   }, []);
 
   const getStatusColor = (status: string | null) => {
-    if (!status) return 'bg-slate-100 text-slate-700';
+    if (!status) return 'bg-slate-100 text-slate-700 border-slate-200';
     const colors: Record<string, string> = {
-      hijau: 'bg-green-100 text-green-700 border-green-300',
-      kuning: 'bg-yellow-100 text-yellow-700 border-yellow-300',
-      merah: 'bg-red-100 text-red-700 border-red-300',
-      biru: 'bg-blue-100 text-blue-700 border-blue-300',
+      hijau: 'bg-green-100 text-green-800 border-green-300',
+      kuning: 'bg-yellow-100 text-yellow-800 border-yellow-300',
+      merah: 'bg-red-100 text-red-800 border-red-300',
+      biru: 'bg-blue-100 text-blue-800 border-blue-300',
     };
-    return colors[status] || 'bg-slate-100 text-slate-700';
+    return colors[status] || 'bg-slate-100 text-slate-700 border-slate-200';
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      hijau: '🟢 HIJAU (Baik)',
+      kuning: '🟡 KUNING (Perhatian)',
+      merah: '🔴 MERAH (Kritis)',
+      biru: '🔵 BIRU (Cuti)',
+    };
+    return labels[status] || status.toUpperCase();
   };
 
   const status = data?.currentStatus;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <Shield className="w-5 h-5 text-blue-600" />
-        <h3 className="font-semibold text-lg">HR Status</h3>
-      </div>
-      {status ? (
-        <div>
-          <div className={`inline-block px-4 py-2 rounded-lg font-medium border-2 ${getStatusColor(status.status)}`}>
-            {status.status.toUpperCase()}
-          </div>
-          {status.reason && (
-            <p className="text-sm text-slate-600 mt-3 bg-slate-50 p-3 rounded">{status.reason}</p>
-          )}
-          <p className="text-xs text-slate-500 mt-3">
-            Last updated: {new Date(status.createdAt).toLocaleDateString()}
-          </p>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between h-full">
+      <div>
+        <div className="flex items-center gap-2.5 mb-3">
+          <Shield className="w-5 h-5 text-blue-600 shrink-0" />
+          <h3 className="font-semibold text-base text-slate-900">Status HR Anda</h3>
         </div>
-      ) : (
-        <p className="text-sm text-slate-500">No status recorded yet</p>
+        {status ? (
+          <div className="space-y-2">
+            <div className={`inline-block px-3 py-1.5 rounded-lg text-xs font-semibold border ${getStatusColor(status.status)}`}>
+              {getStatusLabel(status.status)}
+            </div>
+            {status.reason && (
+              <p className="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">{status.reason}</p>
+            )}
+          </div>
+        ) : (
+          <div className="py-2">
+            <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg text-xs font-semibold border border-emerald-200">
+              🟢 HIJAU (Aktif & Baik)
+            </span>
+            <p className="text-xs text-slate-500 mt-2">Tidak ada catatan kendala dari HR.</p>
+          </div>
+        )}
+      </div>
+      {status && (
+        <p className="text-[11px] text-slate-400 mt-3">
+          Terakhir diperbarui: {new Date(status.createdAt).toLocaleDateString('id-ID')}
+        </p>
       )}
     </div>
   );
@@ -63,6 +82,7 @@ export function HRStatusCard() {
 
 export function AcademicLoadCard() {
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     loadType: 'uts',
     intensity: 'medium',
@@ -80,6 +100,7 @@ export function AcademicLoadCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch('/api/member/hr/academic-load', {
         method: 'POST',
@@ -88,107 +109,108 @@ export function AcademicLoadCard() {
       });
       const result = await res.json();
       if (result.success) {
-        alert('Academic load updated!');
+        alert('Beban studi berhasil diperbarui!');
         setShowForm(false);
         setFormData({ loadType: 'uts', intensity: 'medium', description: '' });
       } else {
-        alert(result.error || 'Failed to update');
+        alert(result.error || 'Gagal memperbarui beban studi');
       }
     } catch (error) {
-      alert('Failed to update academic load');
+      alert('Terjadi kesalahan saat memperbarui beban studi');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <BookOpen className="w-5 h-5 text-purple-600" />
-        <h3 className="font-semibold text-lg">Academic Load</h3>
-      </div>
-      
-      {!showForm ? (
-        <div>
-          <p className="text-sm text-slate-600 mb-4">Update your academic load for this week</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
-          >
-            Update Load
-          </button>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between h-full">
+      <div>
+        <div className="flex items-center gap-2.5 mb-3">
+          <BookOpen className="w-5 h-5 text-purple-600 shrink-0" />
+          <h3 className="font-semibold text-base text-slate-900">Beban Studi Akademik</h3>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
+
+        {!showForm ? (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Load Type</label>
-            <select
-              value={formData.loadType}
-              onChange={(e) => setFormData({ ...formData, loadType: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            >
-              <option value="uts">UTS</option>
-              <option value="uas">UAS</option>
-              <option value="quiz">Quiz</option>
-              <option value="project">Project</option>
-              <option value="sick">Sick</option>
-              <option value="personal">Personal</option>
-              <option value="other">Other</option>
-            </select>
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Input kesibukan perkuliahan minggu ini agar pengurus dapat menyesuaikan beban kerja organisasi.
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Intensity</label>
-            <select
-              value={formData.intensity}
-              onChange={(e) => setFormData({ ...formData, intensity: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Description (Optional)</label>
-            <textarea
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              rows={2}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button type="submit" className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm">
-              Submit
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Jenis Kesibukan</label>
+              <select
+                value={formData.loadType}
+                onChange={(e) => setFormData({ ...formData, loadType: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="uts">UTS (Ujian Tengah Semester)</option>
+                <option value="uas">UAS (Ujian Akhir Semester)</option>
+                <option value="quiz">Kuis / Tugas Rutin</option>
+                <option value="project">Proyek / Tugas Besar</option>
+                <option value="sick">Izin Sakit</option>
+                <option value="personal">Urusan Pribadi</option>
+                <option value="other">Lainnya</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Intensitas</label>
+              <select
+                value={formData.intensity}
+                onChange={(e) => setFormData({ ...formData, intensity: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="low">Rendah (Santai)</option>
+                <option value="medium">Sedang (Cukup Padat)</option>
+                <option value="high">Tinggi (Sangat Padat)</option>
+              </select>
+            </div>
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Keterangan (Opsional)</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-purple-500"
+                rows={2}
+                placeholder="Catatan tambahan..."
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-3 py-1.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 font-medium transition"
+              >
+                {loading ? 'Menyimpan...' : 'Kirim'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {!showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full mt-3 px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-xs font-semibold transition"
+        >
+          Update Beban Studi
+        </button>
       )}
     </div>
   );
 }
 
-// Main HRCards component that renders all HR cards
-export function HRCards() {
-  return (
-    <div className="space-y-4">
-      <HRStatusCard />
-      <AcademicLoadCard />
-      <LeaveRequestCard />
-    </div>
-  );
-}
-
-// Default export for convenience
-export default HRCards;
-
 export function LeaveRequestCard() {
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
@@ -198,6 +220,7 @@ export function LeaveRequestCard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
       const res = await fetch('/api/member/hr/leave', {
         method: 'POST',
@@ -206,95 +229,121 @@ export function LeaveRequestCard() {
       });
       const result = await res.json();
       if (result.success) {
-        alert('Leave request submitted! Waiting for HR approval.');
+        alert('Pengajuan cuti berhasil dikirim! Menunggu persetujuan HR.');
         setShowForm(false);
         setFormData({ startDate: '', endDate: '', reason: '', leaveType: 'regular' });
       } else {
-        alert(result.error || 'Failed to submit');
+        alert(result.error || 'Gagal mengajukan cuti');
       }
     } catch (error) {
-      alert('Failed to submit leave request');
+      alert('Terjadi kesalahan saat mengajukan cuti');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-      <div className="flex items-center gap-3 mb-4">
-        <Calendar className="w-5 h-5 text-orange-600" />
-        <h3 className="font-semibold text-lg">Leave Request</h3>
-      </div>
-      
-      {!showForm ? (
-        <div>
-          <p className="text-sm text-slate-600 mb-4">Request leave (cuti) with proper approval flow</p>
-          <button
-            onClick={() => setShowForm(true)}
-            className="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700"
-          >
-            Request Leave
-          </button>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col justify-between h-full">
+      <div>
+        <div className="flex items-center gap-2.5 mb-3">
+          <Calendar className="w-5 h-5 text-orange-600 shrink-0" />
+          <h3 className="font-semibold text-base text-slate-900">Pengajuan Cuti</h3>
         </div>
-      ) : (
-        <form onSubmit={handleSubmit} className="space-y-3">
+
+        {!showForm ? (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Start Date</label>
-            <input
-              type="date"
-              required
-              value={formData.startDate}
-              onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            />
+            <p className="text-xs text-slate-600 mb-4 leading-relaxed">
+              Ajukan cuti resmi organisasi dengan alur persetujuan HR yang terstruktur.
+            </p>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">End Date</label>
-            <input
-              type="date"
-              required
-              value={formData.endDate}
-              onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Reason</label>
-            <textarea
-              required
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-              rows={2}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Type</label>
-            <select
-              value={formData.leaveType}
-              onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
-              className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm"
-            >
-              <option value="regular">Regular (H-10 rule)</option>
-              <option value="emergency">Emergency</option>
-            </select>
-          </div>
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-700">
-            <AlertCircle className="w-4 h-4 inline mr-1" />
-            Max 7 days per 2 months. Regular leave needs 10 days advance notice.
-          </div>
-          <div className="flex gap-2">
-            <button type="submit" className="flex-1 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm">
-              Submit
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowForm(false)}
-              className="px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        </form>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-3 text-xs">
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Tanggal Mulai</label>
+              <input
+                type="date"
+                required
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Tanggal Selesai</label>
+              <input
+                type="date"
+                required
+                value={formData.endDate}
+                onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-orange-500"
+              />
+            </div>
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Alasan Cuti</label>
+              <textarea
+                required
+                value={formData.reason}
+                onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-orange-500"
+                rows={2}
+                placeholder="Alasan mengajukan cuti..."
+              />
+            </div>
+            <div>
+              <label className="block font-medium text-slate-700 mb-1">Kategori Cuti</label>
+              <select
+                value={formData.leaveType}
+                onChange={(e) => setFormData({ ...formData, leaveType: e.target.value })}
+                className="w-full px-2.5 py-1.5 border border-slate-300 rounded-lg outline-none focus:ring-1 focus:ring-orange-500"
+              >
+                <option value="regular">Reguler (Minimal H-10)</option>
+                <option value="emergency">Mendesak / Darurat</option>
+              </select>
+            </div>
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-2 text-[11px] text-orange-800 leading-tight">
+              <AlertCircle className="w-3.5 h-3.5 inline mr-1 text-orange-600" />
+              Maks. 7 hari per 2 bulan. Cuti reguler diajukan min. H-10.
+            </div>
+            <div className="flex gap-2 pt-1">
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 px-3 py-1.5 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-medium transition"
+              >
+                {loading ? 'Mengirim...' : 'Kirim'}
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowForm(false)}
+                className="px-3 py-1.5 border border-slate-300 text-slate-600 rounded-lg hover:bg-slate-50 transition"
+              >
+                Batal
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {!showForm && (
+        <button
+          onClick={() => setShowForm(true)}
+          className="w-full mt-3 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-xs font-semibold transition"
+        >
+          Ajukan Cuti
+        </button>
       )}
     </div>
   );
 }
+
+export function HRCards() {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+      <HRStatusCard />
+      <AcademicLoadCard />
+      <LeaveRequestCard />
+    </div>
+  );
+}
+
+export default HRCards;

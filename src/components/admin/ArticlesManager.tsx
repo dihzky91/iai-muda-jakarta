@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { BookOpen, Sparkles, Check } from 'lucide-react';
+import { BookOpen, Sparkles, Check, Globe, ShieldAlert, Calendar, Megaphone } from 'lucide-react';
 import { Article } from '@/src/types';
 import { useToast } from '@/src/hooks/useToast';
 import { useConfirm } from '@/src/hooks/useConfirm';
@@ -25,9 +25,10 @@ const emptyForm: Omit<Article, 'id'> = {
   title: '',
   excerpt: '',
   content: '',
-  date: '',
+  date: new Date().toISOString().split('T')[0],
   author: '',
   imageUrl: '',
+  category: 'public',
 };
 
 export default function ArticlesManager({ articles, setArticles }: ArticlesManagerProps) {
@@ -36,6 +37,7 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
 
   const [search, setSearch] = useState('');
   const [authorFilter, setAuthorFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   const authors = useMemo(() => {
     const set = new Set(articles.map(a => a.author).filter(Boolean));
@@ -45,15 +47,16 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
   const filteredArticles = useMemo(() => {
     return articles.filter(art => {
       if (authorFilter !== 'all' && art.author !== authorFilter) return false;
+      if (categoryFilter !== 'all' && (art.category || 'public') !== categoryFilter) return false;
       if (!search.trim()) return true;
       const term = search.toLowerCase();
       return (
         art.title.toLowerCase().includes(term) ||
-        art.excerpt.toLowerCase().includes(term) ||
+        (art.excerpt && art.excerpt.toLowerCase().includes(term)) ||
         art.author.toLowerCase().includes(term)
       );
     });
-  }, [articles, search, authorFilter]);
+  }, [articles, search, authorFilter, categoryFilter]);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingArticle, setEditingArticle] = useState<Article | null>(null);
@@ -70,11 +73,12 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
     setEditingArticle(art);
     setForm({
       title: art.title,
-      excerpt: art.excerpt,
+      excerpt: art.excerpt || '',
       content: art.content,
       date: art.date,
       author: art.author,
       imageUrl: art.imageUrl || '',
+      category: art.category || 'public',
     });
     setIsDrawerOpen(true);
   };
@@ -99,7 +103,7 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
         const result = await res.json();
         if (result.success) {
           setArticles(prev => prev.map(art => art.id === editingArticle.id ? { ...art, ...form } : art));
-          triggerToast('Artikel berhasil diperbarui!');
+          triggerToast('Publikasi berhasil diperbarui!');
           handleCloseDrawer();
         } else {
           triggerToast(`Gagal memperbarui: ${result.message}`, 'error');
@@ -117,14 +121,14 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
           if (listResult.success) {
             setArticles(Array.isArray(listResult.data) ? listResult.data : [listResult.data]);
           }
-          triggerToast('Artikel baru berhasil diterbitkan!');
+          triggerToast('Publikasi baru berhasil diterbitkan!');
           handleCloseDrawer();
         } else {
           triggerToast(`Gagal menambahkan: ${result.message}`, 'error');
         }
       }
     } catch (err) {
-      triggerToast('Terjadi kesalahan saat menyimpan artikel.', 'error');
+      triggerToast('Terjadi kesalahan saat menyimpan publikasi.', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -132,8 +136,8 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
 
   const handleDelete = async (art: Article) => {
     const confirmed = await confirm({
-      title: 'Hapus Artikel',
-      message: `Apakah Anda yakin ingin menghapus artikel "${art.title}"?`,
+      title: 'Hapus Publikasi',
+      message: `Apakah Anda yakin ingin menghapus publikasi "${art.title}"?`,
       confirmText: 'Hapus',
       variant: 'danger',
     });
@@ -143,30 +147,68 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
     const result = await res.json();
     if (result.success) {
       setArticles(prev => prev.filter(item => item.id !== art.id));
-      triggerToast('Artikel berhasil dihapus.');
+      triggerToast('Publikasi berhasil dihapus.');
     } else {
       triggerToast(`Gagal menghapus: ${result.message}`, 'error');
+    }
+  };
+
+  const getCategoryBadge = (cat?: string) => {
+    switch (cat) {
+      case 'internal':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-700 border border-blue-200">
+            <ShieldAlert className="w-3 h-3 text-blue-600" />
+            PENGUMUMAN INTERNAL
+          </span>
+        );
+      case 'agenda':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200">
+            <Calendar className="w-3 h-3 text-purple-600" />
+            AGENDA / EDARAN
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700 border border-emerald-200">
+            <Globe className="w-3 h-3 text-emerald-600" />
+            BERITA PUBLIK
+          </span>
+        );
     }
   };
 
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Artikel & Berita"
-        description="Kelola artikel dan opini akuntansi terkini untuk dipublikasikan ke halaman beranda."
+        title="Artikel & Pengumuman"
+        description="Kelola artikel berita publik serta edaran pengumuman internal untuk seluruh anggota pengurus."
       />
 
       <ListContainer
-        title="Artikel Terbit"
-        subtitle={`Total ${articles.length} artikel terpublikasi`}
-        addLabel="Tulis Artikel"
+        title="Daftar Publikasi & Pengumuman"
+        subtitle={`Total ${articles.length} postingan diterbitkan`}
+        addLabel="Tulis Publikasi Baru"
         onAdd={handleOpenAdd}
         filter={
           <SearchFilterBar
             search={search}
             onSearchChange={setSearch}
-            searchPlaceholder="Cari judul artikel, penulis, atau ringkasan..."
+            searchPlaceholder="Cari judul, penulis, atau kata kunci..."
             filters={[
+              {
+                key: 'category',
+                label: 'Tipe Publikasi',
+                value: categoryFilter,
+                onChange: setCategoryFilter,
+                options: [
+                  { value: 'all', label: 'Semua Tipe' },
+                  { value: 'public', label: '🌐 Berita Publik' },
+                  { value: 'internal', label: '📢 Pengumuman Internal' },
+                  { value: 'agenda', label: '📅 Agenda / Edaran' },
+                ],
+              },
               {
                 key: 'author',
                 label: 'Penulis',
@@ -181,29 +223,32 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
         {filteredArticles.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="Tidak ada artikel ditemukan"
-            description={articles.length === 0 ? "Belum ada artikel terbit. Mulai tulis artikel pertama sekarang." : "Coba sesuaikan kata kunci atau filter penulis."}
+            title="Tidak ada postingan ditemukan"
+            description={articles.length === 0 ? "Belum ada artikel atau pengumuman. Buat publikasi pertama sekarang." : "Coba sesuaikan kata kunci atau filter pencarian."}
           />
         ) : (
-          filteredArticles.map(art => (
-            <div key={art.id} className="pt-4 flex items-start justify-between gap-4">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-500 font-semibold font-mono">{art.date}</span>
-                  <span className="text-[10px] text-blue-600 font-bold">Oleh: {art.author}</span>
+          <div className="divide-y divide-slate-100">
+            {filteredArticles.map(art => (
+              <div key={art.id} className="py-4 flex items-start justify-between gap-4">
+                <div className="space-y-1.5 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    {getCategoryBadge(art.category)}
+                    <span className="text-[10px] text-slate-400 font-mono">{art.date}</span>
+                    <span className="text-[10px] text-slate-600 font-medium">• Oleh: {art.author}</span>
+                  </div>
+                  <h4 className="text-sm font-semibold text-slate-900 leading-tight">{art.title}</h4>
+                  {art.excerpt && <p className="text-xs text-slate-500 line-clamp-2">{art.excerpt}</p>}
                 </div>
-                <h4 className="text-sm font-semibold text-slate-900 leading-tight">{art.title}</h4>
-                <p className="text-xs text-slate-500 line-clamp-2">{art.excerpt}</p>
-              </div>
 
-              <ActionButtons
-                onEdit={() => handleOpenEdit(art)}
-                onDelete={() => handleDelete(art)}
-                editTitle="Ubah Artikel"
-                deleteTitle="Hapus Artikel"
-              />
-            </div>
-          ))
+                <ActionButtons
+                  onEdit={() => handleOpenEdit(art)}
+                  onDelete={() => handleDelete(art)}
+                  editTitle="Ubah Publikasi"
+                  deleteTitle="Hapus Publikasi"
+                />
+              </div>
+            ))}
+          </div>
         )}
       </ListContainer>
 
@@ -213,18 +258,79 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
         title={
           <>
             <Sparkles className="h-5 w-5 text-blue-600" />
-            <span>{editingArticle ? 'Ubah Informasi Artikel' : 'Tulis Artikel Baru'}</span>
+            <span>{editingArticle ? 'Ubah Informasi Publikasi' : 'Tulis Publikasi Baru'}</span>
           </>
         }
-        subtitle="Lengkapi informasi artikel sebelum diterbitkan."
+        subtitle="Pilih target publikasi dan lengkapi detail informasi."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Target Audience / Visibilitas Selector */}
+          <div className="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+            <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <Megaphone className="w-4 h-4 text-blue-600" />
+              Tipe Publikasi & Target Sasaran
+            </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, category: 'public' }))}
+                className={`p-2.5 rounded-xl text-left border transition cursor-pointer flex flex-col justify-between ${form.category === 'public' || !form.category
+                    ? 'bg-emerald-50 border-emerald-500 ring-2 ring-emerald-500/20'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+              >
+                <div>
+                  <Globe className="w-4 h-4 text-emerald-600 mb-1" />
+                  <div className="text-xs font-bold text-slate-900">Berita Publik</div>
+                </div>
+                <div className="text-[10px] text-slate-500 mt-1 leading-tight">
+                  Tampil di Web Utama & Portal
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, category: 'internal' }))}
+                className={`p-2.5 rounded-xl text-left border transition cursor-pointer flex flex-col justify-between ${form.category === 'internal'
+                    ? 'bg-blue-50 border-blue-500 ring-2 ring-blue-500/20'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+              >
+                <div>
+                  <ShieldAlert className="w-4 h-4 text-blue-600 mb-1" />
+                  <div className="text-xs font-bold text-slate-900">Pengumuman Internal</div>
+                </div>
+                <div className="text-[10px] text-slate-500 mt-1 leading-tight">
+                  Khusus Anggota / Pengurus
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, category: 'agenda' }))}
+                className={`p-2.5 rounded-xl text-left border transition cursor-pointer flex flex-col justify-between ${form.category === 'agenda'
+                    ? 'bg-purple-50 border-purple-500 ring-2 ring-purple-500/20'
+                    : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+              >
+                <div>
+                  <Calendar className="w-4 h-4 text-purple-600 mb-1" />
+                  <div className="text-xs font-bold text-slate-900">Agenda / Rapat</div>
+                </div>
+                <div className="text-[10px] text-slate-500 mt-1 leading-tight">
+                  Edaran Rapat & Kepengurusan
+                </div>
+              </button>
+            </div>
+          </div>
+
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Judul Artikel</label>
+            <label className="text-xs font-bold text-slate-700">Judul Artikel / Pengumuman</label>
             <input
               type="text"
               required
-              placeholder="Contoh: Menjawab Tantangan AI..."
+              placeholder="Contoh: Pengumuman Rapat Pleno Semester II..."
               value={form.title}
               onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
               className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
@@ -232,11 +338,11 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Penulis</label>
+            <label className="text-xs font-bold text-slate-700">Penulis / Pembuat Edaran</label>
             <input
               type="text"
               required
-              placeholder="Nama penulis..."
+              placeholder="Contoh: BPH / Sekretariat / Nama Penulis..."
               value={form.author}
               onChange={(e) => setForm(prev => ({ ...prev, author: e.target.value }))}
               className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
@@ -244,10 +350,10 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Ringkasan (Excerpt)</label>
+            <label className="text-xs font-bold text-slate-700">Ringkasan Singkat (Excerpt)</label>
             <textarea
               rows={2}
-              placeholder="Ringkasan singkat artikel..."
+              placeholder="Ringkasan singkat pengumuman..."
               value={form.excerpt}
               onChange={(e) => setForm(prev => ({ ...prev, excerpt: e.target.value }))}
               className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all"
@@ -255,11 +361,11 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
           </div>
 
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Konten Artikel</label>
+            <label className="text-xs font-bold text-slate-700">Isi Pesan / Konten Lengkap</label>
             <RichTextEditor
               value={form.content}
               onChange={(html) => setForm(prev => ({ ...prev, content: html }))}
-              placeholder="Tulis konten artikel di sini..."
+              placeholder="Tulis instruksi atau isi pengumuman lengkap di sini..."
             />
           </div>
 
@@ -275,7 +381,7 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
           </div>
 
           <ImageUploader
-            label="Gambar Sampul Artikel"
+            label="Gambar / Lampiran Visual (Opsional)"
             value={form.imageUrl || ''}
             onChange={(url) => setForm(prev => ({ ...prev, imageUrl: url }))}
             placeholder="https://images.unsplash.com/photo-..."
@@ -292,9 +398,8 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
             <button
               type="submit"
               disabled={submitting}
-              className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 ${
-                editingArticle ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
-              } disabled:opacity-60 disabled:cursor-not-allowed`}
+              className={`flex-[2] rounded-xl font-bold py-3 text-xs text-white shadow-md cursor-pointer transition-all flex items-center justify-center gap-2 ${editingArticle ? 'bg-emerald-600 hover:bg-emerald-500' : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/10'
+                } disabled:opacity-60 disabled:cursor-not-allowed`}
             >
               {submitting ? (
                 <>
@@ -304,7 +409,7 @@ export default function ArticlesManager({ articles, setArticles }: ArticlesManag
               ) : (
                 <>
                   <Check className="h-4 w-4" />
-                  {editingArticle ? 'Simpan Perubahan' : 'Terbitkan Artikel'}
+                  {editingArticle ? 'Simpan Perubahan' : 'Terbitkan Publikasi'}
                 </>
               )}
             </button>

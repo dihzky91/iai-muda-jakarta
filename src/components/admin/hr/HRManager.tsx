@@ -12,10 +12,10 @@ type HRTab = 'dashboard' | 'members' | 'leave' | 'interventions' | 'evaluations'
 
 const HR_TABS = [
   { key: 'dashboard' as const, label: 'Dashboard', icon: HeartHandshake },
-  { key: 'members' as const, label: 'Members', icon: Users },
-  { key: 'leave' as const, label: 'Leave Requests', icon: FileText },
-  { key: 'interventions' as const, label: 'Interventions', icon: MessageSquare },
-  { key: 'evaluations' as const, label: 'Evaluations', icon: Star },
+  { key: 'members' as const, label: 'Anggota', icon: Users },
+  { key: 'leave' as const, label: 'Pengajuan Cuti', icon: FileText },
+  { key: 'interventions' as const, label: 'Intervensi', icon: MessageSquare },
+  { key: 'evaluations' as const, label: 'Evaluasi', icon: Star },
 ];
 
 export default function HRManager() {

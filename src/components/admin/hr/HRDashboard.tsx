@@ -64,7 +64,7 @@ export default function HRDashboard() {
   }
 
   if (!data) {
-    return <div className="text-center py-12 text-slate-500">Failed to load dashboard</div>;
+    return <div className="text-center py-12 text-slate-500">Gagal memuat dashboard</div>;
   }
 
   const total = data.statusCounts.hijau + data.statusCounts.kuning + data.statusCounts.merah + data.statusCounts.biru;
@@ -79,7 +79,7 @@ export default function HRDashboard() {
             <CheckCircle className="w-5 h-5 text-green-600" />
           </div>
           <div className="text-3xl font-bold text-green-600">{data.statusCounts.hijau}</div>
-          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.hijau / total) * 100) : 0}% of total</div>
+          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.hijau / total) * 100) : 0}% dari total</div>
         </div>
 
         <div className="bg-white rounded-lg border-2 border-yellow-200 p-4">
@@ -88,7 +88,7 @@ export default function HRDashboard() {
             <AlertCircle className="w-5 h-5 text-yellow-600" />
           </div>
           <div className="text-3xl font-bold text-yellow-600">{data.statusCounts.kuning}</div>
-          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.kuning / total) * 100) : 0}% of total</div>
+          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.kuning / total) * 100) : 0}% dari total</div>
         </div>
 
         <div className="bg-white rounded-lg border-2 border-red-200 p-4">
@@ -97,7 +97,7 @@ export default function HRDashboard() {
             <AlertCircle className="w-5 h-5 text-red-600" />
           </div>
           <div className="text-3xl font-bold text-red-600">{data.statusCounts.merah}</div>
-          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.merah / total) * 100) : 0}% of total</div>
+          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.merah / total) * 100) : 0}% dari total</div>
         </div>
 
         <div className="bg-white rounded-lg border-2 border-blue-200 p-4">
@@ -106,7 +106,7 @@ export default function HRDashboard() {
             <Clock className="w-5 h-5 text-blue-600" />
           </div>
           <div className="text-3xl font-bold text-blue-600">{data.statusCounts.biru}</div>
-          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.biru / total) * 100) : 0}% of total</div>
+          <div className="text-xs text-slate-500 mt-1">{total > 0 ? Math.round((data.statusCounts.biru / total) * 100) : 0}% dari total</div>
         </div>
       </div>
 
@@ -115,17 +115,17 @@ export default function HRDashboard() {
         <div className="bg-white rounded-lg border border-slate-200 p-5">
           <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-orange-600" />
-            Needs Attention ({data.needsAttention.length})
+            Perlu Perhatian ({data.needsAttention.length})
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {data.needsAttention.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">All members are doing well! 🎉</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Semua anggota baik-baik saja! 🎉</p>
             ) : (
               data.needsAttention.map((member) => (
                 <div key={member.memberId} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
                   <div>
                     <div className="font-medium text-sm">{member.name}</div>
-                    <div className="text-xs text-slate-500">{member.division || 'No division'}</div>
+                    <div className="text-xs text-slate-500">{member.division || 'Tanpa bidang'}</div>
                     {member.reason && <div className="text-xs text-slate-600 mt-1">{member.reason}</div>}
                   </div>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
@@ -143,17 +143,17 @@ export default function HRDashboard() {
         <div className="bg-white rounded-lg border border-slate-200 p-5">
           <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
             <Clock className="w-5 h-5 text-blue-600" />
-            Pending Leaves ({data.pendingLeaves.length})
+            Cuti Menunggu Persetujuan ({data.pendingLeaves.length})
           </h3>
           <div className="space-y-2 max-h-64 overflow-y-auto">
             {data.pendingLeaves.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">No pending leave requests</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Tidak ada pengajuan cuti</p>
             ) : (
               data.pendingLeaves.map((leave) => (
                 <div key={leave.id} className="p-3 bg-slate-50 rounded-lg">
                   <div className="font-medium text-sm">{leave.memberName}</div>
                   <div className="text-xs text-slate-600 mt-1">
-                    {leave.startDate} to {leave.endDate}
+                    {leave.startDate} s/d {leave.endDate}
                   </div>
                 </div>
               ))
@@ -166,15 +166,15 @@ export default function HRDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ongoing Interventions */}
         <div className="bg-white rounded-lg border border-slate-200 p-5">
-          <h3 className="font-semibold text-lg mb-4">Ongoing Interventions ({data.ongoingInterventions.length})</h3>
+          <h3 className="font-semibold text-lg mb-4">Intervensi Berjalan ({data.ongoingInterventions.length})</h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {data.ongoingInterventions.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">No ongoing interventions</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Tidak ada intervensi aktif</p>
             ) : (
               data.ongoingInterventions.map((intervention) => (
                 <div key={intervention.id} className="p-3 bg-slate-50 rounded-lg text-sm">
                   <div className="font-medium">{intervention.memberName}</div>
-                  <div className="text-xs text-slate-600">Stage: {intervention.stage.toUpperCase()}</div>
+                  <div className="text-xs text-slate-600">Tahap: {intervention.stage.toUpperCase()}</div>
                 </div>
               ))
             )}
@@ -183,10 +183,10 @@ export default function HRDashboard() {
 
         {/* No Academic Load Update */}
         <div className="bg-white rounded-lg border border-slate-200 p-5">
-          <h3 className="font-semibold text-lg mb-4">No Academic Load This Week ({data.noAcademicLoadUpdate.length})</h3>
+          <h3 className="font-semibold text-lg mb-4">Belum Input Beban Studi Minggu Ini ({data.noAcademicLoadUpdate.length})</h3>
           <div className="space-y-2 max-h-48 overflow-y-auto">
             {data.noAcademicLoadUpdate.length === 0 ? (
-              <p className="text-sm text-slate-500 py-4 text-center">All members updated! ✅</p>
+              <p className="text-sm text-slate-500 py-4 text-center">Semua anggota sudah mengisi! ✅</p>
             ) : (
               data.noAcademicLoadUpdate.slice(0, 10).map((member) => (
                 <div key={member.memberId} className="p-2 bg-slate-50 rounded text-sm">
