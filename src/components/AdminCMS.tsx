@@ -9,7 +9,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, History, BookOpen, Image as ImageIcon,
   ShieldCheck, Settings as SettingsIcon, LogOut, UserCog, Globe,
-  PanelLeftClose, PanelLeft, Menu, X,
+  PanelLeftClose, PanelLeft, Menu, X, FileText,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
@@ -21,10 +21,11 @@ import GalleryManager from './admin/GalleryManager';
 import PillarsManager from './admin/PillarsManager';
 import GenerationsManager from './admin/GenerationsManager';
 import SettingsManager from './admin/SettingsManager';
+import OnboardingManager from './admin/OnboardingManager';
 import UserManagement from './UserManagement';
 import DashboardOverview from './admin/DashboardOverview';
 
-export type CmsTab = 'dashboard' | 'events' | 'members' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars';
+export type CmsTab = 'dashboard' | 'events' | 'members' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -56,12 +57,14 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'events', label: 'Agenda Acara', icon: Calendar, count: p => p.events.length },
   { key: 'members', label: 'Kepengurusan', icon: Users, count: p => p.members.length },
+  { key: 'onboarding', label: 'Onboarding Library', icon: FileText },
   { key: 'articles', label: 'Artikel & Berita', icon: BookOpen, count: p => p.articles.length },
   { key: 'gallery', label: 'Galeri Kegiatan', icon: ImageIcon, count: p => p.gallery?.length || 0 },
   { key: 'generations', label: 'Masa Transisi', icon: History, count: p => p.generations.length },
   { key: 'pillars', label: 'Pilar Organisasi', icon: ShieldCheck, count: p => p.pillars.length },
   { key: 'settings', label: 'Pengaturan', icon: SettingsIcon },
 ];
+
 
 export default function AdminCMS({
   generations,
@@ -121,6 +124,7 @@ export default function AdminCMS({
     dashboard: 'Dashboard',
     events: 'Agenda Acara',
     members: 'Kepengurusan',
+    onboarding: 'Onboarding Library',
     articles: 'Artikel & Berita',
     gallery: 'Galeri Kegiatan',
     generations: 'Masa Transisi',
@@ -154,8 +158,11 @@ export default function AdminCMS({
             activeGen={activeGen}
           />
         );
+      case 'onboarding':
+        return <OnboardingManager />;
       case 'articles':
         return <ArticlesManager articles={articles} setArticles={setArticles} />;
+
       case 'gallery':
         return setGallery ? <GalleryManager gallery={gallery} setGallery={setGallery} /> : null;
       case 'generations':

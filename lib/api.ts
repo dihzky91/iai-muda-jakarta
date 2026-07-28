@@ -80,7 +80,7 @@ export function adminRoute<P = Record<string, string>>(
 ) {
   return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
     try {
-      const user = getUserFromRequest(request);
+      const user = getUserFromRequest(request, 'admin');
       if (!requireRole(user, ...roles)) {
         return fail('Unauthorized', unauthorizedStatus);
       }
@@ -102,7 +102,7 @@ export function memberRoute<P = Record<string, string>>(
 ) {
   return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
     try {
-      const user = getUserFromRequest(request);
+      const user = getUserFromRequest(request, 'member');
       if (!requireMember(user)) {
         return fail('Unauthorized', 401);
       }
@@ -141,7 +141,7 @@ export function memberRouteRaw<P = Record<string, string>>(
 ) {
   return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
     try {
-      const user = getUserFromRequest(request);
+      const user = getUserFromRequest(request, 'member');
       if (!requireMember(user)) {
         return errorBody('Unauthorized', 401);
       }

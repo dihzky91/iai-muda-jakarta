@@ -57,23 +57,46 @@ export function verifyToken(token: string): JwtPayload {
   return jwt.verify(token, JWT_SECRET) as JwtPayload;
 }
 
-export function getUserFromRequest(request: NextRequest): JwtPayload | null {
+export function getUserFromRequest(request: NextRequest, expectedType?: 'admin' | 'member'): JwtPayload | null {
   const authHeader = request.headers.get('authorization');
 
-  const token = authHeader?.startsWith('Bearer ')
-    ? authHeader.slice(7)
-    : request.cookies.get(ADMIN_COOKIE)?.value
-      ?? request.cookies.get(MEMBER_COOKIE)?.value
-      ?? request.cookies.get(LEGACY_COOKIE)?.value
-      ?? null;
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.slice(7);
+    if (!token) return null;
 
-  if (!token) return null;
-
-  try {
-    return verifyToken(token);
-  } catch {
-    return null;
+    try {
+      const user = verifyToken(token);
+      if (expectedType && user.type !== expectedType) {
+        return null;
+      }
+      return user;
+    } catch {
+      return null;
+    }
   }
+
+  const cookieCandidates: string[] = expectedType === 'member'
+    ? [MEMBER_COOKIE, LEGACY_COOKIE]
+    : expectedType === 'admin'
+      ? [ADMIN_COOKIE, LEGACY_COOKIE]
+      : [MEMBER_COOKIE, ADMIN_COOKIE, LEGACY_COOKIE];
+
+  for (const cookieName of cookieCandidates) {
+    const token = request.cookies.get(cookieName)?.value;
+    if (!token) continue;
+
+    try {
+      const user = verifyToken(token);
+      if (expectedType && user.type !== expectedType) {
+        continue;
+      }
+      return user;
+    } catch {
+      continue;
+    }
+  }
+
+  return null;
 }
 
 export function requireRole(user: JwtPayload | null, ...roles: UserRole[]): boolean {

@@ -285,3 +285,58 @@ export const memberAccountsRelations = relations(memberAccounts, ({ one }) => ({
     references: [members.id],
   }),
 }));
+
+export const resources = mysqlTable('resources', {
+  id: serial('id').primaryKey(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description'),
+  fileUrl: varchar('file_url', { length: 500 }).notNull(),
+  fileName: varchar('file_name', { length: 255 }),
+  fileType: varchar('file_type', { length: 50 }),
+  fileSize: int('file_size'),
+  category: varchar('category', { length: 50 }).default('onboarding').notNull(),
+  subcategory: varchar('subcategory', { length: 100 }),
+  visibility: varchar('visibility', { length: 20 }).default('pengurus').notNull(),
+  sortOrder: int('sort_order').default(0),
+  downloadCount: int('download_count').default(0),
+  uploadedBy: int('uploaded_by'),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxCategory: index('idx_resources_category').on(table.category),
+  idxVisibility: index('idx_resources_visibility').on(table.visibility),
+  idxSortOrder: index('idx_resources_sort_order').on(table.sortOrder),
+  idxIsActive: index('idx_resources_is_active').on(table.isActive),
+}));
+
+export const resourceReads = mysqlTable('resource_reads', {
+  id: serial('id').primaryKey(),
+  resourceId: int('resource_id').notNull(),
+  memberId: int('member_id').notNull(),
+  readAt: timestamp('read_at').defaultNow().notNull(),
+}, (table) => ({
+  uniqResourceMember: uniqueIndex('uniq_resource_member').on(table.resourceId, table.memberId),
+  idxMemberId: index('idx_resource_reads_member_id').on(table.memberId),
+  idxResourceId: index('idx_resource_reads_resource_id').on(table.resourceId),
+}));
+
+export const resourcesRelations = relations(resources, ({ one, many }) => ({
+  uploader: one(users, {
+    fields: [resources.uploadedBy],
+    references: [users.id],
+  }),
+  reads: many(resourceReads),
+}));
+
+export const resourceReadsRelations = relations(resourceReads, ({ one }) => ({
+  resource: one(resources, {
+    fields: [resourceReads.resourceId],
+    references: [resources.id],
+  }),
+  member: one(members, {
+    fields: [resourceReads.memberId],
+    references: [members.id],
+  }),
+}));
+

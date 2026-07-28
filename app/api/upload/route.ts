@@ -15,13 +15,18 @@ if (match) {
   });
 }
 
-function uploadToCloudinary(buffer: Buffer, mimetype: string): Promise<any> {
+function uploadToCloudinary(buffer: Buffer, mimetype: string, originalName: string): Promise<any> {
+  const isImage = mimetype.startsWith('image/');
+  const isPdf = mimetype === 'application/pdf' || originalName.toLowerCase().endsWith('.pdf');
+  // For images and PDFs, Cloudinary image resource type provides optimization & preview capabilities
+  const resourceType = isImage || isPdf ? 'auto' : 'raw';
+
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       {
         folder: 'iai-muda-jakarta',
-        resource_type: 'image',
-        transformation: [{ quality: 'auto', fetch_format: 'auto' }],
+        resource_type: resourceType,
+        ...(isImage ? { transformation: [{ quality: 'auto', fetch_format: 'auto' }] } : {}),
         timeout: 120000, // 2 menit timeout
       },
       (error, result) => {
@@ -35,30 +40,26 @@ function uploadToCloudinary(buffer: Buffer, mimetype: string): Promise<any> {
 
 export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
   const formData = await request.formData();
-  const file = formData.get('image') as File | null;
+  const file = (formData.get('file') || formData.get('image')) as File | null;
 
   if (!file) {
     return fail('No file uploaded', 400);
   }
 
-  if (!file.type.startsWith('image/')) {
-    return fail('Only image files are allowed!', 400);
-  }
-
-  if (file.size > 20 * 1024 * 1024) {
-    return fail('Ukuran file maksimal 20MB', 400);
+  if (file.size > 50 * 1024 * 1024) {
+    return fail('Ukuran file maksimal 50MB', 400);
   }
 
   const buffer = Buffer.from(await file.arrayBuffer());
-  const result = await uploadToCloudinary(buffer, file.type);
+  const result = await uploadToCloudinary(buffer, file.type, file.name);
 
   return NextResponse.json({
     success: true,
     url: result.secure_url,
     publicId: result.public_id,
     originalName: file.name,
-    size: result.bytes,
-    width: result.width,
-    height: result.height,
+    size: file.size || result.bytes,
+    fileType: file.name.split('.').pop()?.toLowerCase() || '',
   });
 }, 'File upload failed');
+

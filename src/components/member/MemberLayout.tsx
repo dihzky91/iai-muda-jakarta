@@ -18,6 +18,7 @@ import {
   CalendarDays,
   HelpCircle,
   Briefcase,
+  BookOpenCheck,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 
@@ -50,10 +51,12 @@ const navGroups: NavGroup[] = [
   {
     title: 'Organisasi',
     items: [
+      { href: '/portal/onboarding', label: 'Onboarding Library', icon: BookOpenCheck },
       { href: '/portal/directory', label: 'Direktori Anggota', icon: Users },
       { href: '/portal/calendar', label: 'Kalender', icon: CalendarDays },
     ],
   },
+
   {
     title: 'Kegiatan',
     items: [

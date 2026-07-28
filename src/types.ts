@@ -159,3 +159,34 @@ export interface Settings {
   logoUrl?: string | null;
   faviconUrl?: string | null;
 }
+
+export type ResourceVisibility = 'pengurus' | 'alumni' | 'both';
+
+export interface Resource {
+  id: number;
+  title: string;
+  description: string | null;
+  fileUrl: string;
+  fileName: string | null;
+  fileType: string | null;
+  fileSize: number | null;
+  category: string;
+  subcategory: string | null;
+  visibility: ResourceVisibility;
+  sortOrder: number;
+  downloadCount: number;
+  uploadedBy?: number | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  // Included in portal view
+  isRead?: boolean;
+  readAt?: string | null;
+}
+
+export interface OnboardingProgress {
+  total: number;
+  readCount: number;
+  percentage: number;
+}
+
