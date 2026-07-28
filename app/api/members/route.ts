@@ -74,11 +74,26 @@ export const POST = adminRoute(['superadmin', 'admin'], async (request, _context
   const memberId = insertedId(result);
 
   // Auto-insert default status 'hijau' untuk member baru
-  // Pakai raw SQL agar tidak memicu mode 'default' Drizzle yang insert semua kolom + keyword DEFAULT
-  await db.execute(sql`
-    INSERT INTO member_statuses (member_id, status, reason, changed_by)
-    VALUES (${memberId}, 'hijau', 'Status awal', ${user.userId})
-  `);
+  try {
+    await db.insert(schema.memberStatuses).values({
+      memberId,
+      status: 'hijau',
+      reason: 'Status awal',
+      changedBy: user.userId,
+    });
+  } catch (e: any) {
+    console.error('Member created but status insert failed:', {
+      memberId,
+      sqlMessage: e?.cause?.sqlMessage || e?.cause?.message || e?.message,
+      code: e?.cause?.code || e?.code,
+      errno: e?.cause?.errno,
+    });
+    // tetap return success — member sudah terlanjur dibuat
+    return done('Member created, but status insert failed', {
+      id: memberId,
+      statusError: e?.cause?.sqlMessage || e?.cause?.message || e?.message,
+    });
+  }
 
   return done('Member created successfully', { id: memberId });
 }, 'Failed to create member');
