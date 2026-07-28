@@ -1,7 +1,7 @@
 // './index' harus lebih dulu — di situ `dotenv/config` dimuat, dan
 // '../lib/auth' butuh JWT_SECRET sudah tersedia saat dievaluasi.
 import { db, schema } from './index';
-import { sql } from 'drizzle-orm';
+import { sql, eq } from 'drizzle-orm';
 import { hashPassword } from '../lib/auth';
 
 async function seed() {
@@ -211,6 +211,22 @@ async function seed() {
 
     await db.insert(schema.members).values(memberData);
     console.log('✓ Members inserted');
+
+    // Insert default status 'hijau' untuk seeded members
+    const seededMembers = await db
+      .select({ id: schema.members.id })
+      .from(schema.members)
+      .where(eq(schema.members.generationId, 2));
+
+    await db.insert(schema.memberStatuses).values(
+      seededMembers.map(m => ({
+        memberId: m.id,
+        status: 'hijau' as const,
+        reason: 'Status awal',
+        changedBy: 1,
+      }))
+    );
+    console.log('✓ Default member statuses inserted');
 
     // Seed default superadmin user
     const defaultPassword = process.env.SUPERADMIN_PASSWORD || 'admin123';
