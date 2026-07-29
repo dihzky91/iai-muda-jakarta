@@ -41,6 +41,36 @@ export function done(message: string, extra?: Record<string, unknown>): NextResp
   return NextResponse.json({ success: true, message, ...extra });
 }
 
+/** Deteksi error koneksi database sementara (seperti ECONNRESET atau connection lost). */
+function isConnectionResetError(err: any): boolean {
+  if (!err) return false;
+  const code = err.code || err.cause?.code;
+  const msg = (err.message || '') + ' ' + (err.cause?.message || '');
+  return (
+    code === 'ECONNRESET' ||
+    code === 'PROTOCOL_CONNECTION_LOST' ||
+    code === 'ETIMEDOUT' ||
+    code === 'ECONNREFUSED' ||
+    msg.includes('ECONNRESET') ||
+    msg.includes('PROTOCOL_CONNECTION_LOST') ||
+    msg.includes('Connection lost')
+  );
+}
+
+/** Coba ulang handler 1x secara otomatis jika terjadi ECONNRESET/connection lost sementara. */
+async function withRetry<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (err: any) {
+    if (isConnectionResetError(err)) {
+      console.warn('[DB Retry] Koneksi terputus (ECONNRESET). Mencoba ulang...', err.code || err.message);
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      return await fn();
+    }
+    throw err;
+  }
+}
+
 /**
  * Route publik — tanpa cek auth, hanya penanganan error terpusat.
  * `fallbackMessage` dipakai kalau error yang dilempar tidak punya `.message`.
@@ -51,7 +81,7 @@ export function publicRoute<P = Record<string, string>>(
 ) {
   return async (request: NextRequest, context: RouteContext<P>): Promise<NextResponse> => {
     try {
-      return await handler(request, context);
+      return await withRetry(() => handler(request, context));
     } catch (err: any) {
       return fail(err?.message || fallbackMessage, 500);
     }
@@ -84,7 +114,7 @@ export function adminRoute<P = Record<string, string>>(
       if (!requireRole(user, ...roles)) {
         return fail('Unauthorized', unauthorizedStatus);
       }
-      return await handler(request, context, user as AdminJwtPayload);
+      return await withRetry(() => handler(request, context, user as AdminJwtPayload));
     } catch (err: any) {
       const causeMsg = err?.cause?.sqlMessage || err?.cause?.message;
       return fail(causeMsg ? `${err?.message} — ${causeMsg}` : (err?.message || fallbackMessage), 500);
@@ -107,7 +137,7 @@ export function memberRoute<P = Record<string, string>>(
       if (!requireMember(user)) {
         return fail('Unauthorized', 401);
       }
-      return await handler(request, context, user);
+      return await withRetry(() => handler(request, context, user));
     } catch (err: any) {
       return fail(err?.message || fallbackMessage, 500);
     }
@@ -146,7 +176,7 @@ export function memberRouteRaw<P = Record<string, string>>(
       if (!requireMember(user)) {
         return errorBody('Unauthorized', 401);
       }
-      return await handler(request, context, user);
+      return await withRetry(() => handler(request, context, user));
     } catch (err: any) {
       console.error(logLabel, err);
       return errorBody(fallbackError, 500);

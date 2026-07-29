@@ -12,6 +12,8 @@ const nextConfig: NextConfig = {
       { protocol: 'https', hostname: 'imud.iaijakarta.or.id' },
     ],
   },
+  // Mengizinkan akses dev resources (HMR, webpack) dari ngrok domain
+  allowedDevOrigins: ['sublenticular-northwestwardly-nila.ngrok-free.dev'],
 };
 
 export default nextConfig;

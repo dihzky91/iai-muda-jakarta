@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { Users } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 import { MemberLayout, MemberDirectory } from '@/src/components/member';
 
 const containerVariants = {
@@ -61,19 +62,12 @@ export default function DirectoryPage() {
       >
         {/* Page Header */}
         <motion.div variants={itemVariants}>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-700 to-red-900 flex items-center justify-center shadow-lg shadow-blue-900/20">
-              <Users className="w-6 h-6 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-display font-bold text-slate-900">
-                Direktori Anggota
-              </h1>
-              <p className="text-slate-500 mt-1">
-                Jaringan pengurus & alumni IAI Muda Jakarta
-              </p>
-            </div>
-          </div>
+          <PortalPageHeader
+            badgeIcon={Users}
+            badgeLabel="Direktori Pengurus & Alumni"
+            title="Direktori Anggota"
+            description="Jaringan pengurus aktif & alumni IAI Muda Wilayah DKI Jakarta. Cari dan terhubung dengan sesama anggota organisasi."
+          />
         </motion.div>
 
         {/* Directory Component */}

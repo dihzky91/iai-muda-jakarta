@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import { MemberLayout } from '@/src/components/member';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 
 export default function MemberSettings() {
   const router = useRouter();
@@ -124,19 +125,17 @@ export default function MemberSettings() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="max-w-3xl mx-auto space-y-6"
+        className="space-y-6 lg:space-y-8"
       >
-        {/* Header */}
-        <div>
-          <button
-            onClick={() => router.push('/portal/dashboard')}
-            className="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-slate-800 transition-colors mb-3"
-          >
-            <ArrowLeft className="w-4 h-4" /> Kembali ke Dashboard
-          </button>
-          <h1 className="text-2xl lg:text-3xl font-display font-bold text-slate-900">Pengaturan Akun</h1>
-          <p className="text-slate-500 mt-1">Kelola keamanan akun portal Anda</p>
-        </div>
+        {/* Header Banner */}
+        <PortalPageHeader
+          badgeIcon={Lock}
+          badgeLabel="Keamanan & Akun"
+          title="Pengaturan Akun"
+          description="Kelola keamanan password dan kredensial akun portal IAI Muda Wilayah DKI Jakarta."
+          backHref="/portal/dashboard"
+          backTitle="Kembali ke Dashboard"
+        />
 
         {/* Alert */}
         {message && (

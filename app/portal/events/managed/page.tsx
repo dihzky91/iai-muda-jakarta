@@ -50,37 +50,42 @@ export default function ManagedEventsPage() {
   return (
     <MemberLayout>
       <div className="space-y-6 pb-12">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <Link
-                href="/portal/events"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200/80 text-xs font-bold text-slate-600 hover:text-blue-600 hover:border-blue-300 shadow-sm transition-all"
-              >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                Kembali
-              </Link>
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                Committee Only
-              </span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-slate-900 tracking-tight">
-              Event yang Saya Kelola
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 font-medium">
-              Pantau dan kelola acara internal tempat Anda tergabung sebagai panitia.
-            </p>
-          </div>
+        {/* Header Banner */}
+        <div className="relative overflow-hidden p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white shadow-xl shadow-blue-900/10">
+          <div className="absolute -right-8 -bottom-8 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
 
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="p-3.5 rounded-2xl bg-white border border-slate-200/80 shadow-sm flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center shadow-md">
-                <Briefcase className="h-5 w-5" />
+          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="space-y-2 max-w-2xl">
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/portal/events"
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white transition cursor-pointer"
+                  title="Kembali ke Portal Events"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                </Link>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-bold tracking-wider text-blue-200 uppercase border border-white/10">
+                  <Briefcase className="w-3.5 h-3.5 text-cyan-300" />
+                  <span>Panitia / Committee Only</span>
+                </div>
               </div>
-              <div>
-                <div className="text-xl font-extrabold leading-none text-slate-900">{events.length}</div>
-                <div className="text-[11px] font-medium text-slate-500 mt-1">Event Dikelola</div>
+              <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
+                Event yang Saya Kelola
+              </h1>
+              <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
+                Pantau dan kelola acara internal tempat Anda tergabung sebagai panitia IAI Muda Wilayah DKI Jakarta.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0">
+              <div className="p-3.5 rounded-2xl bg-white/10 border border-white/20 backdrop-blur-md flex items-center gap-3 shadow-lg">
+                <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center text-white shrink-0">
+                  <Briefcase className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-xl font-extrabold leading-none text-white">{events.length}</div>
+                  <div className="text-[11px] font-medium text-blue-100 mt-1">Event Dikelola</div>
+                </div>
               </div>
             </div>
           </div>

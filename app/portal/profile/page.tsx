@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import { MemberLayout } from '@/src/components/member';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 
 export default function MemberProfile() {
   const router = useRouter();
@@ -197,52 +198,56 @@ export default function MemberProfile() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="max-w-6xl mx-auto space-y-6"
+        className="space-y-6 lg:space-y-8"
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-display font-bold text-slate-900">Profil Saya</h1>
-            <p className="text-slate-500 mt-1">Kelola informasi publik dan pribadi Anda</p>
-          </div>
-          {!isEditing ? (
-            <button
-              onClick={() => setIsEditing(true)}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all"
-            >
-              <Pencil className="w-4 h-4" />
-              Edit Profil
-            </button>
-          ) : (
-            <div className="flex gap-3">
-              <button
-                onClick={handleCancel}
-                disabled={saving}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 border border-slate-300 text-slate-700 rounded-xl font-medium hover:bg-slate-50 transition-all disabled:opacity-50"
-              >
-                <X className="w-4 h-4" />
-                Batal
-              </button>
-              <button
-                onClick={handleSubmit}
-                disabled={saving}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/20 transition-all disabled:bg-blue-400"
-              >
-                {saving ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Menyimpan...
-                  </>
-                ) : (
-                  <>
-                    <Save className="w-4 h-4" />
-                    Simpan
-                  </>
-                )}
-              </button>
+        {/* Header Banner */}
+        <PortalPageHeader
+          badgeIcon={User}
+          badgeLabel="Profil Anggota"
+          title="Profil Saya"
+          description="Kelola informasi publik dan pribadi Anda sebagai pengurus IAI Muda Wilayah DKI Jakarta."
+          rightContent={
+            <div className="shrink-0">
+              {!isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs sm:text-sm font-bold backdrop-blur-md transition-all cursor-pointer shadow-sm"
+                >
+                  <Pencil className="w-4 h-4" />
+                  Edit Profil
+                </button>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCancel}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-xl text-xs sm:text-sm font-bold backdrop-blur-md transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSubmit}
+                    disabled={saving}
+                    className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                  >
+                    {saving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Menyimpan...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="w-4 h-4" />
+                        Simpan
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          }
+        />
 
         {/* Alert */}
         {message && (

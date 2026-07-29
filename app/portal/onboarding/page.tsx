@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'motion/react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import { MemberLayout } from '@/src/components/member';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 import { Resource, OnboardingProgress } from '@/src/types';
 import {
   BookOpenCheck,
@@ -258,26 +259,13 @@ export default function MemberOnboardingPage() {
         className="space-y-6 lg:space-y-8"
       >
         {/* Page Header */}
-        <motion.div
-          variants={itemVariants}
-          className="relative overflow-hidden p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-900 via-blue-800 to-indigo-900 text-white shadow-xl shadow-blue-900/10"
-        >
-          <div className="absolute -right-8 -bottom-8 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div className="space-y-2 max-w-2xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-[11px] font-bold tracking-wider text-blue-200 uppercase border border-white/10">
-                <BookOpenCheck className="w-3.5 h-3.5" />
-                <span>Pengurus Onboarding</span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-display font-extrabold text-white tracking-tight">
-                Onboarding Library
-              </h1>
-              <p className="text-xs sm:text-sm text-blue-100/90 leading-relaxed">
-                Panduan resmi, template kerja, dan berkas penting kepengurusan IAI Muda Wilayah DKI Jakarta. Silakan baca dan pelajari setiap dokumen di bawah ini.
-              </p>
-            </div>
-          </div>
+        <motion.div variants={itemVariants}>
+          <PortalPageHeader
+            badgeIcon={BookOpenCheck}
+            badgeLabel="Pengurus Onboarding"
+            title="Onboarding Library"
+            description="Panduan resmi, template kerja, dan berkas penting kepengurusan IAI Muda Wilayah DKI Jakarta. Silakan baca dan pelajari setiap dokumen di bawah ini."
+          />
         </motion.div>
 
         {/* Progress Tracker Section */}

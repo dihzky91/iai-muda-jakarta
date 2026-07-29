@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import { MemberLayout } from '@/src/components/member';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 import { Megaphone, Calendar, User, ArrowLeft, ChevronRight, Search } from 'lucide-react';
 
 interface Announcement {
@@ -69,39 +70,29 @@ export default function MemberAnnouncementsPage() {
 
   return (
     <MemberLayout>
-      <div className="space-y-6 max-w-5xl mx-auto">
-        {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => router.push('/portal/dashboard')}
-              className="p-2 rounded-xl bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition"
-              title="Kembali ke Dashboard"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                <Megaphone className="w-6 h-6 text-blue-600" />
-                Pengumuman & Informasi Internal
-              </h1>
-              <p className="text-sm text-slate-500">
-                Pemberitahuan, artikel, dan edaran resmi dari pengurus IAI Muda Jakarta.
-              </p>
+      <div className="space-y-6 lg:space-y-8">
+        {/* Navigation & Header Banner */}
+        <PortalPageHeader
+          badgeIcon={Megaphone}
+          badgeLabel="Pengumuman & Edaran"
+          badgeColor="text-amber-300"
+          title="Pengumuman & Informasi Internal"
+          description="Pemberitahuan, artikel, dan edaran resmi dari pengurus IAI Muda Wilayah DKI Jakarta."
+          backHref="/portal/dashboard"
+          backTitle="Kembali ke Dashboard"
+          rightContent={
+            <div className="relative w-full md:w-72">
+              <Search className="absolute left-3.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-blue-200/60" />
+              <input
+                type="text"
+                placeholder="Cari pengumuman..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-white/20 rounded-2xl text-xs sm:text-sm bg-white/10 backdrop-blur-md text-white placeholder-blue-200/60 focus:outline-none focus:ring-2 focus:ring-blue-400"
+              />
             </div>
-          </div>
-
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Cari pengumuman..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-xl text-sm bg-white focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
-        </div>
+          }
+        />
 
         {/* Announcements Feed */}
         {filtered.length === 0 ? (

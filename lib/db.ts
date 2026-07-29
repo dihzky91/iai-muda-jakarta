@@ -16,9 +16,9 @@ function createPool() {
     connectionLimit: isTiDB ? 5 : 10, // TiDB serverless: limit koneksi lebih kecil
     queueLimit: 0,
     enableKeepAlive: true,
-    keepAliveInitialDelay: 10000,
+    keepAliveInitialDelay: 2000,
     maxIdle: isTiDB ? 2 : 5, // Jumlah koneksi idle maksimal
-    idleTimeout: 30000, // Tutup koneksi idle setelah 30 detik (sebelum TiDB kill di 60s)
+    idleTimeout: 15000, // Tutup koneksi idle setelah 15 detik (sebelum DB server kill koneksi)
     connectTimeout: 10000, // Timeout koneksi 10 detik
     ...(isTiDB ? {
       ssl: {
@@ -42,6 +42,10 @@ const globalForDb = globalThis as unknown as {
 };
 
 const pool = globalForDb.__mysqlPool ?? createPool();
+
+(pool as any).on('error', (err: any) => {
+  console.warn('[MySQL Pool Warning]', err?.code || err?.message);
+});
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.__mysqlPool = pool;

@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import { MessageSquare, Globe, Users, Loader2, Sparkles, RefreshCw, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import MemberLayout from '@/src/components/member/MemberLayout';
+import PortalPageHeader from '@/src/components/member/PortalPageHeader';
 import PostComposer from '@/src/components/member/community/PostComposer';
 import PostCard, { PostItem } from '@/src/components/member/community/PostCard';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
@@ -90,35 +91,19 @@ export default function CommunityFeedPage() {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="max-w-4xl mx-auto space-y-6 pb-12"
+        className="space-y-6 lg:space-y-8 pb-12"
       >
-        {/* Navigation Breadcrumb & Back Link */}
-        <motion.div variants={itemVariants} className="flex items-center justify-between">
-          <Link
-            href="/portal/dashboard"
-            className="inline-flex items-center gap-2 text-xs font-bold text-slate-600 hover:text-blue-600 bg-white hover:bg-blue-50 border border-slate-200 px-3.5 py-2 rounded-xl transition-all shadow-sm"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            <span>Kembali ke Dashboard</span>
-          </Link>
-
-          <span className="text-xs font-medium text-slate-400">Portal / Ruang Komunitas</span>
-        </motion.div>
-
         {/* Header Banner */}
-        <motion.div
-          variants={itemVariants}
-          className="rounded-3xl p-6 sm:p-8 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white shadow-xl relative overflow-hidden"
-        >
-          <div className="relative z-10 space-y-2">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-bold text-cyan-300">
-              <Sparkles className="w-3.5 h-3.5" /> Ruang Komunitas & Feed Pengurus
-            </div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight">Kabar Anggota IAI Muda Jakarta</h1>
-            <p className="text-xs sm:text-sm text-blue-100/80 max-w-2xl leading-relaxed">
-              Wadah kolaborasi, diskusi profesional, dan kabar kegiatan antar sesama pengurus & alumni IAI Muda DKI Jakarta.
-            </p>
-          </div>
+        <motion.div variants={itemVariants}>
+          <PortalPageHeader
+            badgeIcon={Sparkles}
+            badgeLabel="Ruang Komunitas & Feed Pengurus"
+            badgeColor="text-cyan-300"
+            title="Kabar Anggota IAI Muda Jakarta"
+            description="Wadah kolaborasi, diskusi profesional, dan kabar kegiatan antar sesama pengurus & alumni IAI Muda DKI Jakarta."
+            backHref="/portal/dashboard"
+            backTitle="Kembali ke Dashboard"
+          />
         </motion.div>
 
         {/* Post Composer */}
