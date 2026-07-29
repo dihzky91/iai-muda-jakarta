@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
-import { eq, desc, and, sql, inArray } from 'drizzle-orm';
+import { eq, desc, and, sql, inArray, like, or } from 'drizzle-orm';
 import { getUserFromRequest } from '@/lib/auth';
 import { ok, fail } from '@/lib/api';
 
@@ -8,6 +8,8 @@ import { ok, fail } from '@/lib/api';
  * GET /api/member/community/posts
  * Query params:
  * - scope: 'all' | 'division' | 'generation'
+ * - category: 'all' | 'umum' | 'diskusi_karir' | 'regulasi_pajak' | 'info_lowongan' | 'event_sharing'
+ * - search: string (search in content or author name)
  * - page: number (default 1)
  * - limit: number (default 15)
  */
@@ -16,6 +18,8 @@ export async function GET(request: Request) {
     const user = getUserFromRequest(request as any);
     const { searchParams } = new URL(request.url);
     const scope = searchParams.get('scope') || 'all';
+    const category = searchParams.get('category') || 'all';
+    const search = searchParams.get('search')?.trim() || '';
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = Math.min(parseInt(searchParams.get('limit') || '15', 10), 30);
     const offset = (page - 1) * limit;
@@ -38,12 +42,24 @@ export async function GET(request: Request) {
     if (scope === 'division' && memberDivision) {
       conditions.push(eq(schema.communityPosts.targetDivision, memberDivision));
     }
+    if (category && category !== 'all') {
+      conditions.push(eq(schema.communityPosts.category, category));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          like(schema.communityPosts.content, `%${search}%`),
+          like(schema.members.name, `%${search}%`)
+        )
+      );
+    }
 
     // Fetch posts sorted by isPinned DESC, createdAt DESC
     const postsQuery = db
       .select({
         id: schema.communityPosts.id,
         memberId: schema.communityPosts.memberId,
+        category: schema.communityPosts.category,
         content: schema.communityPosts.content,
         imageUrl: schema.communityPosts.imageUrl,
         attachmentUrl: schema.communityPosts.attachmentUrl,
@@ -153,7 +169,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { content, imageUrl, attachmentUrl, attachmentName, scope = 'all' } = body;
+    const { content, imageUrl, attachmentUrl, attachmentName, scope = 'all', category = 'umum' } = body;
 
     if (!content || typeof content !== 'string' || content.trim().length === 0) {
       return fail('Isi postingan tidak boleh kosong', 400);
@@ -203,6 +219,7 @@ export async function POST(request: Request) {
     // Insert post
     const [result] = await db.insert(schema.communityPosts).values({
       memberId: authorMemberId,
+      category: typeof category === 'string' && category.trim() ? category.trim() : 'umum',
       content: content.trim(),
       imageUrl: imageUrl || null,
       attachmentUrl: attachmentUrl || null,

@@ -532,9 +532,24 @@ export const monthlyEvaluationsRelations = relations(monthlyEvaluations, ({ one 
 // TABEL RUANG KOMUNITAS & NOTIFIKASI PORTAL
 // ============================================================================
 
+export const communityCategories = mysqlTable('community_categories', {
+  id: serial('id').primaryKey(),
+  slug: varchar('slug', { length: 50 }).notNull().unique(),
+  hashtag: varchar('hashtag', { length: 50 }).notNull(),
+  label: varchar('label', { length: 100 }).notNull(),
+  description: text('description'),
+  badgeClass: varchar('badge_class', { length: 255 }).default('bg-slate-100 text-slate-700 border-slate-200').notNull(),
+  activeTabClass: varchar('active_tab_class', { length: 255 }).default('bg-slate-800 text-white').notNull(),
+  sortOrder: int('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
 export const communityPosts = mysqlTable('community_posts', {
   id: serial('id').primaryKey(),
   memberId: int('member_id').notNull(),
+  category: varchar('category', { length: 50 }).default('umum').notNull(),
   content: text('content').notNull(),
   imageUrl: varchar('image_url', { length: 500 }),
   attachmentUrl: varchar('attachment_url', { length: 500 }),
@@ -547,6 +562,7 @@ export const communityPosts = mysqlTable('community_posts', {
 }, (table) => ({
   idxMemberScopeCreatedAt: index('idx_posts_member_scope_created').on(table.memberId, table.scope, table.createdAt),
   idxCreatedAt: index('idx_posts_created_at').on(table.createdAt),
+  idxCategory: index('idx_posts_category').on(table.category),
 }));
 
 export const communityComments = mysqlTable('community_comments', {

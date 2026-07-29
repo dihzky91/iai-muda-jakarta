@@ -30,7 +30,7 @@ export default function MemberLoginPage() {
       const result = await login(email, password);
 
       if (result.success) {
-        router.push('/portal/dashboard');
+        window.location.href = '/portal/dashboard';
       } else {
         setError(result.message || 'Login gagal');
       }

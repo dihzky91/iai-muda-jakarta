@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
-import { Send, Image as ImageIcon, Globe, Users, Loader2, X, AlertCircle } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Send, Image as ImageIcon, Globe, Users, Loader2, X, AlertCircle, Tag } from 'lucide-react';
 import MentionInput from './MentionInput';
+import { COMMUNITY_CATEGORIES } from './categories';
 
 interface PostComposerProps {
   onPostSuccess: () => void;
@@ -62,6 +63,8 @@ function compressImage(file: File, maxDim = 1200, quality = 0.8): Promise<File> 
 
 export default function PostComposer({ onPostSuccess, userDivision }: PostComposerProps) {
   const [content, setContent] = useState('');
+  const [category, setCategory] = useState<string>('umum');
+  const [categoriesList, setCategoriesList] = useState(COMMUNITY_CATEGORIES);
   const [scope, setScope] = useState<'all' | 'division'>('all');
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -69,6 +72,17 @@ export default function PostComposer({ onPostSuccess, userDivision }: PostCompos
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch('/api/member/community/categories')
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success && Array.isArray(result.data) && result.data.length > 0) {
+          setCategoriesList(result.data);
+        }
+      })
+      .catch((err) => console.error(err));
+  }, []);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -133,6 +147,7 @@ export default function PostComposer({ onPostSuccess, userDivision }: PostCompos
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content,
+          category,
           imageUrl,
           scope,
         }),
@@ -145,6 +160,7 @@ export default function PostComposer({ onPostSuccess, userDivision }: PostCompos
 
       // Reset form
       setContent('');
+      setCategory('umum');
       removeSelectedImage();
       onPostSuccess();
     } catch (err: any) {
@@ -158,6 +174,27 @@ export default function PostComposer({ onPostSuccess, userDivision }: PostCompos
   return (
     <div className="rounded-3xl bg-white p-5 sm:p-6 border border-slate-200 shadow-sm space-y-4">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Category Pill Selector */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 mr-1 flex items-center gap-1">
+            <Tag className="w-3 h-3" /> Topik:
+          </span>
+          {categoriesList.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              onClick={() => setCategory(cat.id)}
+              className={`px-3 py-1 rounded-xl text-xs font-semibold shrink-0 transition-all border cursor-pointer ${
+                category === cat.id
+                  ? cat.badgeClass + ' ring-2 ring-blue-500/20 font-bold'
+                  : 'bg-slate-50 text-slate-500 border-slate-200 hover:bg-slate-100 hover:text-slate-800'
+              }`}
+            >
+              {cat.hashtag}
+            </button>
+          ))}
+        </div>
+
         <MentionInput
           value={content}
           onChange={setContent}

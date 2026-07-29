@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { MessageSquare, ThumbsUp, Lightbulb, PartyPopper, Heart, Pin, Trash2, Send, CornerDownRight, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import ConfirmDeleteModal from './ConfirmDeleteModal';
+import { getCategoryById } from './categories';
 
 export interface PostItem {
   id: number;
   memberId: number;
+  category?: string | null;
   content: string;
   imageUrl: string | null;
   attachmentUrl: string | null;
@@ -92,6 +94,7 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
+  const categoryObj = getCategoryById(post.category);
   const canDelete = isAdmin || (currentMemberId && post.memberId === currentMemberId);
 
   const handleToggleReaction = async (reactionType: 'like' | 'insightful' | 'congrats' | 'appreciate') => {
@@ -201,8 +204,11 @@ export default function PostCard({ post, currentMemberId, isAdmin, onPostDeleted
             </div>
           )}
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h4 className="text-xs sm:text-sm font-bold text-slate-900">{post.authorName || 'Anggota IAI Muda'}</h4>
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-bold ${categoryObj.badgeClass}`}>
+                {categoryObj.hashtag}
+              </span>
               {post.isPinned && (
                 <span className="px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[10px] font-bold flex items-center gap-1">
                   <Pin className="w-2.5 h-2.5" /> Pinned
