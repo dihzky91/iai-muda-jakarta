@@ -12,7 +12,18 @@ export async function GET(request: Request) {
     const query = searchParams.get('q') || '';
 
     if (!query || query.trim().length === 0) {
-      return ok([]);
+      const defaultMembers = await db
+        .select({
+          id: schema.members.id,
+          fullName: schema.members.name,
+          roleTitle: schema.members.division,
+          division: schema.members.division,
+          profileImagePath: schema.members.imageUrl,
+        })
+        .from(schema.members)
+        .limit(8);
+
+      return ok(defaultMembers);
     }
 
     const searchTerm = `%${query.trim()}%`;
