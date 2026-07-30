@@ -25,7 +25,7 @@ export async function GET(request: Request) {
       );
     }
 
-    // Fetch member records with position info ordered by latest generation first
+    // Fetch member records with position info, joined with member_accounts so ONLY members with portal accounts appear
     const rawMembers = await db
       .select({
         id: schema.members.id,
@@ -37,6 +37,13 @@ export async function GET(request: Request) {
         positionName: schema.positions.name,
       })
       .from(schema.members)
+      .innerJoin(
+        schema.memberAccounts,
+        and(
+          eq(schema.members.id, schema.memberAccounts.memberId),
+          eq(schema.memberAccounts.isActive, true)
+        )
+      )
       .leftJoin(schema.positions, eq(schema.members.positionId, schema.positions.id))
       .where(and(...conditions))
       .orderBy(desc(schema.members.generationId), schema.members.name);
