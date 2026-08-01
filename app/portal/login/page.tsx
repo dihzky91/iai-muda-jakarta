@@ -63,8 +63,12 @@ export default function MemberLoginPage() {
       >
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/25">
-            <Users className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white p-2 rounded-2xl mb-4 shadow-xl shadow-blue-600/15 border border-slate-200/80">
+            <img
+              src="/images/iai-muda-logo-badge.png"
+              alt="IAI Muda Official Logo Badge"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h1 className="text-3xl font-display font-bold text-slate-900">Portal Anggota</h1>
           <p className="text-slate-500 mt-2">IAI Muda Jakarta</p>

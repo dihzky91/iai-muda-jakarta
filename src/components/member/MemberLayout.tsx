@@ -158,8 +158,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         {/* Logo */}
         <div className="p-6 border-b border-slate-100">
           <Link href="/portal/dashboard" className="flex items-center gap-3 group">
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-700 to-red-900 flex items-center justify-center shadow-lg shadow-blue-900/20 group-hover:shadow-blue-900/30 transition-shadow">
-              <Users className="w-6 h-6 text-white" />
+            <div className="w-11 h-11 rounded-xl bg-white p-1 border border-slate-200/80 shadow-md shadow-blue-500/10 group-hover:scale-105 transition-transform shrink-0 flex items-center justify-center">
+              <img
+                src="/images/iai-muda-logo-badge.png"
+                alt="IAI Muda Logo Badge"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div>
               <h1 className="font-display font-bold text-lg text-slate-900 leading-tight">
@@ -218,8 +222,12 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
       {/* Mobile Header Bar */}
       <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-md border-b border-slate-200/80 z-40 flex items-center justify-between px-4">
         <Link href="/portal/dashboard" className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-blue-700 to-red-900 flex items-center justify-center shadow-lg shadow-blue-900/20">
-            <Users className="w-5 h-5 text-white" />
+          <div className="w-9 h-9 rounded-lg bg-white p-1 border border-slate-200/80 shadow-md shrink-0 flex items-center justify-center">
+            <img
+              src="/images/iai-muda-logo-badge.png"
+              alt="IAI Muda Logo Badge"
+              className="w-full h-full object-contain"
+            />
           </div>
           <div>
             <h1 className="font-display font-bold text-sm text-slate-900">Portal Anggota</h1>
