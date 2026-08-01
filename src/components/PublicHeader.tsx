@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera, Menu, X, Home } from 'lucide-react';
+import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera, Menu, X, Home, Handshake } from 'lucide-react';
 
 interface PublicHeaderProps {
   currentGenName: string;
@@ -33,11 +33,13 @@ export default function PublicHeader({
   const navItems = [
     { path: '/', label: 'Beranda', icon: <Home className="h-4 w-4" /> },
     { path: '/struktur', label: 'Kepengurusan', icon: <Users className="h-4 w-4" /> },
+    { path: '/jejaring', label: 'Jejaring HIMA', icon: <Handshake className="h-4 w-4" /> },
     { path: '/acara', label: 'Acara', icon: <Calendar className="h-4 w-4" /> },
     { path: '/kalender', label: 'Kalender', icon: <Calendar className="h-4 w-4" /> },
     { path: '/galeri', label: 'Galeri', icon: <Camera className="h-4 w-4" /> },
     { path: '/artikel', label: 'Artikel', icon: <FileText className="h-4 w-4" /> },
   ];
+
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
@@ -70,7 +72,7 @@ export default function PublicHeader({
               </span>
             </div>
             <p className="text-[10px] sm:text-xs text-slate-500 font-sans font-medium tracking-wide whitespace-nowrap">
-              Ikatan Akuntan Indonesia Muda
+              Official Website
             </p>
           </div>
         </Link>

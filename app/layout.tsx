@@ -18,16 +18,21 @@ async function getHeaderData(): Promise<{ logoUrl: string | null; currentGenName
   try {
     const { db, schema } = await import('@/lib/db');
     const { eq } = await import('drizzle-orm');
-    const rows = await db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1);
-    const settings = rows[0];
+    const [settingsRows, genRows] = await Promise.all([
+      db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1),
+      db.select().from(schema.generations).where(eq(schema.generations.isActive, true)).limit(1),
+    ]);
+    const settings = settingsRows[0];
+    const activeGen = genRows[0];
+    const genLabel = activeGen ? `${activeGen.name.replace('Generasi ke-', 'Gen ')} (${activeGen.years})` : 'Gen 2 (2025-2026)';
     return {
       logoUrl: settings?.logoUrl || null,
-      currentGenName: 'Gen 2 (2024-2026)',
+      currentGenName: genLabel,
     };
   } catch {
     return {
       logoUrl: null,
-      currentGenName: 'Gen 2',
+      currentGenName: 'Gen 2 (2025-2026)',
     };
   }
 }

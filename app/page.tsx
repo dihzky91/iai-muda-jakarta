@@ -61,8 +61,8 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 50
 
 export default async function HomePage() {
   try {
-    // Homepage hanya perlu 4 query: settings, events (untuk featured), pillars, members (untuk count)
-    const [settingsRows, events, pillars, members] = await Promise.all([
+    // Homepage query: settings, events, pillars, members, partners, activeGen
+    const [settingsRows, events, pillars, members, partners, activeGenRows] = await Promise.all([
       fetchWithRetry(() =>
         db.select().from(schema.settings).where(eq(schema.settings.id, 1)).limit(1)
       ),
@@ -73,6 +73,12 @@ export default async function HomePage() {
         db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder)
       ),
       fetchWithRetry(() => selectMembers({ publicOnly: true })),
+      fetchWithRetry(() =>
+        db.select().from(schema.partners).where(eq(schema.partners.isActive, true))
+      ),
+      fetchWithRetry(() =>
+        db.select().from(schema.generations).where(eq(schema.generations.isActive, true)).limit(1)
+      ).catch(() => []),
     ]);
 
     const settings = settingsRows[0];
@@ -88,16 +94,21 @@ export default async function HomePage() {
     // Cari featured event (upcoming atau ongoing)
     const featuredEvent = events.find(e => e.status === 'upcoming' || e.status === 'ongoing') || events[0];
 
-    // Hitung member count dan generation years
+    // Hitung member count, event count, partner count dan generation years
     const memberCount = members.length;
-    const activeGenYears = '2024-2026'; // Hardcoded untuk saat ini, bisa dipindah ke settings nanti
+    const eventCount = events.length;
+    const partnerCount = partners.length;
+    const activeGenYears = activeGenRows[0]?.years || '2025-2026';
 
     return (
       <div className="min-h-screen bg-[#f8fafc]">
         <HeroSection 
           memberCount={memberCount} 
+          eventCount={eventCount}
+          partnerCount={partnerCount}
           activeGenYears={activeGenYears} 
         />
+
         
         <div className="space-y-20 py-12">
           <FeaturedEventSection 

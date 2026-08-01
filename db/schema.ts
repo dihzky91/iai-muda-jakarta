@@ -646,5 +646,20 @@ export const portalNotificationsRelations = relations(portalNotifications, ({ on
   }),
 }));
 
+export const partners = mysqlTable('partners', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  university: varchar('university', { length: 255 }),
+  logoUrl: varchar('logo_url', { length: 500 }),
+  category: mysqlEnum('category', ['hima', 'organisasi', 'corporate', 'media']).default('hima').notNull(),
+  websiteUrl: varchar('website_url', { length: 500 }),
+  contactPerson: varchar('contact_person', { length: 255 }),
+  sortOrder: int('sort_order').default(0).notNull(),
+  isActive: boolean('is_active').default(true).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+});
+
+
 
 

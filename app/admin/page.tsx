@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/src/context/AuthContext';
 import AdminCMS from '@/src/components/AdminCMS';
 import { DEFAULT_SETTINGS } from '@/src/constants/defaults';
-import type { Generation, Member, Event, Article, GalleryItem, Pillar, Settings } from '@/src/types';
+import type { Generation, Member, Event, Article, GalleryItem, Pillar, Settings, Partner } from '@/src/types';
 
 /** Seluruh data CMS yang dipegang halaman ini. */
 interface AdminData {
@@ -14,6 +14,7 @@ interface AdminData {
   articles: Article[];
   gallery: GalleryItem[];
   pillars: Pillar[];
+  partners: Partner[];
   settings: Settings | null;
 }
 
@@ -24,6 +25,7 @@ const EMPTY_DATA: AdminData = {
   articles: [],
   gallery: [],
   pillars: [],
+  partners: [],
   settings: null,
 };
 
@@ -52,7 +54,7 @@ export default function AdminPage() {
   );
 
   const fetchAll = useCallback(async () => {
-    const [generations, members, events, articles, galleries, pillars, settings] =
+    const [generations, members, events, articles, galleries, pillars, partners, settings] =
       await Promise.all([
         fetch('/api/generations').then(r => r.json()),
         fetch('/api/members').then(r => r.json()),
@@ -60,6 +62,7 @@ export default function AdminPage() {
         fetch('/api/articles').then(r => r.json()),
         fetch('/api/galleries').then(r => r.json()),
         fetch('/api/pillars').then(r => r.json()),
+        fetch('/api/admin/partners').then(r => r.json()),
         fetch('/api/settings').then(r => r.json()),
       ]);
 
@@ -70,6 +73,7 @@ export default function AdminPage() {
       articles: articles.data || [],
       gallery: galleries.data || [],
       pillars: pillars.data || [],
+      partners: partners.data || [],
       settings: settings.data || null,
     });
   }, []);
@@ -104,8 +108,11 @@ export default function AdminPage() {
       setGallery={makeSetter('gallery')}
       pillars={data.pillars}
       setPillars={makeSetter('pillars')}
+      partners={data.partners}
+      setPartners={makeSetter('partners')}
       settings={data.settings ?? DEFAULT_SETTINGS}
       onSettingsUpdate={(updated: Settings) => setData(prev => ({ ...prev, settings: updated }))}
     />
   );
 }
+

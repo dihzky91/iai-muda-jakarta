@@ -192,3 +192,19 @@ export interface OnboardingProgress {
   percentage: number;
 }
 
+export interface Partner {
+  id: number;
+  name: string;
+  university?: string | null;
+  logoUrl?: string | null;
+  category: 'hima' | 'organisasi' | 'corporate' | 'media';
+  websiteUrl?: string | null;
+  contactPerson?: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
+}
+
+
+

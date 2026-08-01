@@ -9,10 +9,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, History, BookOpen, Image as ImageIcon,
   ShieldCheck, Settings as SettingsIcon, LogOut, UserCog, Globe,
-  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList, MessageSquare,
+  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList, MessageSquare, Handshake,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar } from '../types';
+import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar, Partner } from '../types';
 import { useAuth } from '../context/AuthContext';
 import EventsManager from './admin/EventsManager';
 import MembersManager from './admin/MembersManager';
@@ -26,8 +26,9 @@ import UserManagement from './UserManagement';
 import DashboardOverview from './admin/DashboardOverview';
 import HRManager from './admin/hr/HRManager';
 import CommunityModerationManager from './admin/CommunityModerationManager';
+import PartnersManager from './admin/PartnersManager';
 
-export type CmsTab = 'dashboard' | 'events' | 'members' | 'hr' | 'community' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
+export type CmsTab = 'dashboard' | 'events' | 'members' | 'partners' | 'hr' | 'community' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -42,6 +43,8 @@ interface AdminCMSProps {
   setGallery?: React.Dispatch<React.SetStateAction<GalleryItem[]>>;
   pillars: Pillar[];
   setPillars: React.Dispatch<React.SetStateAction<Pillar[]>>;
+  partners?: Partner[];
+  setPartners?: React.Dispatch<React.SetStateAction<Partner[]>>;
   settings: Settings;
   onSettingsUpdate: (updated: Settings) => void;
 }
@@ -53,12 +56,14 @@ interface NavCountProps {
   gallery: GalleryItem[];
   generations: Generation[];
   pillars: Pillar[];
+  partners: Partner[];
 }
 
 const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; count?: (props: NavCountProps) => number }> = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'events', label: 'Agenda Acara', icon: Calendar, count: p => p.events.length },
   { key: 'members', label: 'Kepengurusan', icon: Users, count: p => p.members.length },
+  { key: 'partners', label: 'Jejaring HIMA', icon: Handshake, count: p => p.partners?.length || 0 },
   { key: 'hr', label: 'HR Command Center', icon: ClipboardList },
   { key: 'community', label: 'Moderasi Feed', icon: MessageSquare },
   { key: 'onboarding', label: 'Onboarding Library', icon: FileText },
@@ -68,6 +73,7 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'pillars', label: 'Pilar Organisasi', icon: ShieldCheck, count: p => p.pillars.length },
   { key: 'settings', label: 'Pengaturan', icon: SettingsIcon },
 ];
+
 
 
 export default function AdminCMS({
@@ -83,6 +89,8 @@ export default function AdminCMS({
   setGallery,
   pillars,
   setPillars,
+  partners = [],
+  setPartners,
   settings,
   onSettingsUpdate,
 }: AdminCMSProps) {
@@ -128,6 +136,7 @@ export default function AdminCMS({
     dashboard: 'Dashboard',
     events: 'Agenda Acara',
     members: 'Kepengurusan',
+    partners: 'Jejaring HIMA',
     hr: 'HR Command Center',
     community: 'Moderasi Feed',
     onboarding: 'Onboarding Library',
@@ -164,6 +173,8 @@ export default function AdminCMS({
             activeGen={activeGen}
           />
         );
+      case 'partners':
+        return setPartners ? <PartnersManager partners={partners} setPartners={setPartners} /> : null;
       case 'hr':
         return <HRManager />;
       case 'community':
@@ -172,6 +183,7 @@ export default function AdminCMS({
         return <OnboardingManager />;
       case 'articles':
         return <ArticlesManager articles={articles} setArticles={setArticles} />;
+
 
       case 'gallery':
         return setGallery ? <GalleryManager gallery={gallery} setGallery={setGallery} /> : null;
@@ -282,7 +294,8 @@ export default function AdminCMS({
                 <span className={`opacity-0 group-hover:opacity-100 transition-opacity text-[10px] px-2 py-0.5 rounded-full font-bold font-mono ${
                   isActive ? 'bg-blue-700 text-blue-100' : 'bg-slate-100 text-slate-700'
                 }`}>
-                  {item.count({ events, members, articles, gallery, generations, pillars })}
+                  {item.count({ events, members, articles, gallery, generations, pillars, partners })}
+
                 </span>
               )}
             </button>

@@ -62,7 +62,7 @@ export default function Header({
               </span>
             </div>
             <p className="text-[10px] sm:text-xs text-slate-500 font-sans font-medium tracking-wide whitespace-nowrap">
-              Ikatan Akuntan Indonesia Muda
+              Official Website
             </p>
           </div>
         </div>
