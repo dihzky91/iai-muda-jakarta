@@ -41,7 +41,7 @@ export default function RecentActivity({
     activities.push({
       id: 'login',
       icon: LogIn,
-      text: 'Masuk ke portal anggota',
+      text: 'Masuk ke portal pengurus',
       subtext: 'Sesi aktif di browser',
       time: formatRelativeTime(lastLoginAt),
     });

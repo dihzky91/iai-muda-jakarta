@@ -401,7 +401,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
             <div className="space-y-6">
               <div>
                 <h4 className="text-sm font-bold text-slate-800">Identitas Visual & Hero Banner</h4>
-                <p className="text-[11px] text-slate-500 mt-0.5">Kelola logo organisasi, favicon, dan banner utama portal anggota.</p>
+                <p className="text-[11px] text-slate-500 mt-0.5">Kelola logo organisasi, favicon, dan banner utama portal pengurus.</p>
               </div>
 
               {/* Hero Banner Manager Section */}
@@ -409,9 +409,9 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
                 <div className="flex items-center justify-between">
                   <div>
                     <label className="text-xs font-bold text-blue-950 flex items-center gap-2">
-                      <span className="text-base">💳</span> Hero Banner Portal Anggota
+                      <span className="text-base">💳</span> Hero Banner Portal Pengurus
                     </label>
-                    <p className="text-[11px] text-slate-600 mt-0.5">Tampil sebagai gambar latar/aset di bagian header Dashboard Portal Anggota.</p>
+                    <p className="text-[11px] text-slate-600 mt-0.5">Tampil sebagai gambar latar/aset di bagian header Dashboard Portal Pengurus.</p>
                   </div>
                   <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-sm">
                     Fitur Baru ✨
@@ -481,7 +481,7 @@ export default function SettingsManager({ settings, onSettingsUpdate }: Settings
                       />
                       <div className="absolute inset-0 bg-gradient-to-r from-blue-950/80 via-blue-900/60 to-transparent flex items-center p-4">
                         <span className="text-xs font-bold text-white tracking-wide flex items-center gap-2">
-                          <span>✨</span> Pratinjau Tampilan Header Portal Anggota
+                          <span>✨</span> Pratinjau Tampilan Header Portal Pengurus
                         </span>
                       </div>
                     </div>

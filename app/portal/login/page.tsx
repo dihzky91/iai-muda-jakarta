@@ -70,7 +70,7 @@ export default function MemberLoginPage() {
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Portal Anggota</h1>
+          <h1 className="text-3xl font-display font-bold text-slate-900">Portal Pengurus</h1>
           <p className="text-slate-500 mt-2">IAI Muda Jakarta</p>
         </div>
 

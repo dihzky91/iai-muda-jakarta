@@ -167,7 +167,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             </div>
             <div>
               <h1 className="font-display font-bold text-lg text-slate-900 leading-tight">
-                Portal Anggota
+                Portal Pengurus
               </h1>
               <p className="text-xs text-slate-500 font-medium">IAI Muda Jakarta</p>
             </div>
@@ -230,7 +230,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
             />
           </div>
           <div>
-            <h1 className="font-display font-bold text-sm text-slate-900">Portal Anggota</h1>
+            <h1 className="font-display font-bold text-sm text-slate-900">Portal Pengurus</h1>
             <p className="text-[10px] text-slate-500">IAI Muda Jakarta</p>
           </div>
         </Link>
