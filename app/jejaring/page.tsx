@@ -1,5 +1,4 @@
-import { db, schema } from '@/lib/db';
-import { eq, asc } from 'drizzle-orm';
+import { selectActivePartners } from '@/lib/partners';
 import { Handshake, Building2, Globe, ExternalLink, GraduationCap, Users } from 'lucide-react';
 import type { Partner } from '@/src/types';
 
@@ -8,11 +7,7 @@ export const revalidate = 300; // ISR 5 mins
 export default async function JejaringPage() {
   let partners: Partner[] = [];
   try {
-    const data = await db
-      .select()
-      .from(schema.partners)
-      .where(eq(schema.partners.isActive, true))
-      .orderBy(asc(schema.partners.sortOrder));
+    const data = await selectActivePartners();
     partners = data as Partner[];
   } catch (err) {
     console.error('Failed to fetch partners:', err);
@@ -34,7 +29,7 @@ export default async function JejaringPage() {
             Jejaring HIMA & Mitra Strategis
           </h1>
           <p className="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-            IAI Muda Wilayah DKI Jakarta menjalin kemitraan erat dengan Himpunan Mahasiswa Akuntansi (HIMA) di berbagai perguruan tinggi terkemuka untuk membangun kompetensi dan jejaring generasi akuntan masa depan.
+            IAI Muda Wilayah DKI Jakarta menjalin kemitraan erat dengan Himpunan Mahasiswa Akuntansi (HIMA) di berbagai perguruan tinggi untuk membangun kompetensi dan jejaring generasi akuntan masa depan.
           </p>
         </div>
 
