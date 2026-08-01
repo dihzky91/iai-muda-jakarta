@@ -1,6 +1,7 @@
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { selectMembers } from '@/lib/members';
+import { selectActivePartners } from '@/lib/partners';
 import type { Settings, Event } from '@/src/types';
 import HeroSection from '@/src/components/home/HeroSection';
 import FeaturedEventSection from '@/src/components/home/FeaturedEventSection';
@@ -73,9 +74,7 @@ export default async function HomePage() {
         db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder)
       ),
       fetchWithRetry(() => selectMembers({ publicOnly: true })),
-      fetchWithRetry(() =>
-        db.select().from(schema.partners).where(eq(schema.partners.isActive, true))
-      ).catch(() => []),
+      fetchWithRetry(() => selectActivePartners()),
       fetchWithRetry(() =>
         db.select().from(schema.generations).where(eq(schema.generations.isActive, true)).limit(1)
       ).catch(() => []),

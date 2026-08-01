@@ -1,15 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db, schema } from '@/lib/db';
-import { eq, asc } from 'drizzle-orm';
+import { selectActivePartners } from '@/lib/partners';
 
 export async function GET() {
   try {
-    const data = await db
-      .select()
-      .from(schema.partners)
-      .where(eq(schema.partners.isActive, true))
-      .orderBy(asc(schema.partners.sortOrder));
-
+    const data = await selectActivePartners();
     return NextResponse.json({ success: true, data });
   } catch (error: any) {
     console.error('Error fetching active partners:', error);
