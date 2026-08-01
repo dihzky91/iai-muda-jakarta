@@ -75,7 +75,7 @@ export default async function HomePage() {
       fetchWithRetry(() => selectMembers({ publicOnly: true })),
       fetchWithRetry(() =>
         db.select().from(schema.partners).where(eq(schema.partners.isActive, true))
-      ),
+      ).catch(() => []),
       fetchWithRetry(() =>
         db.select().from(schema.generations).where(eq(schema.generations.isActive, true)).limit(1)
       ).catch(() => []),
