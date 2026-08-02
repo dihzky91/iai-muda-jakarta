@@ -71,6 +71,8 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+import CommandPalette from '@/src/components/CommandPalette';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headerData = await getHeaderData();
   
@@ -83,6 +85,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             currentGenName={headerData.currentGenName} 
           />
           {children}
+          <CommandPalette />
         </Providers>
       </body>
     </html>

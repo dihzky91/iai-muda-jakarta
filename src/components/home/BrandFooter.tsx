@@ -48,6 +48,11 @@ export default function BrandFooter({ settings }: BrandFooterProps) {
               </Link>
             </li>
             <li>
+              <Link href="/jejaring" className="hover:text-blue-600 transition-colors font-medium">
+                Jejaring HIMA
+              </Link>
+            </li>
+            <li>
               <Link href="/acara" className="hover:text-blue-600 transition-colors font-medium">
                 Agenda Webinar
               </Link>

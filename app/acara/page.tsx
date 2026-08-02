@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { db, schema } from '@/lib/db';
 import type { Event } from '@/src/types';
 import EventsList from '@/src/components/EventsList';
@@ -64,7 +65,11 @@ export default async function AcaraPage() {
     return (
       <div className="min-h-screen bg-[#f8fafc]">
         <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <EventsList events={serialize(events) as unknown as Event[]} />
+          <Suspense fallback={
+            <div className="py-12 text-center text-slate-500">Memuat agenda acara...</div>
+          }>
+            <EventsList events={serialize(events) as unknown as Event[]} />
+          </Suspense>
         </main>
       </div>
     );

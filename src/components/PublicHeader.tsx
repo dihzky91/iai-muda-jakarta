@@ -8,7 +8,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera, Menu, X, Home, Handshake } from 'lucide-react';
+import { Landmark, Calendar, Users, FileText, ShieldAlert, Camera, Menu, X, Home, Handshake, Search } from 'lucide-react';
 
 interface PublicHeaderProps {
   currentGenName: string;
@@ -35,7 +35,6 @@ export default function PublicHeader({
     { path: '/struktur', label: 'Kepengurusan', icon: <Users className="h-4 w-4" /> },
     { path: '/jejaring', label: 'Jejaring HIMA', icon: <Handshake className="h-4 w-4" /> },
     { path: '/acara', label: 'Acara', icon: <Calendar className="h-4 w-4" /> },
-    { path: '/kalender', label: 'Kalender', icon: <Calendar className="h-4 w-4" /> },
     { path: '/galeri', label: 'Galeri', icon: <Camera className="h-4 w-4" /> },
     { path: '/artikel', label: 'Artikel', icon: <FileText className="h-4 w-4" /> },
   ];
@@ -98,8 +97,21 @@ export default function PublicHeader({
           })}
         </nav>
 
-        {/* Mobile Menu Button & Admin Link */}
+        {/* Mobile Menu Button & Action Triggers */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Global Search / Command Palette Trigger Button */}
+          <button
+            onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+            className="flex items-center gap-2 bg-slate-100/90 hover:bg-slate-200/80 text-slate-500 hover:text-slate-900 px-3 py-2 rounded-xl border border-slate-200/80 text-xs font-semibold transition-all cursor-pointer shadow-2xs"
+            title="Cari sesuatu... (Ctrl + K)"
+          >
+            <Search className="h-3.5 w-3.5 text-blue-600 shrink-0" />
+            <span className="hidden lg:inline text-slate-600">Cari...</span>
+            <kbd className="hidden lg:inline-flex items-center gap-0.5 rounded bg-white px-1.5 py-0.5 text-[9px] font-mono font-bold text-slate-500 border border-slate-300 shadow-2xs">
+              Ctrl K
+            </kbd>
+          </button>
+
           {/* Mobile Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}

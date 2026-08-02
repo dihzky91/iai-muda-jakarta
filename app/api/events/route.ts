@@ -43,7 +43,8 @@ export const GET = publicRoute(async () => {
 }, 'Failed to fetch events');
 
 export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
-  const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
+  const body = await request.json();
+  const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color, isFeatured, skpText, skpSubtitle, hasCertificate, priceText, speakersText, categoryBadge, isLive } = body;
 
   if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
     return fail('Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)', 400);
@@ -77,6 +78,14 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     allDay: allDay ?? false,
     color: color || 'blue',
     generationId: generationId || null,
+    isFeatured: isFeatured ?? false,
+    skpText: skpText || null,
+    skpSubtitle: skpSubtitle || null,
+    hasCertificate: hasCertificate ?? true,
+    priceText: priceText || 'Gratis',
+    speakersText: speakersText || null,
+    categoryBadge: categoryBadge || 'WEBINAR',
+    isLive: isLive ?? false,
   });
 
   return done('Event created successfully', { id: insertedId(result) });

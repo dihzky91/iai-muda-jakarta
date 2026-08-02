@@ -19,7 +19,8 @@ export const GET = publicRoute<Params>(async (_request, { params }) => {
 
 export const PUT = adminRoute<Params>([...EDITORS], async (request, { params }) => {
   const { id } = await params;
-  const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color } = await request.json();
+  const body = await request.json();
+  const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color, isFeatured, skpText, skpSubtitle, hasCertificate, priceText, speakersText, categoryBadge, isLive } = body;
 
   if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
     return fail('Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)', 400);
@@ -36,13 +37,21 @@ export const PUT = adminRoute<Params>([...EDITORS], async (request, { params }) 
     endDate: endDate !== undefined ? endDate : undefined,
     time: time || undefined,
     location: location || undefined,
-    imageUrl: imageUrl || undefined,
-    registrationUrl: registrationUrl || undefined,
+    imageUrl: imageUrl !== undefined ? imageUrl : undefined,
+    registrationUrl: registrationUrl !== undefined ? registrationUrl : undefined,
     status: status || undefined,
     eventType: eventType || undefined,
     allDay: allDay !== undefined ? allDay : undefined,
     color: color || undefined,
     generationId: generationId || undefined,
+    isFeatured: isFeatured !== undefined ? isFeatured : undefined,
+    skpText: skpText !== undefined ? skpText : undefined,
+    skpSubtitle: skpSubtitle !== undefined ? skpSubtitle : undefined,
+    hasCertificate: hasCertificate !== undefined ? hasCertificate : undefined,
+    priceText: priceText !== undefined ? priceText : undefined,
+    speakersText: speakersText !== undefined ? speakersText : undefined,
+    categoryBadge: categoryBadge !== undefined ? categoryBadge : undefined,
+    isLive: isLive !== undefined ? isLive : undefined,
   }).where(eq(schema.events.id, parseInt(id)));
 
   return done('Event updated successfully');

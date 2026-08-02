@@ -5,6 +5,7 @@ import { selectActivePartners } from '@/lib/partners';
 import type { Settings, Event } from '@/src/types';
 import HeroSection from '@/src/components/home/HeroSection';
 import FeaturedEventSection from '@/src/components/home/FeaturedEventSection';
+import UpcomingEventsSection from '@/src/components/home/UpcomingEventsSection';
 import PillarsSection from '@/src/components/home/PillarsSection';
 import ContactSection from '@/src/components/home/ContactSection';
 import BrandFooter from '@/src/components/home/BrandFooter';
@@ -90,8 +91,16 @@ export default async function HomePage() {
       );
     }
 
-    // Cari featured event (upcoming atau ongoing)
-    const featuredEvent = events.find(e => e.status === 'upcoming' || e.status === 'ongoing') || events[0];
+    // Filter featured events (ditandai isFeatured = true, atau fallback ke upcoming/ongoing terdekat)
+    let featuredEvents = events.filter(e => e.isFeatured);
+    if (featuredEvents.length === 0) {
+      const fallback = events.filter(e => e.status === 'upcoming' || e.status === 'ongoing');
+      featuredEvents = fallback.length > 0 ? fallback.slice(0, 3) : events.slice(0, 1);
+    }
+
+    // Exclude featured events dari list upcoming events agar tidak terduplikasi
+    const featuredIds = new Set(featuredEvents.map(f => f.id));
+    const upcomingEvents = events.filter(e => !featuredIds.has(e.id) && e.status !== 'completed');
 
     // Hitung member count, event count, partner count dan generation years
     const memberCount = members.length;
@@ -108,12 +117,15 @@ export default async function HomePage() {
           activeGenYears={activeGenYears} 
         />
 
-        
-        <div className="space-y-20 py-12">
+        <div className="space-y-16 py-12">
           <FeaturedEventSection 
-            event={serialize(featuredEvent) as unknown as Event} 
+            events={serialize(featuredEvents) as unknown as Event[]} 
           />
           
+          <UpcomingEventsSection 
+            events={serialize(upcomingEvents) as unknown as Event[]} 
+          />
+
           <PillarsSection 
             pillars={serialize(pillars)} 
           />

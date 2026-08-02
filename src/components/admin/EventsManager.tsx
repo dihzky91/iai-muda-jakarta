@@ -38,6 +38,14 @@ const emptyForm: Omit<Event, 'id'> = {
   visibleToAlumni: false,
   allDay: false,
   color: 'blue',
+  isFeatured: false,
+  skpText: '4 SKP',
+  skpSubtitle: 'IAI & Mahasiswa',
+  hasCertificate: true,
+  priceText: 'Gratis',
+  speakersText: 'Bersama 3+ Narasumber Ahli',
+  categoryBadge: 'WEBINAR',
+  isLive: false,
 };
 
 const statusOptions: Record<string, { label: string; className: string }> = {
@@ -115,6 +123,14 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
       eventType: (evt.eventType as 'public' | 'internal') || 'public',
       allDay: Boolean(evt.allDay),
       color: (evt.color as CalendarColor) || 'blue',
+      isFeatured: Boolean(evt.isFeatured),
+      skpText: evt.skpText || '4 SKP',
+      skpSubtitle: evt.skpSubtitle || 'IAI & Mahasiswa',
+      hasCertificate: evt.hasCertificate !== undefined ? evt.hasCertificate : true,
+      priceText: evt.priceText || 'Gratis',
+      speakersText: evt.speakersText || 'Bersama 3+ Narasumber Ahli',
+      categoryBadge: evt.categoryBadge || 'WEBINAR',
+      isLive: Boolean(evt.isLive),
     });
     setIsDrawerOpen(true);
   };
@@ -394,6 +410,93 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
                 <option value="ongoing">Berlangsung (Ongoing)</option>
                 <option value="completed">Telah Selesai (Completed)</option>
               </select>
+            </div>
+          </div>
+
+          {/* Featured Event Checkbox Box */}
+          <div className="p-4 bg-blue-50/80 border border-blue-200 rounded-2xl space-y-3">
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isFeatured"
+                checked={form.isFeatured || false}
+                onChange={(e) => setForm(prev => ({ ...prev, isFeatured: e.target.checked }))}
+                className="w-4 h-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="isFeatured" className="text-xs font-extrabold text-blue-900 cursor-pointer">
+                ★ Jadikan Featured Event (Sorotan Utama Homepage)
+              </label>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isLive"
+                checked={form.isLive || false}
+                onChange={(e) => setForm(prev => ({ ...prev, isLive: e.target.checked }))}
+                className="w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+              />
+              <label htmlFor="isLive" className="text-xs font-bold text-rose-900 cursor-pointer">
+                🔴 Penanda LIVE NOW (Tampilkan badge Live di flyer)
+              </label>
+            </div>
+
+            {/* Sub-inputs metadata jika featured */}
+            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-blue-200/60">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-700">Badge Kategori</label>
+                <input
+                  type="text"
+                  placeholder="WEBINAR"
+                  value={form.categoryBadge || ''}
+                  onChange={(e) => setForm(prev => ({ ...prev, categoryBadge: e.target.value }))}
+                  className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-700">Status Biaya</label>
+                <input
+                  type="text"
+                  placeholder="Gratis"
+                  value={form.priceText || ''}
+                  onChange={(e) => setForm(prev => ({ ...prev, priceText: e.target.value }))}
+                  className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-700">Bobot SKP</label>
+                <input
+                  type="text"
+                  placeholder="4 SKP"
+                  value={form.skpText || ''}
+                  onChange={(e) => setForm(prev => ({ ...prev, skpText: e.target.value }))}
+                  className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-slate-700">Sub-Keterangan SKP</label>
+                <input
+                  type="text"
+                  placeholder="IAI & Mahasiswa"
+                  value={form.skpSubtitle || ''}
+                  onChange={(e) => setForm(prev => ({ ...prev, skpSubtitle: e.target.value }))}
+                  className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
+                />
+              </div>
+
+              <div className="col-span-2 space-y-1">
+                <label className="text-[11px] font-bold text-slate-700">Label Narasumber</label>
+                <input
+                  type="text"
+                  placeholder="Bersama 3+ Narasumber Ahli"
+                  value={form.speakersText || ''}
+                  onChange={(e) => setForm(prev => ({ ...prev, speakersText: e.target.value }))}
+                  className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
+                />
+              </div>
             </div>
           </div>
 

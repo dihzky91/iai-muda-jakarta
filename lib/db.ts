@@ -6,14 +6,14 @@ import * as schema from '../db/schema';
 const isTiDB = process.env.DB_HOST?.includes('tidb');
 
 function createPool() {
-  return mysql.createPool({
+  const p = mysql.createPool({
     host: process.env.DB_HOST || 'localhost',
     user: process.env.DB_USER || 'root',
     password: process.env.DB_PASSWORD || '',
     database: process.env.DB_NAME || 'iai_muda_jakarta',
     port: parseInt(process.env.DB_PORT || '3306'),
     waitForConnections: true,
-    connectionLimit: isTiDB ? 5 : 10, // TiDB serverless: limit koneksi lebih kecil
+    connectionLimit: isTiDB ? 5 : 10, // TiDB serverless: limit koneksi melebih kecil
     queueLimit: 0,
     enableKeepAlive: true,
     keepAliveInitialDelay: 2000,
@@ -27,6 +27,13 @@ function createPool() {
       }
     } : {}),
   });
+
+  (p as any).setMaxListeners(30);
+  (p as any).on('error', (err: any) => {
+    console.warn('[MySQL Pool Warning]', err?.code || err?.message);
+  });
+
+  return p;
 }
 
 /**
@@ -42,10 +49,6 @@ const globalForDb = globalThis as unknown as {
 };
 
 const pool = globalForDb.__mysqlPool ?? createPool();
-
-(pool as any).on('error', (err: any) => {
-  console.warn('[MySQL Pool Warning]', err?.code || err?.message);
-});
 
 if (process.env.NODE_ENV !== 'production') {
   globalForDb.__mysqlPool = pool;

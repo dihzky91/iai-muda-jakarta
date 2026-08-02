@@ -43,6 +43,14 @@ export interface Event {
   allDay?: boolean;     // true = sepanjang hari
   color?: string;       // nama warna chip: 'blue' | 'emerald' | 'purple' | 'amber' | 'slate' (default 'blue')
   generationId?: number | null; // generasi kepengurusan penyelenggara, ada di tabel events
+  isFeatured?: boolean;
+  skpText?: string | null;
+  skpSubtitle?: string | null;
+  hasCertificate?: boolean;
+  priceText?: string | null;
+  speakersText?: string | null;
+  categoryBadge?: string | null;
+  isLive?: boolean;
 }
 
 // Extended Event untuk portal anggota (include RSVP info)
