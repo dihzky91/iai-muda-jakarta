@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, ensureEventsSchema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
@@ -9,6 +9,7 @@ type Params = { id: string };
 const EDITORS = ['superadmin', 'admin', 'editor'] as const;
 
 export const GET = publicRoute<Params>(async (_request, { params }) => {
+  await ensureEventsSchema();
   const { id } = await params;
   const event = await db.select().from(schema.events).where(eq(schema.events.id, parseInt(id))).limit(1);
   if (!event.length) {
@@ -18,6 +19,7 @@ export const GET = publicRoute<Params>(async (_request, { params }) => {
 }, 'Failed to fetch event');
 
 export const PUT = adminRoute<Params>([...EDITORS], async (request, { params }) => {
+  await ensureEventsSchema();
   const { id } = await params;
   const body = await request.json();
   const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color, isFeatured, skpText, skpSubtitle, hasCertificate, priceText, speakersText, categoryBadge, isLive } = body;

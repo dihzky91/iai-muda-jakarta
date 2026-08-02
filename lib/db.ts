@@ -72,3 +72,35 @@ export { schema, pool };
 export function insertedId(result: MySqlRawQueryResult): number {
   return result[0].insertId;
 }
+
+let eventsSchemaChecked = false;
+
+/**
+ * Memastikan kolom-kolom baru (is_featured, skp_text, dll.) pada tabel events
+ * dibuat secara otomatis pada database production jika belum ada.
+ */
+export async function ensureEventsSchema() {
+  if (eventsSchemaChecked) return;
+  try {
+    const statements = [
+      "ALTER TABLE events ADD COLUMN is_featured BOOLEAN NOT NULL DEFAULT FALSE",
+      "ALTER TABLE events ADD COLUMN skp_text VARCHAR(50) NULL",
+      "ALTER TABLE events ADD COLUMN skp_subtitle VARCHAR(100) NULL",
+      "ALTER TABLE events ADD COLUMN has_certificate BOOLEAN NOT NULL DEFAULT TRUE",
+      "ALTER TABLE events ADD COLUMN price_text VARCHAR(100) NOT NULL DEFAULT 'Gratis'",
+      "ALTER TABLE events ADD COLUMN speakers_text VARCHAR(255) NULL",
+      "ALTER TABLE events ADD COLUMN category_badge VARCHAR(50) NOT NULL DEFAULT 'WEBINAR'",
+      "ALTER TABLE events ADD COLUMN is_live BOOLEAN NOT NULL DEFAULT FALSE",
+    ];
+    for (const sql of statements) {
+      try {
+        await pool.query(sql);
+      } catch {
+        // Abaikan jika kolom sudah ada
+      }
+    }
+    eventsSchemaChecked = true;
+  } catch (err) {
+    console.warn('[ensureEventsSchema warning]', err);
+  }
+}

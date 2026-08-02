@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { db, schema } from '@/lib/db';
+import { db, schema, ensureEventsSchema } from '@/lib/db';
 import type { Event } from '@/src/types';
 import EventsList from '@/src/components/EventsList';
 import type { Metadata } from 'next';
@@ -58,6 +58,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function AcaraPage() {
   try {
+    await ensureEventsSchema();
     const events = await fetchWithRetry(() =>
       db.select().from(schema.events).orderBy(schema.events.date)
     );

@@ -1,4 +1,4 @@
-import { db, schema } from '@/lib/db';
+import { db, schema, ensureEventsSchema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { selectMembers } from '@/lib/members';
 import { selectActivePartners } from '@/lib/partners';
@@ -63,6 +63,8 @@ async function fetchWithRetry<T>(fn: () => Promise<T>, retries = 2, delayMs = 50
 
 export default async function HomePage() {
   try {
+    await ensureEventsSchema();
+
     // Homepage query: settings, events, pillars, members, partners, activeGen
     const [settingsRows, events, pillars, members, partners, activeGenRows] = await Promise.all([
       fetchWithRetry(() =>

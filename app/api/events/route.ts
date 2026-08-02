@@ -1,4 +1,4 @@
-import { db, schema, insertedId } from '@/lib/db';
+import { db, schema, insertedId, ensureEventsSchema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
@@ -32,6 +32,7 @@ function validate(fields: Record<string, { value: unknown; minLen?: number; maxL
 }
 
 export const GET = publicRoute(async () => {
+  await ensureEventsSchema();
   // Event 'internal' hanya untuk portal anggota. Filternya di WHERE, bukan
   // .filter() setelah seluruh tabel ditarik — memakai idx_events_type_date.
   const events = await db
@@ -43,6 +44,7 @@ export const GET = publicRoute(async () => {
 }, 'Failed to fetch events');
 
 export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request) => {
+  await ensureEventsSchema();
   const body = await request.json();
   const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color, isFeatured, skpText, skpSubtitle, hasCertificate, priceText, speakersText, categoryBadge, isLive } = body;
 
