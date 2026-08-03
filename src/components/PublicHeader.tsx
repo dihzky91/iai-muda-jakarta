@@ -34,7 +34,7 @@ export default function PublicHeader({
     { path: '/', label: 'Beranda', icon: <Home className="h-4 w-4" /> },
     { path: '/struktur', label: 'Kepengurusan', icon: <Users className="h-4 w-4" /> },
     { path: '/jejaring', label: 'Jejaring HIMA', icon: <Handshake className="h-4 w-4" /> },
-    { path: '/acara', label: 'Acara', icon: <Calendar className="h-4 w-4" /> },
+    { path: '/acara', label: 'Kegiatan', icon: <Calendar className="h-4 w-4" /> },
     { path: '/galeri', label: 'Galeri', icon: <Camera className="h-4 w-4" /> },
     { path: '/artikel', label: 'Artikel', icon: <FileText className="h-4 w-4" /> },
   ];
@@ -115,42 +115,39 @@ export default function PublicHeader({
           >
             {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-
-          {/* Admin CMS Link */}
-          <Link
-            href="/admin"
-            className="flex items-center gap-2 rounded-xl px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold transition-all shadow-md shrink-0 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200"
-          >
-            <ShieldAlert className="h-4 w-4 shrink-0" />
-            <span className="hidden sm:inline whitespace-nowrap">Akses CMS Admin</span>
-          </Link>
         </div>
       </div>
 
-      {/* Mobile Menu Dropdown */}
+      {/* Mobile Menu Dropdown with Backdrop Overlay */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white">
-          <nav className="px-4 py-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  onClick={() => setMobileMenuOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-slate-600 hover:bg-slate-50'
-                  }`}
-                >
-                  {item.icon}
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
+        <>
+          <div 
+            className="md:hidden fixed inset-0 top-[73px] z-40 bg-slate-900/40 backdrop-blur-xs transition-opacity animate-in fade-in"
+            onClick={() => setMobileMenuOpen(false)}
+          />
+          <div className="md:hidden relative z-50 border-t border-slate-200 bg-white/98 backdrop-blur-md shadow-xl animate-in slide-in-from-top-2 duration-200">
+            <nav className="px-4 py-4 space-y-1 max-h-[calc(100vh-80px)] overflow-y-auto">
+              {navItems.map((item) => {
+                const isActive = pathname === item.path;
+                return (
+                  <Link
+                    key={item.path}
+                    href={item.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-600 font-extrabold shadow-2xs'
+                        : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                    }`}
+                  >
+                    {item.icon}
+                    {item.label}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </>
       )}
     </header>
   );

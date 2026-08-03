@@ -245,60 +245,75 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         </div>
       </header>
 
-      {/* Mobile Navigation Drawer */}
+      {/* Mobile Navigation Drawer & Backdrop */}
       <AnimatePresence>
         {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.2 }}
-            className="lg:hidden fixed inset-x-0 top-16 bg-white border-b border-slate-200 shadow-xl z-30 px-4 py-4 max-h-[calc(100vh-4rem)] overflow-y-auto"
-          >
-            <nav className="space-y-5">
-              {navGroups.map((group) => (
-                <div key={group.title}>
-                  <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
-                    {group.title}
-                  </p>
-                  <div className="space-y-1">
-                    {group.items.map((item) => {
-                      const active = isActive(item.href);
-                      const baseClasses =
-                        'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all';
-                      const activeClasses = 'bg-blue-50 text-blue-700';
-                      const inactiveClasses = 'text-slate-600 hover:bg-slate-100';
+          <>
+            {/* Backdrop Blur Overlay */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen(false)}
+              className="lg:hidden fixed inset-0 top-16 bg-slate-900/50 backdrop-blur-sm z-30"
+            />
 
-                      return (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          target={item.external ? '_blank' : undefined}
-                          rel={item.external ? 'noopener noreferrer' : undefined}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
-                        >
-                          <item.icon className={`w-5 h-5 ${active ? 'text-blue-700' : 'text-slate-400'}`} />
-                          <span className="flex-1">{item.label}</span>
-                          {item.hasBadge && (
-                            <span className="w-2 h-2 rounded-full bg-red-600" />
-                          )}
-                          {item.external && <ChevronRight className="w-4 h-4 ml-auto text-slate-400" />}
-                        </Link>
-                      );
-                    })}
+            {/* Navigation Drawer */}
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.2 }}
+              className="lg:hidden fixed inset-x-0 top-16 bg-white border-b border-slate-200 shadow-2xl z-40 px-4 py-5 max-h-[calc(100vh-4rem)] overflow-y-auto"
+            >
+              <nav className="space-y-5">
+                {navGroups.map((group) => (
+                  <div key={group.title}>
+                    <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+                      {group.title}
+                    </p>
+                    <div className="space-y-1">
+                      {group.items.map((item) => {
+                        const active = isActive(item.href);
+                        const baseClasses =
+                          'flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-all';
+                        const activeClasses = 'bg-blue-50 text-blue-700 font-bold';
+                        const inactiveClasses = 'text-slate-600 hover:bg-slate-100';
+
+                        return (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            target={item.external ? '_blank' : undefined}
+                            rel={item.external ? 'noopener noreferrer' : undefined}
+                            onClick={() => setMobileMenuOpen(false)}
+                            className={`${baseClasses} ${active ? activeClasses : inactiveClasses}`}
+                          >
+                            <item.icon className={`w-5 h-5 ${active ? 'text-blue-700' : 'text-slate-400'}`} />
+                            <span className="flex-1">{item.label}</span>
+                            {item.hasBadge && (
+                              <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                            )}
+                            {item.external && <ChevronRight className="w-4 h-4 ml-auto text-slate-400" />}
+                          </Link>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-              <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 cursor-pointer"
-              >
-                <LogOut className="w-5 h-5" />
-                Keluar
-              </button>
-            </nav>
-          </motion.div>
+                ))}
+                <button
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 cursor-pointer border border-red-100 mt-4"
+                >
+                  <LogOut className="w-5 h-5 text-red-600" />
+                  Keluar dari Akun
+                </button>
+              </nav>
+            </motion.div>
+          </>
         )}
       </AnimatePresence>
 

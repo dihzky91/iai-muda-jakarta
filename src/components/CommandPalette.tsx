@@ -41,12 +41,12 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
   },
   {
     id: 'nav-events',
-    title: 'Agenda & Webinar',
-    subtitle: 'Lihat daftar webinar, workshop, dan event kompetensi',
+    title: 'Kegiatan & Webinar',
+    subtitle: 'Lihat daftar program kegiatan, webinar, workshop, dan agenda',
     category: 'Navigasi Cepat',
     icon: <Calendar className="h-4 w-4 text-emerald-600" />,
     url: '/acara',
-    keywords: ['acara', 'webinar', 'event', 'agenda', 'kegiatan', 'workshop', 'seminar', 'jadwal'],
+    keywords: ['kegiatan', 'acara', 'webinar', 'event', 'agenda', 'program', 'workshop', 'seminar', 'jadwal', 'kalender'],
   },
   {
     id: 'nav-structure',
@@ -235,7 +235,7 @@ export default function CommandPalette() {
         subtitle: `Tanggal: ${evt.date} • ${evt.status}`,
         icon: <Calendar className="h-4 w-4 text-emerald-600" />,
         url: `/acara?id=${evt.id}`,
-        category: 'Acara & Webinar',
+        category: 'Kegiatan & Webinar',
       });
     });
 

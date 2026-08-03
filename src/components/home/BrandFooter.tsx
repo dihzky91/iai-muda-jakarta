@@ -54,12 +54,7 @@ export default function BrandFooter({ settings }: BrandFooterProps) {
             </li>
             <li>
               <Link href="/acara" className="hover:text-blue-600 transition-colors font-medium">
-                Agenda Webinar
-              </Link>
-            </li>
-            <li>
-              <Link href="/kalender" className="hover:text-blue-600 transition-colors font-medium">
-                Kalender Acara
+                Kegiatan
               </Link>
             </li>
             <li>

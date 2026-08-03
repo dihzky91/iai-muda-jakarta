@@ -351,10 +351,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                   <Calendar className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-bold text-slate-900 truncate">
+                  <div className="text-xs font-bold text-slate-900 truncate sm:whitespace-normal">
                     {formattedDate}
                   </div>
-                  <div className="text-[11px] font-medium text-slate-500 truncate">
+                  <div className="text-[11px] font-medium text-slate-500 truncate sm:whitespace-normal">
                     {eventTime}
                   </div>
                 </div>
@@ -367,10 +367,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                     <LocationIcon className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-900 truncate" title={rawLocation}>
+                    <div className="text-xs font-bold text-slate-900 truncate sm:whitespace-normal" title={rawLocation}>
                       {rawLocation}
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                    <div className="text-[11px] font-medium text-slate-500 truncate sm:whitespace-normal">
                       {locationSubtitle}
                     </div>
                   </div>
@@ -384,10 +384,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                     <Ticket className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-900 truncate">
+                    <div className="text-xs font-bold text-slate-900 truncate sm:whitespace-normal">
                       {priceLabel}
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                    <div className="text-[11px] font-medium text-slate-500 truncate sm:whitespace-normal">
                       Terbuka untuk umum
                     </div>
                   </div>
@@ -401,10 +401,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                     <Award className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-900 truncate">
+                    <div className="text-xs font-bold text-slate-900 truncate sm:whitespace-normal">
                       {skpText}
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                    <div className="text-[11px] font-medium text-slate-500 truncate sm:whitespace-normal">
                       {skpSub}
                     </div>
                   </div>
@@ -418,10 +418,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                     <FileCheck className="h-5 w-5" />
                   </div>
                   <div className="min-w-0">
-                    <div className="text-xs font-bold text-slate-900 truncate">
+                    <div className="text-xs font-bold text-slate-900 truncate sm:whitespace-normal">
                       E-Sertifikat
                     </div>
-                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                    <div className="text-[11px] font-medium text-slate-500 truncate sm:whitespace-normal">
                       Untuk peserta
                     </div>
                   </div>
@@ -433,8 +433,8 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
               cardItems.length === 1 ? 'grid-cols-1 max-w-sm' :
               cardItems.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl' :
               cardItems.length === 3 ? 'grid-cols-1 sm:grid-cols-3' :
-              cardItems.length === 4 ? 'grid-cols-2 sm:grid-cols-4' :
-              'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5';
+              cardItems.length === 4 ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-4' :
+              'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5';
 
             return (
               <div className={`grid gap-3.5 sm:gap-4 ${gridColsClass}`}>

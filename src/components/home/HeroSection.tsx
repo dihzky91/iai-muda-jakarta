@@ -267,72 +267,72 @@ export default function HeroSection({
               <motion.div
                 variants={floatAnimation(0)}
                 animate="animate"
-                className="absolute top-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute top-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-blue-500 mb-1" />
-                <img src="/images/hero-icon-learning.png" alt="Learning Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Learning</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Belajar tanpa henti, tumbuh tanpa batas.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-blue-500 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-learning.png" alt="Learning Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Learning</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Belajar tanpa henti, tumbuh tanpa batas.</span>
               </motion.div>
 
               {/* Surrounding Node 2: Networking */}
               <motion.div
                 variants={floatAnimation(0.6)}
                 animate="animate"
-                className="absolute top-[18%] right-[1%] sm:right-[2%] flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute top-[18%] right-[1%] sm:right-[2%] flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-purple-500 mb-1" />
-                <img src="/images/hero-icon-networking.png" alt="Networking Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Networking</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Memperluas jejaring, membangun peluang.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-purple-500 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-networking.png" alt="Networking Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Networking</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Memperluas jejaring, membangun peluang.</span>
               </motion.div>
 
               {/* Surrounding Node 3: Leadership */}
               <motion.div
                 variants={floatAnimation(1.2)}
                 animate="animate"
-                className="absolute bottom-[18%] right-[1%] sm:right-[2%] flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute bottom-[18%] right-[1%] sm:right-[2%] flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-pink-500 mb-1" />
-                <img src="/images/hero-icon-leadership.png" alt="Leadership Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Leadership</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Memimpin dengan integritas.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-pink-500 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-leadership.png" alt="Leadership Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Leadership</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Memimpin dengan integritas.</span>
               </motion.div>
 
               {/* Surrounding Node 4: Professional Growth */}
               <motion.div
                 variants={floatAnimation(1.8)}
                 animate="animate"
-                className="absolute bottom-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute bottom-[3%] left-1/2 -translate-x-1/2 flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-sky-400 mb-1" />
-                <img src="/images/hero-icon-growth.png" alt="Professional Growth Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Professional Growth</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Terus berkembang & profesional.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-sky-400 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-growth.png" alt="Professional Growth Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Professional Growth</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Terus berkembang & profesional.</span>
               </motion.div>
 
               {/* Surrounding Node 5: Collaboration */}
               <motion.div
                 variants={floatAnimation(2.4)}
                 animate="animate"
-                className="absolute bottom-[18%] left-[1%] sm:left-[2%] flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute bottom-[18%] left-[1%] sm:left-[2%] flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-teal-400 mb-1" />
-                <img src="/images/hero-icon-collaboration.png" alt="Collaboration Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Collaboration</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Berkolaborasi untuk dampak besar.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-teal-400 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-collaboration.png" alt="Collaboration Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Collaboration</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Berkolaborasi untuk dampak besar.</span>
               </motion.div>
 
               {/* Surrounding Node 6: Innovation */}
               <motion.div
                 variants={floatAnimation(3.0)}
                 animate="animate"
-                className="absolute top-[18%] left-[1%] sm:left-[2%] flex flex-col items-center px-2 py-1.5 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-28 sm:w-32 text-center z-10"
+                className="absolute top-[18%] left-[1%] sm:left-[2%] flex flex-col items-center px-1.5 sm:px-2 py-1 sm:py-2 rounded-xl bg-white/95 backdrop-blur-md border border-slate-100/80 shadow-md shadow-slate-200/40 hover:shadow-lg hover:scale-105 transition-all duration-300 group w-24 sm:w-32 text-center z-10"
               >
-                <div className="w-5 h-0.5 rounded-full bg-amber-400 mb-1" />
-                <img src="/images/hero-icon-innovation.png" alt="Innovation Icon" className="w-5 h-5 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
-                <span className="text-[10px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Innovation</span>
-                <span className="text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[95px] sm:max-w-[105px]">Berpikir kreatif, cipta solusi.</span>
+                <div className="w-4 sm:w-5 h-0.5 rounded-full bg-amber-400 mb-0.5 sm:mb-1" />
+                <img src="/images/hero-icon-innovation.png" alt="Innovation Icon" className="w-4 h-4 sm:w-6 sm:h-6 object-contain group-hover:scale-110 transition-transform duration-300" />
+                <span className="text-[9px] sm:text-[11px] font-bold text-slate-800 leading-tight mt-0.5">Innovation</span>
+                <span className="hidden xs:block text-[8px] sm:text-[8.5px] text-slate-500 leading-tight mt-0.5 max-w-[85px] sm:max-w-[105px]">Berpikir kreatif, cipta solusi.</span>
               </motion.div>
 
             </div>
