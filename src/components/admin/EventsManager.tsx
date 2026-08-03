@@ -124,8 +124,8 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
       allDay: Boolean(evt.allDay),
       color: (evt.color as CalendarColor) || 'blue',
       isFeatured: Boolean(evt.isFeatured),
-      skpText: evt.skpText || '4 SKP',
-      skpSubtitle: evt.skpSubtitle || 'IAI & Mahasiswa',
+      skpText: evt.skpText ?? '',
+      skpSubtitle: evt.skpSubtitle ?? '',
       hasCertificate: evt.hasCertificate !== undefined ? evt.hasCertificate : true,
       priceText: evt.priceText || 'Gratis',
       speakersText: evt.speakersText || 'Bersama 3+ Narasumber Ahli',
@@ -455,10 +455,15 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-700">Status Biaya</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-700">Status Biaya</label>
+                  {form.priceText && (
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, priceText: '' }))} className="text-[9px] text-rose-500 hover:underline">Sembunyikan</button>
+                  )}
+                </div>
                 <input
                   type="text"
-                  placeholder="Gratis"
+                  placeholder="Gratis (kosongkan jika sembunyi)"
                   value={form.priceText || ''}
                   onChange={(e) => setForm(prev => ({ ...prev, priceText: e.target.value }))}
                   className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
@@ -466,14 +471,20 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               </div>
 
               <div className="space-y-1">
-                <label className="text-[11px] font-bold text-slate-700">Bobot SKP</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-700">Bobot SKP</label>
+                  {form.skpText && (
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, skpText: '' }))} className="text-[9px] text-rose-500 hover:underline">Sembunyikan</button>
+                  )}
+                </div>
                 <input
                   type="text"
-                  placeholder="4 SKP"
+                  placeholder="4 SKP (kosongkan jika sembunyi)"
                   value={form.skpText || ''}
                   onChange={(e) => setForm(prev => ({ ...prev, skpText: e.target.value }))}
                   className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
                 />
+                <p className="text-[9px] text-slate-400">Kosongkan jika tanpa SKP (kartu otomatis sembunyi).</p>
               </div>
 
               <div className="space-y-1">
@@ -488,15 +499,35 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
               </div>
 
               <div className="col-span-2 space-y-1">
-                <label className="text-[11px] font-bold text-slate-700">Label Narasumber</label>
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-700">Label Narasumber (Pill Avatars)</label>
+                  {form.speakersText && (
+                    <button type="button" onClick={() => setForm(prev => ({ ...prev, speakersText: '' }))} className="text-[9px] text-rose-500 hover:underline">Sembunyikan</button>
+                  )}
+                </div>
                 <input
                   type="text"
-                  placeholder="Bersama 3+ Narasumber Ahli"
+                  placeholder="Bersama 3+ Narasumber Ahli (kosongkan jika sembunyi)"
                   value={form.speakersText || ''}
                   onChange={(e) => setForm(prev => ({ ...prev, speakersText: e.target.value }))}
                   className="w-full rounded-xl bg-white border border-blue-200 px-3 py-1.5 text-xs text-slate-900"
                 />
+                <p className="text-[9px] text-slate-400">Kosongkan jika acara tidak menampilkan pill narasumber (misal Awarding/Festival).</p>
               </div>
+            </div>
+
+            {/* Checkbox E-Sertifikat */}
+            <div className="flex items-center justify-between pt-2">
+              <label htmlFor="hasCertificate" className="flex items-center gap-2 text-xs font-bold text-slate-700 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="hasCertificate"
+                  checked={form.hasCertificate ?? true}
+                  onChange={(e) => setForm(prev => ({ ...prev, hasCertificate: e.target.checked }))}
+                  className="w-4 h-4 rounded border-blue-300 text-blue-600 focus:ring-blue-500"
+                />
+                📜 Tampilkan Kartu E-Sertifikat
+              </label>
             </div>
           </div>
 
@@ -588,14 +619,20 @@ export default function EventsManager({ events, setEvents }: EventsManagerProps)
 
           {/* Link Pendaftaran */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-700">Link Pendaftaran (Google Form)</label>
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-bold text-slate-700">Link Pendaftaran (Google Form / External)</label>
+              <span className="text-[10px] text-slate-400 font-normal">Opsional (Kosongkan jika belum ada)</span>
+            </div>
             <input
               type="url"
-              placeholder="https://docs.google.com/forms/..."
+              placeholder="https://forms.gle/... atau https://docs.google.com/forms/..."
               value={form.registrationUrl || ''}
               onChange={(e) => setForm(prev => ({ ...prev, registrationUrl: e.target.value }))}
               className="w-full rounded-xl bg-slate-50 border border-slate-200 px-4 py-2.5 text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:bg-white transition-all font-mono text-[11px]"
             />
+            <p className="text-[10px] text-slate-400">
+              Bisa berupa link pendek (<code className="text-slate-600 bg-slate-100 px-1 rounded font-mono">forms.gle/...</code>) atau link Google Form biasa.
+            </p>
           </div>
 
           {/* Color Picker */}

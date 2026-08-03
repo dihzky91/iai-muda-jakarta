@@ -26,6 +26,7 @@ interface QuickLink {
   category: 'Navigasi Cepat';
   icon: React.ReactNode;
   url: string;
+  keywords?: string[];
 }
 
 const QUICK_NAV_ITEMS: QuickLink[] = [
@@ -36,6 +37,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <Home className="h-4 w-4 text-blue-600" />,
     url: '/',
+    keywords: ['beranda', 'home', 'depan', 'utama', 'landing', 'halaman'],
   },
   {
     id: 'nav-events',
@@ -44,6 +46,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <Calendar className="h-4 w-4 text-emerald-600" />,
     url: '/acara',
+    keywords: ['acara', 'webinar', 'event', 'agenda', 'kegiatan', 'workshop', 'seminar', 'jadwal'],
   },
   {
     id: 'nav-structure',
@@ -52,6 +55,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <Users className="h-4 w-4 text-indigo-600" />,
     url: '/struktur',
+    keywords: ['pengurus', 'kepengurusan', 'struktur', 'anggota', 'komite', 'divisi', 'jabatan', 'organisasi'],
   },
   {
     id: 'nav-hima',
@@ -60,6 +64,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <Handshake className="h-4 w-4 text-amber-600" />,
     url: '/jejaring',
+    keywords: ['hima', 'mitra', 'universitas', 'kampus', 'jejaring', 'kerjasama', 'himpunan', 'akuntansi'],
   },
   {
     id: 'nav-gallery',
@@ -68,6 +73,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <Camera className="h-4 w-4 text-purple-600" />,
     url: '/galeri',
+    keywords: ['galeri', 'foto', 'dokumentasi', 'video', 'kegiatan', 'gambar'],
   },
   {
     id: 'nav-articles',
@@ -76,6 +82,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <FileText className="h-4 w-4 text-cyan-600" />,
     url: '/artikel',
+    keywords: ['artikel', 'berita', 'opini', 'publikasi', 'rilis', 'tulisan', 'bacaan', 'wawasan'],
   },
   {
     id: 'nav-portal',
@@ -84,6 +91,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <UserCheck className="h-4 w-4 text-pink-600" />,
     url: '/portal/feed',
+    keywords: ['portal', 'pengurus', 'komunitas', 'internal', 'diskusi', 'feed', 'login', 'member', 'anggota', 'ruang'],
   },
   {
     id: 'nav-admin',
@@ -92,6 +100,7 @@ const QUICK_NAV_ITEMS: QuickLink[] = [
     category: 'Navigasi Cepat',
     icon: <ShieldAlert className="h-4 w-4 text-rose-600" />,
     url: '/admin',
+    keywords: ['admin', 'cms', 'dasbor', 'dashboard', 'kelola', 'login', 'management', 'sistem'],
   },
 ];
 
@@ -183,27 +192,40 @@ export default function CommandPalette() {
 
   // Flattened results for keyboard navigation
   const combinedItems = useCallback(() => {
-    if (!query || query.trim().length < 2) {
-      return QUICK_NAV_ITEMS.map((item) => ({
-        type: 'quick',
-        id: item.id,
-        title: item.title,
-        subtitle: item.subtitle,
-        icon: item.icon,
-        url: item.url,
-        category: item.category,
-      }));
+    const q = query.toLowerCase().trim();
+
+    // Filter Quick Nav items by query / keywords
+    const quickNavMatches = QUICK_NAV_ITEMS.filter((item) => {
+      if (!q) return true;
+      return (
+        item.title.toLowerCase().includes(q) ||
+        item.subtitle.toLowerCase().includes(q) ||
+        item.url.toLowerCase().includes(q) ||
+        (item.keywords && item.keywords.some((k) => k.toLowerCase().includes(q)))
+      );
+    }).map((item) => ({
+      type: 'quick' as const,
+      id: item.id,
+      title: item.title,
+      subtitle: item.subtitle,
+      icon: item.icon,
+      url: item.url,
+      category: item.category,
+    }));
+
+    if (!q || q.length < 2) {
+      return quickNavMatches;
     }
 
     const items: Array<{
-      type: 'event' | 'article' | 'member' | 'partner';
+      type: 'quick' | 'event' | 'article' | 'member' | 'partner';
       id: string;
       title: string;
       subtitle: string;
       icon: React.ReactNode;
       url: string;
       category: string;
-    }> = [];
+    }> = [...quickNavMatches];
 
     searchResults.events.forEach((evt) => {
       items.push({
@@ -356,6 +378,11 @@ export default function CommandPalette() {
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 ml-3">
+                      {query.length >= 1 && (
+                        <span className="hidden sm:inline-flex items-center text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200/80">
+                          {item.category}
+                        </span>
+                      )}
                       {isSelected && (
                         <span className="hidden sm:inline-flex items-center text-[10px] font-bold text-blue-600 bg-blue-100/60 px-2 py-0.5 rounded-lg border border-blue-200/50">
                           Buka <ArrowRight className="h-3 w-3 ml-1" />

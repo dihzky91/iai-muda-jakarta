@@ -18,7 +18,8 @@ import {
   FileCheck, 
   ChevronLeft, 
   ChevronRight,
-  Users
+  Users,
+  MapPin
 } from 'lucide-react';
 import type { Event } from '@/src/types';
 
@@ -95,12 +96,36 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
 
   const formattedDate = formatDateDisplay(currentEvent.date);
   const eventTime = currentEvent.time ? `${currentEvent.time} WIB` : 'Sesuai Jadwal';
-  const eventLocation = currentEvent.location || 'Zoom Meeting & YouTube Live';
+  const rawLocation = currentEvent.location || 'Zoom Meeting & YouTube Live';
+
+  // Deteksi lokasi (Online, Offline / Tatap Muka, atau Hybrid)
+  const isOnlineLoc = /zoom|google meet|meet|online|webinar|live stream|youtube/i.test(rawLocation);
+  const isHybridLoc = /hybrid/i.test(rawLocation);
+  const isOfflineLoc = !isOnlineLoc || isHybridLoc;
+
+  let locationSubtitle = 'Online Event';
+  let LocationIcon = Video;
+  let iconBgClass = 'bg-purple-50 text-purple-600 hover:border-purple-200';
+
+  if (isHybridLoc) {
+    locationSubtitle = 'Hybrid Event (Online & Offline)';
+    LocationIcon = Video;
+    iconBgClass = 'bg-indigo-50 text-indigo-600 hover:border-indigo-200';
+  } else if (isOfflineLoc) {
+    locationSubtitle = 'Offline Event (Tatap Muka)';
+    LocationIcon = MapPin;
+    iconBgClass = 'bg-amber-50 text-amber-600 hover:border-amber-200';
+  }
 
   const categoryLabel = currentEvent.categoryBadge || 'WEBINAR';
   const priceLabel = currentEvent.priceText || 'Gratis';
-  const skpText = currentEvent.skpText || '4 SKP';
-  const skpSub = currentEvent.skpSubtitle || 'IAI & Mahasiswa';
+
+  // Handling SKP (Jika kosong/null/Non-SKP/Tanpa SKP/0 SKP)
+  const rawSkp = currentEvent.skpText;
+  const isNoSkp = !rawSkp || /^(non-?skp|tanpa skp|0 skp|tidak ada skp|none|-)$/i.test(rawSkp.trim());
+  const skpText = isNoSkp ? 'Non-SKP' : rawSkp;
+  const skpSub = isNoSkp ? (currentEvent.skpSubtitle && currentEvent.skpSubtitle !== 'IAI & Mahasiswa' ? currentEvent.skpSubtitle : 'Tanpa Bobot SKP') : (currentEvent.skpSubtitle || 'IAI & Mahasiswa');
+
   const speakersLabel = currentEvent.speakersText || 'Bersama 3+\nNarasumber Ahli';
 
   return (
@@ -189,29 +214,31 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                 </Link>
               )}
 
-              {/* Speaker Avatars Pill */}
-              <div className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-slate-200/70 px-4 py-2 shadow-xs">
-                <div className="flex -space-x-2 overflow-hidden">
-                  <img
-                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                    src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
-                    alt="Speaker 1"
-                  />
-                  <img
-                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
-                    alt="Speaker 2"
-                  />
-                  <img
-                    className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
-                    src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150"
-                    alt="Speaker 3"
-                  />
+              {/* Speaker Avatars Pill (Hanya tampil jika ada data narasumber) */}
+              {currentEvent.speakersText && currentEvent.speakersText.trim() !== '' && (
+                <div className="flex items-center gap-3 rounded-2xl bg-slate-50 border border-slate-200/70 px-4 py-2 shadow-xs">
+                  <div className="flex -space-x-2 overflow-hidden">
+                    <img
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                      src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150"
+                      alt="Speaker 1"
+                    />
+                    <img
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                      src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150"
+                      alt="Speaker 2"
+                    />
+                    <img
+                      className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                      src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80&w=150"
+                      alt="Speaker 3"
+                    />
+                  </div>
+                  <div className="text-[11px] leading-tight font-semibold text-slate-700 whitespace-pre-line">
+                    {currentEvent.speakersText}
+                  </div>
                 </div>
-                <div className="text-[11px] leading-tight font-semibold text-slate-700 whitespace-pre-line">
-                  {speakersLabel}
-                </div>
-              </div>
+              )}
             </div>
 
           </div>
@@ -238,10 +265,10 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
             <div className="relative group w-full max-w-[270px] sm:max-w-[290px] z-10 my-2">
               
               {/* Elevated Clean Poster Shell */}
-              <div className="relative rounded-3xl overflow-hidden shadow-xl shadow-slate-900/10 border border-slate-200/70 bg-slate-900 p-1.5 transition-transform duration-500 group-hover:scale-[1.02]">
+              <div className="relative rounded-3xl overflow-hidden shadow-2xl shadow-blue-900/15 border border-slate-200/80 bg-white transition-transform duration-500 group-hover:scale-[1.02]">
                 
                 {/* Poster Image / Graphic Cover */}
-                <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-slate-900 flex flex-col justify-between p-5 text-white">
+                <div className="relative aspect-[3/4] w-full overflow-hidden bg-slate-100 flex flex-col justify-between p-5 text-white">
                   {currentEvent.imageUrl ? (
                     <img
                       src={currentEvent.imageUrl}
@@ -277,14 +304,14 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
                         <div className="space-y-1 text-xs text-blue-100 font-medium">
                           <p>📅 {formattedDate}</p>
                           <p>🕒 {eventTime}</p>
-                          <p>📹 {eventLocation}</p>
+                          <p>📍 {rawLocation}</p>
                         </div>
                       </div>
                     </>
                   )}
 
-                  {/* Gradient Overlay for badges visibility */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-slate-950/30 pointer-events-none" />
+                  {/* Gradient Overlay for bottom badges readability */}
+                  <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-slate-950/70 via-slate-950/20 to-transparent pointer-events-none" />
 
                   {/* Poster Overlay Badges */}
                   <div className="relative z-10 flex items-center justify-between w-full mt-auto">
@@ -309,86 +336,112 @@ export default function FeaturedEventSection({ events }: FeaturedEventSectionPro
 
         </div>
 
-        {/* Bottom Metadata Bar (Full Width Grid of 5 Cards) */}
+        {/* Bottom Metadata Bar (Dynamic Cards Grid) */}
         <div className="mt-10 pt-8 border-t border-slate-100 relative z-10">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 sm:gap-4">
-            
-            {/* Card 1: Tanggal */}
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-blue-200 transition-all group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
-                <Calendar className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  {formattedDate}
-                </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  {eventTime}
-                </div>
-              </div>
-            </div>
+          {(() => {
+            const hasLocationCard = Boolean(currentEvent.location && currentEvent.location.trim() !== '');
+            const hasPriceCard = Boolean(currentEvent.priceText && currentEvent.priceText.trim() !== '');
+            const hasSkpCard = Boolean(currentEvent.skpText && currentEvent.skpText.trim() !== '' && !isNoSkp);
+            const hasCertCard = currentEvent.hasCertificate !== false;
 
-            {/* Card 2: Platform */}
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-purple-200 transition-all group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-50 text-purple-600 group-hover:scale-110 transition-transform">
-                <Video className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  {eventLocation.split('&')[0] || eventLocation}
+            const cardItems = [
+              // Card 1: Tanggal (Selalu Tampil)
+              <div key="date" className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-blue-200 transition-all group">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 group-hover:scale-110 transition-transform">
+                  <Calendar className="h-5 w-5" />
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  {eventLocation.includes('&') ? '& ' + eventLocation.split('&')[1] : 'Online Event'}
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-slate-900 truncate">
+                    {formattedDate}
+                  </div>
+                  <div className="text-[11px] font-medium text-slate-500 truncate">
+                    {eventTime}
+                  </div>
                 </div>
-              </div>
-            </div>
+              </div>,
 
-            {/* Card 3: Biaya / Entry */}
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-emerald-200 transition-all group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
-                <Ticket className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  {priceLabel}
+              // Card 2: Lokasi / Platform
+              hasLocationCard && (
+                <div key="location" className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-blue-200 transition-all group">
+                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${isOfflineLoc ? 'bg-amber-50 text-amber-600' : 'bg-purple-50 text-purple-600'} group-hover:scale-110 transition-transform`}>
+                    <LocationIcon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate" title={rawLocation}>
+                      {rawLocation}
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                      {locationSubtitle}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  Terbuka untuk umum
-                </div>
-              </div>
-            </div>
+              ),
 
-            {/* Card 4: SKP */}
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-amber-200 transition-all group">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
-                <Award className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  {skpText}
+              // Card 3: Biaya / Entry
+              hasPriceCard && (
+                <div key="price" className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-emerald-200 transition-all group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 group-hover:scale-110 transition-transform">
+                    <Ticket className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">
+                      {priceLabel}
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                      Terbuka untuk umum
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  {skpSub}
-                </div>
-              </div>
-            </div>
+              ),
 
-            {/* Card 5: Sertifikat */}
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-rose-200 transition-all group col-span-2 sm:col-span-1">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 group-hover:scale-110 transition-transform">
-                <FileCheck className="h-5 w-5" />
-              </div>
-              <div className="min-w-0">
-                <div className="text-xs font-bold text-slate-900 truncate">
-                  E-Sertifikat
+              // Card 4: SKP
+              hasSkpCard && (
+                <div key="skp" className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-amber-200 transition-all group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-50 text-amber-600 group-hover:scale-110 transition-transform">
+                    <Award className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">
+                      {skpText}
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                      {skpSub}
+                    </div>
+                  </div>
                 </div>
-                <div className="text-[11px] font-medium text-slate-500 truncate">
-                  Untuk peserta
-                </div>
-              </div>
-            </div>
+              ),
 
-          </div>
+              // Card 5: Sertifikat
+              hasCertCard && (
+                <div key="cert" className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50/80 border border-slate-100 hover:bg-white hover:shadow-md hover:border-rose-200 transition-all group">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-50 text-rose-600 group-hover:scale-110 transition-transform">
+                    <FileCheck className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-bold text-slate-900 truncate">
+                      E-Sertifikat
+                    </div>
+                    <div className="text-[11px] font-medium text-slate-500 truncate">
+                      Untuk peserta
+                    </div>
+                  </div>
+                </div>
+              ),
+            ].filter(Boolean);
+
+            const gridColsClass = 
+              cardItems.length === 1 ? 'grid-cols-1 max-w-sm' :
+              cardItems.length === 2 ? 'grid-cols-1 sm:grid-cols-2 max-w-2xl' :
+              cardItems.length === 3 ? 'grid-cols-1 sm:grid-cols-3' :
+              cardItems.length === 4 ? 'grid-cols-2 sm:grid-cols-4' :
+              'grid-cols-2 sm:grid-cols-3 lg:grid-cols-5';
+
+            return (
+              <div className={`grid gap-3.5 sm:gap-4 ${gridColsClass}`}>
+                {cardItems}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Pagination Dots (bottom center) */}

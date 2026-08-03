@@ -53,14 +53,9 @@ export default function Header({
             </div>
           )}
           <div className="shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950 whitespace-nowrap">
-                IAI Muda <span className="text-blue-600">DKI Jakarta</span>
-              </span>
-              <span className="hidden sm:inline-flex items-center rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-mono font-medium text-blue-600 ring-1 ring-inset ring-blue-500/20 whitespace-nowrap">
-                {currentGenName}
-              </span>
-            </div>
+            <span className="font-display text-base sm:text-lg font-extrabold tracking-tight text-slate-950 whitespace-nowrap block">
+              IAI Muda DKI Jakarta
+            </span>
             <p className="text-[10px] sm:text-xs text-slate-500 font-sans font-medium tracking-wide whitespace-nowrap">
               Official Website
             </p>

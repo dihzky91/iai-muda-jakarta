@@ -1,5 +1,5 @@
 import { db, schema } from '@/lib/db';
-import { like, or } from 'drizzle-orm';
+import { sql, or, and } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 
 export async function GET(request: Request) {
@@ -11,7 +11,48 @@ export async function GET(request: Request) {
       return NextResponse.json({ events: [], articles: [], members: [], partners: [] });
     }
 
-    const searchTerm = `%${query}%`;
+    const qLower = query.toLowerCase();
+    const words = qLower.split(/\s+/).filter(Boolean);
+
+    if (words.length === 0) {
+      return NextResponse.json({ events: [], articles: [], members: [], partners: [] });
+    }
+
+    const eventConditions = words.map((w) => {
+      const term = `%${w}%`;
+      return or(
+        sql`LOWER(${schema.events.title}) LIKE ${term}`,
+        sql`LOWER(${schema.events.description}) LIKE ${term}`,
+        sql`LOWER(${schema.events.location}) LIKE ${term}`
+      );
+    });
+
+    const articleConditions = words.map((w) => {
+      const term = `%${w}%`;
+      return or(
+        sql`LOWER(${schema.articles.title}) LIKE ${term}`,
+        sql`LOWER(${schema.articles.excerpt}) LIKE ${term}`,
+        sql`LOWER(${schema.articles.author}) LIKE ${term}`
+      );
+    });
+
+    const memberConditions = words.map((w) => {
+      const term = `%${w}%`;
+      return or(
+        sql`LOWER(${schema.members.name}) LIKE ${term}`,
+        sql`LOWER(${schema.members.division}) LIKE ${term}`,
+        sql`LOWER(${schema.members.university}) LIKE ${term}`
+      );
+    });
+
+    const partnerConditions = words.map((w) => {
+      const term = `%${w}%`;
+      return or(
+        sql`LOWER(${schema.partners.name}) LIKE ${term}`,
+        sql`LOWER(${schema.partners.university}) LIKE ${term}`,
+        sql`LOWER(${schema.partners.category}) LIKE ${term}`
+      );
+    });
 
     const [events, articles, members, partners] = await Promise.all([
       db
@@ -23,14 +64,8 @@ export async function GET(request: Request) {
           status: schema.events.status,
         })
         .from(schema.events)
-        .where(
-          or(
-            like(schema.events.title, searchTerm),
-            like(schema.events.description, searchTerm),
-            like(schema.events.location, searchTerm)
-          )
-        )
-        .limit(5),
+        .where(and(...eventConditions))
+        .limit(10),
 
       db
         .select({
@@ -40,13 +75,8 @@ export async function GET(request: Request) {
           category: schema.articles.category,
         })
         .from(schema.articles)
-        .where(
-          or(
-            like(schema.articles.title, searchTerm),
-            like(schema.articles.excerpt, searchTerm)
-          )
-        )
-        .limit(5),
+        .where(and(...articleConditions))
+        .limit(10),
 
       db
         .select({
@@ -56,14 +86,8 @@ export async function GET(request: Request) {
           university: schema.members.university,
         })
         .from(schema.members)
-        .where(
-          or(
-            like(schema.members.name, searchTerm),
-            like(schema.members.division, searchTerm),
-            like(schema.members.university, searchTerm)
-          )
-        )
-        .limit(5),
+        .where(and(...memberConditions))
+        .limit(10),
 
       db
         .select({
@@ -73,15 +97,15 @@ export async function GET(request: Request) {
           category: schema.partners.category,
         })
         .from(schema.partners)
-        .where(
-          or(
-            like(schema.partners.name, searchTerm),
-            like(schema.partners.university, searchTerm),
-            like(schema.partners.category, searchTerm)
-          )
-        )
-        .limit(5),
+        .where(and(...partnerConditions))
+        .limit(10),
     ]);
+
+    // Sort by relevance: items matching query in title/name come first
+    events.sort((a, b) => (b.title.toLowerCase().includes(qLower) ? 1 : 0) - (a.title.toLowerCase().includes(qLower) ? 1 : 0));
+    articles.sort((a, b) => (b.title.toLowerCase().includes(qLower) ? 1 : 0) - (a.title.toLowerCase().includes(qLower) ? 1 : 0));
+    members.sort((a, b) => (b.name.toLowerCase().includes(qLower) ? 1 : 0) - (a.name.toLowerCase().includes(qLower) ? 1 : 0));
+    partners.sort((a, b) => (b.name.toLowerCase().includes(qLower) ? 1 : 0) - (a.name.toLowerCase().includes(qLower) ? 1 : 0));
 
     return NextResponse.json({
       events,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
+import { ensurePartnersTableExists } from '@/lib/partners';
 import { eq } from 'drizzle-orm';
 
 async function checkAdminAuth(req: NextRequest) {
@@ -25,6 +26,8 @@ export async function PUT(
     if (isNaN(partnerId)) {
       return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 });
     }
+
+    await ensurePartnersTableExists();
 
     const body = await req.json();
     const updateData: Record<string, any> = {};
@@ -62,6 +65,8 @@ export async function DELETE(
     if (isNaN(partnerId)) {
       return NextResponse.json({ success: false, error: 'Invalid ID' }, { status: 400 });
     }
+
+    await ensurePartnersTableExists();
 
     await db.delete(schema.partners).where(eq(schema.partners.id, partnerId));
 

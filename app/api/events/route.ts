@@ -2,7 +2,7 @@ import { db, schema, insertedId, ensureEventsSchema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
 
-const URL_REGEX = /^https:\/\/(docs\.)?google\.com\/forms\/.+/i;
+const URL_REGEX = /^https?:\/\/.+/i;
 
 function validate(fields: Record<string, { value: unknown; minLen?: number; maxLen?: number; type?: string; enum?: string[]; regex?: RegExp; label: string }>) {
   for (const [, rule] of Object.entries(fields)) {
@@ -48,8 +48,10 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
   const body = await request.json();
   const { title, description, date, endDate, time, location, imageUrl, registrationUrl, status, eventType, generationId, allDay, color, isFeatured, skpText, skpSubtitle, hasCertificate, priceText, speakersText, categoryBadge, isLive } = body;
 
-  if (registrationUrl && !URL_REGEX.test(registrationUrl)) {
-    return fail('Link Google Form tidak valid. Harus berupa URL Google Form (https://docs.google.com/forms/...)', 400);
+  const regUrl = typeof registrationUrl === 'string' ? registrationUrl.trim() : registrationUrl;
+
+  if (regUrl && !URL_REGEX.test(regUrl)) {
+    return fail('Link pendaftaran tidak valid. Harus berupa URL yang diawali dengan http:// atau https:// (misal: https://forms.gle/... atau https://docs.google.com/forms/...)', 400);
   }
 
   if (endDate && endDate < date) {
@@ -74,7 +76,7 @@ export const POST = adminRoute(['superadmin', 'admin', 'editor'], async (request
     time: time || null,
     location: location || null,
     imageUrl: imageUrl || null,
-    registrationUrl: registrationUrl || null,
+    registrationUrl: regUrl || null,
     status: status || 'upcoming',
     eventType: eventType || 'public',
     allDay: allDay ?? false,

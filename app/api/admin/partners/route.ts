@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db, schema } from '@/lib/db';
 import { verifyToken } from '@/lib/auth';
+import { ensurePartnersTableExists } from '@/lib/partners';
 import { asc, desc } from 'drizzle-orm';
 
 async function checkAdminAuth(req: NextRequest) {
@@ -16,6 +17,8 @@ export async function GET(req: NextRequest) {
     if (!auth) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
+
+    await ensurePartnersTableExists();
 
     const data = await db
       .select()
@@ -42,6 +45,8 @@ export async function POST(req: NextRequest) {
     if (!name || typeof name !== 'string' || !name.trim()) {
       return NextResponse.json({ success: false, error: 'Nama himpunan/mitra wajib diisi' }, { status: 400 });
     }
+
+    await ensurePartnersTableExists();
 
     const [newPartner] = await db.insert(schema.partners).values({
       name: name.trim(),
