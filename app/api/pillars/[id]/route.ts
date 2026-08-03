@@ -1,6 +1,7 @@
 import { db, schema } from '@/lib/db';
 import { eq } from 'drizzle-orm';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
+import { revalidatePath } from 'next/cache';
 
 type Params = { id: string };
 
@@ -24,6 +25,7 @@ export const PUT = adminRoute<Params>(['superadmin', 'admin'], async (request, {
     sortOrder: sortOrder !== undefined ? sortOrder : undefined,
   }).where(eq(schema.pillars.id, parseInt(id)));
 
+  revalidatePath('/');
   return done('Pillar updated successfully');
 }, 'Failed to update pillar');
 
@@ -32,5 +34,7 @@ export const DELETE = adminRoute<Params>(['superadmin', 'admin'], async (_reques
 
   await db.delete(schema.pillars).where(eq(schema.pillars.id, parseInt(id)));
 
+  revalidatePath('/');
   return done('Pillar deleted successfully');
 }, 'Failed to delete pillar');
+

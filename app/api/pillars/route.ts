@@ -1,5 +1,6 @@
 import { db, schema, insertedId } from '@/lib/db';
 import { adminRoute, publicRoute, fail, ok, done } from '@/lib/api';
+import { revalidatePath } from 'next/cache';
 
 export const GET = publicRoute(async () => {
   const pillars = await db.select().from(schema.pillars).orderBy(schema.pillars.sortOrder);
@@ -19,5 +20,7 @@ export const POST = adminRoute(['superadmin', 'admin'], async (request) => {
     sortOrder: sortOrder || 0,
   });
 
+  revalidatePath('/');
   return done('Pillar created successfully', { id: insertedId(result) });
 }, 'Failed to create pillar');
+
