@@ -268,7 +268,7 @@ export default function ProfAkunWidget() {
       dragElastic={0.1}
       dragMomentum={false}
       whileDrag={{ scale: 1.05, cursor: 'grabbing' }}
-      className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 flex flex-col items-end gap-2.5 font-sans select-none max-w-[calc(100vw-2rem)] cursor-grab active:cursor-grabbing"
+      className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 flex flex-col items-end gap-3 font-sans select-none max-w-[calc(100vw-2rem)] cursor-grab active:cursor-grabbing"
     >
       {/* MOBILE BOTTOM SHEET & DESKTOP POP-OUT MODAL */}
       <AnimatePresence>
@@ -280,121 +280,165 @@ export default function ProfAkunWidget() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={handleCloseModal}
-              className="sm:hidden fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40"
+              className="sm:hidden fixed inset-0 bg-slate-950/70 backdrop-blur-md z-40 transition-opacity"
             />
 
             {/* Modal Box: Bottom Sheet on Mobile, Floating Card on Desktop */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 0 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="fixed sm:relative inset-x-0 bottom-0 sm:bottom-auto sm:inset-auto z-50 w-full sm:w-[360px] max-w-full sm:max-w-[360px] bg-white rounded-t-[2rem] sm:rounded-3xl shadow-2xl border-t sm:border border-blue-100/80 overflow-hidden"
+              initial={{ opacity: 0, y: 35, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 25, scale: 0.95 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+              className="fixed sm:relative inset-x-0 bottom-0 sm:bottom-auto sm:inset-auto z-50 w-full sm:w-[380px] max-w-full sm:max-w-[380px] bg-white/95 backdrop-blur-2xl rounded-t-[2.25rem] sm:rounded-[2rem] shadow-[0_25px_70px_-15px_rgba(13,27,61,0.45)] border-t sm:border border-blue-100/90 overflow-hidden ring-1 ring-slate-900/5"
             >
-              {/* Mobile Notch Handle */}
-              <div className="sm:hidden flex justify-center pt-2.5 pb-1 bg-[#0D1B3D]">
-                <div className="w-12 h-1.5 bg-white/30 rounded-full" />
+              {/* Mobile Drag Handle Bar */}
+              <div className="sm:hidden flex justify-center pt-3 pb-1 bg-gradient-to-r from-[#070E20] via-[#0D1B3D] to-[#1E293B]">
+                <div className="w-12 h-1.5 bg-white/30 rounded-full backdrop-blur-sm" />
               </div>
 
-              {/* Header Card (Navy Accent #0D1B3D) */}
-              <div className="bg-[#0D1B3D] text-white p-4.5 px-5 relative overflow-hidden">
-                {/* Background Decorative Pattern */}
-                <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-blue-600/20 rounded-full blur-xl pointer-events-none" />
-                
+              {/* Glassmorphism Cyber-Navy Header Card */}
+              <div className="bg-gradient-to-r from-[#070E20] via-[#0D1B3D] to-[#1A2E5A] text-white p-5 relative overflow-hidden border-b border-white/10">
+                {/* Ambient Glowing Radial Mesh Background */}
+                <div className="absolute -right-8 -bottom-10 w-36 h-36 bg-blue-500/25 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute -left-6 -top-8 w-28 h-28 bg-indigo-500/20 rounded-full blur-xl pointer-events-none" />
+
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-3">
-                    {/* Clean AI Badge Icon */}
-                    <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">
-                      <Sparkles className="h-5 w-5 text-amber-400" />
+                    {/* Glowing AI Avatar Icon Frame */}
+                    <div className="relative group">
+                      <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-blue-500/30 to-indigo-600/30 border border-blue-400/40 flex items-center justify-center shrink-0 shadow-inner backdrop-blur-md">
+                        <Sparkles className="h-5.5 w-5.5 text-amber-400 drop-shadow-[0_2px_8px_rgba(251,191,36,0.6)]" />
+                      </div>
+                      <span className="absolute -bottom-0.5 -right-0.5 flex h-3.5 w-3.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-[#0D1B3D]"></span>
+                      </span>
                     </div>
+
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-extrabold text-sm tracking-tight text-white">Prof Akun</h3>
-                        <span className="flex items-center gap-1 bg-emerald-500/20 text-emerald-300 text-[10px] font-medium px-2 py-0.5 rounded-full border border-emerald-500/30">
+                        <h3 className="font-black text-base tracking-tight text-white drop-shadow-sm">Prof Akun</h3>
+                        <span className="inline-flex items-center gap-1 bg-white/10 backdrop-blur-md text-blue-200 text-[10px] font-bold px-2.5 py-0.5 rounded-full border border-white/15 shadow-sm">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           Online
                         </span>
                       </div>
-                      <p className="text-[11px] text-blue-200/80 font-medium">Asisten Digital IAI Muda Jakarta</p>
+                      <p className="text-[11.5px] text-blue-200/90 font-medium">Asisten Digital IAI Muda Jakarta</p>
                     </div>
                   </div>
 
-                  {/* Close Button */}
+                  {/* Close Button with Micro Hover Animation */}
                   <button
                     onClick={handleCloseModal}
-                    className="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+                    className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white/80 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-sm border border-white/10"
                     title="Tutup"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-4 w-4" />
                   </button>
+                </div>
+
+                {/* Progress Segment Indicator Bar */}
+                <div className="mt-4 flex gap-1.5 relative z-10">
+                  {GUIDE_SLIDES.map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="h-1 flex-1 rounded-full overflow-hidden bg-white/15 backdrop-blur-sm"
+                    >
+                      <motion.div
+                        initial={false}
+                        animate={{
+                          width: idx <= currentSlideIndex ? '100%' : '0%',
+                          backgroundColor: idx === currentSlideIndex ? '#60A5FA' : idx < currentSlideIndex ? '#3B82F6' : 'transparent',
+                        }}
+                        transition={{ duration: 0.3 }}
+                        className="h-full rounded-full shadow-[0_0_8px_rgba(96,165,250,0.8)]"
+                      />
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Body Content */}
-              <div className="p-5 bg-gradient-to-b from-blue-50/30 to-white">
-                
-                {/* Category / Badge */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100/80 px-3 py-1 rounded-full border border-blue-200/60">
-                    {currentSlide.icon}
-                    {currentSlide.badge}
-                  </span>
-                  <span className="text-[11px] font-semibold text-slate-400">
-                    {currentSlideIndex + 1} / {GUIDE_SLIDES.length}
-                  </span>
-                </div>
-
-                {/* Slide Title & Description */}
-                <h4 className="text-base font-bold text-[#0D1B3D] tracking-tight leading-snug mb-1">
-                  {currentSlide.title}
-                </h4>
-                <p className="text-xs font-semibold text-blue-600 mb-2">
-                  {currentSlide.subtitle}
-                </p>
-                <p className="text-xs text-slate-600 leading-relaxed font-normal mb-4">
-                  {currentSlide.description}
-                </p>
-
-                {/* Optional Action Button */}
-                {currentSlide.actionText && (
-                  <a
-                    href={currentSlide.actionHref}
-                    target={currentSlide.actionHref?.startsWith('http') ? '_blank' : '_self'}
-                    rel="noreferrer"
-                    className="mb-4 flex items-center justify-center gap-1.5 w-full py-2 px-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all transform active:scale-95"
+              {/* Body Content with Smooth Dynamic Slide Animations */}
+              <div className="p-6 bg-gradient-to-b from-blue-50/40 via-white to-slate-50/50">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentSlide.id}
+                    initial={{ opacity: 0, x: 18 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -18 }}
+                    transition={{ duration: 0.22, ease: 'easeOut' }}
                   >
-                    <span>{currentSlide.actionText}</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </a>
-                )}
+                    {/* Category Badge & Step Counter */}
+                    <div className="flex items-center justify-between mb-3.5">
+                      <span className="inline-flex items-center gap-2 text-xs font-extrabold text-blue-700 bg-gradient-to-r from-blue-100/90 to-indigo-100/90 px-3.5 py-1.5 rounded-xl border border-blue-200/80 shadow-xs backdrop-blur-sm">
+                        {currentSlide.icon}
+                        <span>{currentSlide.badge}</span>
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
+                        {currentSlideIndex + 1} / {GUIDE_SLIDES.length}
+                      </span>
+                    </div>
 
-                {/* Pagination Dots & Navigation Controls */}
-                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                    {/* Slide Title & Subtitle */}
+                    <h4 className="text-lg font-black text-[#0D1B3D] tracking-tight leading-snug mb-1">
+                      {currentSlide.title}
+                    </h4>
+                    <p className="text-xs font-bold text-blue-600 mb-3 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                      {currentSlide.subtitle}
+                    </p>
+                    
+                    {/* Description Card */}
+                    <div className="p-3.5 bg-white/80 rounded-2xl border border-slate-200/60 shadow-xs mb-4">
+                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                        {currentSlide.description}
+                      </p>
+                    </div>
+
+                    {/* Interactive Action CTA Button */}
+                    {currentSlide.actionText && (
+                      <motion.a
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        href={currentSlide.actionHref}
+                        target={currentSlide.actionHref?.startsWith('http') ? '_blank' : '_self'}
+                        rel="noreferrer"
+                        className="mb-4 flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs font-bold rounded-xl shadow-md hover:shadow-blue-500/25 transition-all group cursor-pointer"
+                      >
+                        <span>{currentSlide.actionText}</span>
+                        <ChevronRight className="h-4 w-4 transform group-hover:translate-x-1 transition-transform" />
+                      </motion.a>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Pagination Controls & Navigation Footer */}
+                <div className="flex items-center justify-between pt-4 border-t border-slate-200/60">
                   
                   {/* Previous Button */}
                   <button
                     onClick={handlePrevSlide}
                     disabled={currentSlideIndex === 0}
-                    className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
+                    className={`flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
                       currentSlideIndex === 0
-                        ? 'text-slate-300 cursor-not-allowed'
-                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer'
+                        ? 'text-slate-300 bg-slate-100/50 cursor-not-allowed'
+                        : 'text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-95 cursor-pointer'
                     }`}
                   >
-                    <ChevronLeft className="h-3.5 w-3.5" />
-                    Kembali
+                    <ChevronLeft className="h-4 w-4" />
+                    <span>Kembali</span>
                   </button>
 
-                  {/* Dots */}
+                  {/* Dot Indicators */}
                   <div className="flex items-center gap-1.5">
                     {GUIDE_SLIDES.map((_, idx) => (
                       <button
                         key={idx}
                         onClick={() => setCurrentSlideIndex(idx)}
-                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                        className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                           idx === currentSlideIndex
-                            ? 'w-4 bg-blue-600'
-                            : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                            ? 'w-5 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm'
+                            : 'w-2 bg-slate-200 hover:bg-slate-300'
                         }`}
                       />
                     ))}
@@ -403,17 +447,17 @@ export default function ProfAkunWidget() {
                   {/* Next / Finish Button */}
                   <button
                     onClick={handleNextSlide}
-                    className="flex items-center gap-1 text-xs font-bold text-white bg-[#0D1B3D] hover:bg-slate-900 px-3.5 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer active:scale-95"
+                    className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#0D1B3D] to-[#1E293B] hover:from-[#070E20] hover:to-[#0D1B3D] px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
                   >
                     {currentSlideIndex === GUIDE_SLIDES.length - 1 ? (
                       <>
                         <span>Selesai</span>
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-400" />
                       </>
                     ) : (
                       <>
                         <span>Lanjut</span>
-                        <ChevronRight className="h-3.5 w-3.5" />
+                        <ChevronRight className="h-4 w-4" />
                       </>
                     )}
                   </button>
@@ -434,19 +478,19 @@ export default function ProfAkunWidget() {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
           onClick={handleOpenModal}
-          className={`relative backdrop-blur-md text-slate-800 p-3.5 px-4 rounded-2xl rounded-br-none shadow-2xl flex flex-col gap-1 max-w-[250px] cursor-pointer group transition-all duration-300 transform hover:-translate-y-1 ${
+          className={`relative backdrop-blur-xl text-slate-800 p-4 px-4.5 rounded-2xl rounded-br-none shadow-[0_15px_35px_rgba(13,27,61,0.18)] flex flex-col gap-1.5 max-w-[260px] cursor-pointer group transition-all duration-300 transform hover:-translate-y-1 ${
             isReaction
               ? 'bg-amber-50/95 border-2 border-amber-300 ring-4 ring-amber-400/20'
               : 'bg-white/95 border border-blue-200/80 hover:border-blue-400'
           }`}
         >
           {/* Header Badge */}
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100/80 pb-1.5 mb-0.5">
-            <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100/90 pb-1.5">
+            <span className={`flex items-center gap-1.5 text-[10.5px] font-black uppercase tracking-wider ${
               isReaction ? 'text-amber-700' : 'text-blue-700'
             }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${isReaction ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
-              {isReaction ? '✨ Reaksi Prof' : 'Prof Akun'}
+              <span className={`w-2 h-2 rounded-full ${isReaction ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
+              {isReaction ? '✨ Reaksi Prof' : 'Prof Akun • AI Assistant'}
             </span>
             <button
               onClick={(e) => {
@@ -457,16 +501,16 @@ export default function ProfAkunWidget() {
               className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
               title="Tutup pesan"
             >
-              <X className="h-3 w-3" />
+              <X className="h-3.5 w-3.5" />
             </button>
           </div>
 
           {/* Contextual / Reaction Text */}
-          <p className="text-xs font-extrabold text-[#0D1B3D] leading-snug">
+          <p className="text-xs font-black text-[#0D1B3D] leading-snug">
             {greeting.text}
           </p>
           {greeting.sub && (
-            <p className="text-[11px] font-medium text-slate-500 leading-tight">
+            <p className="text-[11px] font-semibold text-slate-500 leading-tight">
               {greeting.sub}
             </p>
           )}
@@ -487,12 +531,12 @@ export default function ProfAkunWidget() {
             <motion.div
               key={sp.id}
               initial={{ opacity: 1, y: 0, scale: 0.5, x: sp.x }}
-              animate={{ opacity: 0, y: -45, scale: 1.3, x: sp.x + (Math.random() * 20 - 10) }}
+              animate={{ opacity: 0, y: -50, scale: 1.4, x: sp.x + (Math.random() * 24 - 12) }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.7, ease: 'easeOut' }}
+              transition={{ duration: 0.75, ease: 'easeOut' }}
               className="absolute top-0 pointer-events-none z-30"
             >
-              <Sparkles className="h-5 w-5 text-amber-400 drop-shadow-md" />
+              <Sparkles className="h-5.5 w-5.5 text-amber-400 drop-shadow-[0_2px_8px_rgba(251,191,36,0.8)]" />
             </motion.div>
           ))}
         </AnimatePresence>
@@ -502,26 +546,26 @@ export default function ProfAkunWidget() {
           className="group relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none select-none"
           title="Klik Prof Akun untuk Reaksi / Buka Panduan"
         >
-          {/* Soft Ground Shadow */}
-          <div className="absolute -bottom-1 w-14 h-3 bg-slate-900/25 rounded-full blur-[3px] transition-all duration-300 group-hover:w-16 group-hover:bg-blue-600/40" />
+          {/* Soft Ground Glow & Shadow */}
+          <div className="absolute -bottom-1 w-16 h-3 bg-[#0D1B3D]/30 rounded-full blur-[4px] transition-all duration-300 group-hover:w-18 group-hover:bg-blue-600/50" />
 
           {/* Uncropped Free Mascot Image with Framer Motion Bounce / Spin Physics */}
           <motion.div
             animate={{
-              scale: isBouncing ? [1, 1.22, 0.92, 1.1, 1] : 1,
-              rotate: isSpinning ? [0, 360] : isBouncing ? [-8, 8, -4, 4, 0] : 0,
-              y: isBouncing ? [0, -16, 0, -6, 0] : 0,
+              scale: isBouncing ? [1, 1.25, 0.9, 1.12, 1] : 1,
+              rotate: isSpinning ? [0, 360] : isBouncing ? [-10, 10, -5, 5, 0] : 0,
+              y: isBouncing ? [0, -18, 0, -8, 0] : 0,
             }}
             transition={{
               duration: isSpinning ? 0.75 : 0.45,
               ease: 'easeOut',
             }}
-            className="relative z-10 transition-transform duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 active:scale-95"
+            className="relative z-10 transition-transform duration-300 transform group-hover:-translate-y-2.5 group-hover:scale-110 active:scale-95"
           >
             <img
               src={isOpen ? currentSlide.image : '/images/prof-akun-waving.png'}
               alt="Prof Akun Mascot"
-              className="h-20 sm:h-24 w-auto object-contain filter drop-shadow-[0_8px_16px_rgba(13,27,61,0.25)] group-hover:drop-shadow-[0_14px_24px_rgba(37,99,235,0.35)] transition-all duration-300"
+              className="h-22 sm:h-26 w-auto object-contain filter drop-shadow-[0_10px_20px_rgba(13,27,61,0.3)] group-hover:drop-shadow-[0_16px_28px_rgba(37,99,235,0.4)] transition-all duration-300"
             />
           </motion.div>
         </button>
