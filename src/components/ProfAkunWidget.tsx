@@ -122,6 +122,18 @@ const getContextualGreeting = (pathname: string | null): { text: string; sub?: s
   }
 };
 
+// Easter Egg Reaction Quotes Pool
+const EASTER_EGG_QUOTES = [
+  { text: 'Aduh! Prof kaget... 🦉', sub: 'Tapi Prof siap bantu kepengurusan kamu!' },
+  { text: 'Semangat Akuntan Muda! ☕', sub: 'Jangan lupa rehat sejenak di tengah kesibukan.' },
+  { text: 'Cerdas • Integritas • Solutif! ✨', sub: 'Tagline kebanggaan IAI Muda DKI Jakarta.' },
+  { text: 'Akuntansi itu seru! 📊', sub: 'Apalagi kalau dikerjakan bareng sesama pengurus.' },
+  { text: 'Poin kamu terus bertambah! 🏆', sub: 'Pantau posisi kamu di Leaderboard portal.' },
+  { text: 'Keren banget semangatnya! 🚀', sub: 'Setiap kontribusimu berdampak besar bagi organisasi.' },
+  { text: 'Ada info agenda seru minggu ini! 📅', sub: 'Klik Prof untuk menjelajahi event terbaru.' },
+  { text: 'Pengurus IAI Muda Jakarta TOP! 🌟', sub: 'Selalu berinovasi & siap melayani.' },
+];
+
 export default function ProfAkunWidget() {
   const pathname = usePathname();
   const widgetRef = useRef<HTMLDivElement>(null);
@@ -129,6 +141,13 @@ export default function ProfAkunWidget() {
   const [showSpeechBubble, setShowSpeechBubble] = useState(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [dragBounds, setDragBounds] = useState({ left: -300, right: 0, top: -500, bottom: 0 });
+
+  // Interactive Mascot State (Easter Eggs & Reactions)
+  const [tapCount, setTapCount] = useState(0);
+  const [reactionQuote, setReactionQuote] = useState<{ text: string; sub?: string } | null>(null);
+  const [isBouncing, setIsBouncing] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [sparkles, setSparkles] = useState<{ id: number; x: number; y: number }[]>([]);
 
   useEffect(() => {
     // Dynamically update drag boundaries on window resize
@@ -149,6 +168,7 @@ export default function ProfAkunWidget() {
   useEffect(() => {
     // Reset speech bubble visibility on page navigation so contextual greeting shows
     setShowSpeechBubble(true);
+    setReactionQuote(null);
   }, [pathname]);
 
   // Close modal when clicking outside
@@ -194,8 +214,51 @@ export default function ProfAkunWidget() {
     }
   };
 
+  // Interactive Mascot Click / Tap Reaction Handler
+  const handleMascotClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    // If modal is open, toggle close
+    if (isOpen) {
+      handleCloseModal();
+      return;
+    }
+
+    const nextTap = tapCount + 1;
+    setTapCount(nextTap);
+    setShowSpeechBubble(true);
+
+    // Spawn Sparkle Burst Particles
+    const newSparkleId = Date.now();
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const relativeX = e.clientX - rect.left - 20;
+    const relativeY = e.clientY - rect.top - 20;
+
+    setSparkles((prev) => [...prev.slice(-4), { id: newSparkleId, x: relativeX, y: relativeY }]);
+    setTimeout(() => {
+      setSparkles((prev) => prev.filter((s) => s.id !== newSparkleId));
+    }, 800);
+
+    // Easter Egg Spin every 5 taps
+    if (nextTap % 5 === 0) {
+      setIsSpinning(true);
+      setReactionQuote({
+        text: '🎉 WOW! Easter Egg Prof Akun Terbuka! 🌟',
+        sub: `Kamu sudah men-tap Prof Akun sebanyak ${nextTap}x! Kamu keren!`,
+      });
+      setTimeout(() => setIsSpinning(false), 800);
+    } else {
+      // Normal Bounce & Random Quote
+      setIsBouncing(true);
+      const randomQuote = EASTER_EGG_QUOTES[Math.floor(Math.random() * EASTER_EGG_QUOTES.length)];
+      setReactionQuote(randomQuote);
+      setTimeout(() => setIsBouncing(false), 500);
+    }
+  };
+
   const currentSlide = GUIDE_SLIDES[currentSlideIndex];
-  const greeting = getContextualGreeting(pathname);
+  const greeting = reactionQuote || getContextualGreeting(pathname);
+  const isReaction = !!reactionQuote;
 
   return (
     <motion.div
@@ -224,7 +287,7 @@ export default function ProfAkunWidget() {
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 30 }}
+              exit={{ opacity: 0, y: 0 }}
               transition={{ duration: 0.25, ease: 'easeOut' }}
               className="fixed sm:relative inset-x-0 bottom-0 sm:bottom-auto sm:inset-auto z-50 w-full sm:w-[360px] max-w-full sm:max-w-[360px] bg-white rounded-t-[2rem] sm:rounded-3xl shadow-2xl border-t sm:border border-blue-100/80 overflow-hidden"
             >
@@ -240,7 +303,7 @@ export default function ProfAkunWidget() {
                 
                 <div className="flex items-center justify-between relative z-10">
                   <div className="flex items-center gap-3">
-                    {/* Clean AI Badge Icon (No duplicate mascot image) */}
+                    {/* Clean AI Badge Icon */}
                     <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-400/30 flex items-center justify-center shrink-0 shadow-inner">
                       <Sparkles className="h-5 w-5 text-amber-400" />
                     </div>
@@ -267,119 +330,129 @@ export default function ProfAkunWidget() {
                 </div>
               </div>
 
-          {/* Body Content */}
-          <div className="p-5 bg-gradient-to-b from-blue-50/30 to-white">
-            
-            {/* Category / Badge */}
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100/80 px-3 py-1 rounded-full border border-blue-200/60">
-                {currentSlide.icon}
-                {currentSlide.badge}
-              </span>
-              <span className="text-[11px] font-semibold text-slate-400">
-                {currentSlideIndex + 1} / {GUIDE_SLIDES.length}
-              </span>
-            </div>
+              {/* Body Content */}
+              <div className="p-5 bg-gradient-to-b from-blue-50/30 to-white">
+                
+                {/* Category / Badge */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100/80 px-3 py-1 rounded-full border border-blue-200/60">
+                    {currentSlide.icon}
+                    {currentSlide.badge}
+                  </span>
+                  <span className="text-[11px] font-semibold text-slate-400">
+                    {currentSlideIndex + 1} / {GUIDE_SLIDES.length}
+                  </span>
+                </div>
 
-            {/* Slide Title & Description */}
-            <h4 className="text-base font-bold text-[#0D1B3D] tracking-tight leading-snug mb-1">
-              {currentSlide.title}
-            </h4>
-            <p className="text-xs font-semibold text-blue-600 mb-2">
-              {currentSlide.subtitle}
-            </p>
-            <p className="text-xs text-slate-600 leading-relaxed font-normal mb-4">
-              {currentSlide.description}
-            </p>
+                {/* Slide Title & Description */}
+                <h4 className="text-base font-bold text-[#0D1B3D] tracking-tight leading-snug mb-1">
+                  {currentSlide.title}
+                </h4>
+                <p className="text-xs font-semibold text-blue-600 mb-2">
+                  {currentSlide.subtitle}
+                </p>
+                <p className="text-xs text-slate-600 leading-relaxed font-normal mb-4">
+                  {currentSlide.description}
+                </p>
 
-            {/* Optional Action Button (Sleek & Compact) */}
-            {currentSlide.actionText && (
-              <a
-                href={currentSlide.actionHref}
-                target={currentSlide.actionHref?.startsWith('http') ? '_blank' : '_self'}
-                rel="noreferrer"
-                className="mb-4 flex items-center justify-center gap-1.5 w-full py-2 px-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all transform active:scale-95"
-              >
-                <span>{currentSlide.actionText}</span>
-                <ChevronRight className="h-3.5 w-3.5" />
-              </a>
-            )}
+                {/* Optional Action Button */}
+                {currentSlide.actionText && (
+                  <a
+                    href={currentSlide.actionHref}
+                    target={currentSlide.actionHref?.startsWith('http') ? '_blank' : '_self'}
+                    rel="noreferrer"
+                    className="mb-4 flex items-center justify-center gap-1.5 w-full py-2 px-3.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition-all transform active:scale-95"
+                  >
+                    <span>{currentSlide.actionText}</span>
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </a>
+                )}
 
-            {/* Pagination Dots & Navigation Controls (Proportional & Balanced) */}
-            <div className="flex items-center justify-between pt-3 border-t border-slate-100">
-              
-              {/* Previous Button */}
-              <button
-                onClick={handlePrevSlide}
-                disabled={currentSlideIndex === 0}
-                className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
-                  currentSlideIndex === 0
-                    ? 'text-slate-300 cursor-not-allowed'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer'
-                }`}
-              >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Kembali
-              </button>
-
-              {/* Dots */}
-              <div className="flex items-center gap-1.5">
-                {GUIDE_SLIDES.map((_, idx) => (
+                {/* Pagination Dots & Navigation Controls */}
+                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                  
+                  {/* Previous Button */}
                   <button
-                    key={idx}
-                    onClick={() => setCurrentSlideIndex(idx)}
-                    className={`h-1.5 rounded-full transition-all cursor-pointer ${
-                      idx === currentSlideIndex
-                        ? 'w-4 bg-blue-600'
-                        : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                    onClick={handlePrevSlide}
+                    disabled={currentSlideIndex === 0}
+                    className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-lg transition-colors ${
+                      currentSlideIndex === 0
+                        ? 'text-slate-300 cursor-not-allowed'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 cursor-pointer'
                     }`}
-                  />
-                ))}
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Kembali
+                  </button>
+
+                  {/* Dots */}
+                  <div className="flex items-center gap-1.5">
+                    {GUIDE_SLIDES.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlideIndex(idx)}
+                        className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                          idx === currentSlideIndex
+                            ? 'w-4 bg-blue-600'
+                            : 'w-1.5 bg-slate-200 hover:bg-slate-300'
+                        }`}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Next / Finish Button */}
+                  <button
+                    onClick={handleNextSlide}
+                    className="flex items-center gap-1 text-xs font-bold text-white bg-[#0D1B3D] hover:bg-slate-900 px-3.5 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer active:scale-95"
+                  >
+                    {currentSlideIndex === GUIDE_SLIDES.length - 1 ? (
+                      <>
+                        <span>Selesai</span>
+                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+                      </>
+                    ) : (
+                      <>
+                        <span>Lanjut</span>
+                        <ChevronRight className="h-3.5 w-3.5" />
+                      </>
+                    )}
+                  </button>
+
+                </div>
+
               </div>
 
-              {/* Next / Finish Button */}
-              <button
-                onClick={handleNextSlide}
-                className="flex items-center gap-1 text-xs font-bold text-white bg-[#0D1B3D] hover:bg-slate-900 px-3.5 py-1.5 rounded-xl shadow-sm transition-all cursor-pointer active:scale-95"
-              >
-                {currentSlideIndex === GUIDE_SLIDES.length - 1 ? (
-                  <>
-                    <span>Selesai</span>
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                  </>
-                ) : (
-                  <>
-                    <span>Lanjut</span>
-                    <ChevronRight className="h-3.5 w-3.5" />
-                  </>
-                )}
-              </button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-            </div>
-
-          </div>
-
-        </motion.div>
-      </>
-    )}
-  </AnimatePresence>
-
-      {/* SPEECH BUBBLE (Glassmorphism & Precision Speech Tail + Contextual Greeting) */}
+      {/* SPEECH BUBBLE (Glassmorphism & Dynamic Reaction Accent) */}
       {!isOpen && showSpeechBubble && (
-        <div
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9, y: 10 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.9 }}
           onClick={handleOpenModal}
-          className="relative bg-white/95 backdrop-blur-md text-slate-800 p-3.5 px-4 rounded-2xl rounded-br-none shadow-2xl border border-blue-200/80 flex flex-col gap-1 max-w-[250px] cursor-pointer group hover:border-blue-400 transition-all duration-300 transform hover:-translate-y-1 animate-in fade-in slide-in-from-bottom-2"
+          className={`relative backdrop-blur-md text-slate-800 p-3.5 px-4 rounded-2xl rounded-br-none shadow-2xl flex flex-col gap-1 max-w-[250px] cursor-pointer group transition-all duration-300 transform hover:-translate-y-1 ${
+            isReaction
+              ? 'bg-amber-50/95 border-2 border-amber-300 ring-4 ring-amber-400/20'
+              : 'bg-white/95 border border-blue-200/80 hover:border-blue-400'
+          }`}
         >
           {/* Header Badge */}
-          <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-1.5 mb-0.5">
-            <span className="flex items-center gap-1.5 text-[10px] font-extrabold text-blue-700 uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Prof Akun
+          <div className="flex items-center justify-between gap-2 border-b border-slate-100/80 pb-1.5 mb-0.5">
+            <span className={`flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-wider ${
+              isReaction ? 'text-amber-700' : 'text-blue-700'
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isReaction ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
+              {isReaction ? '✨ Reaksi Prof' : 'Prof Akun'}
             </span>
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 setShowSpeechBubble(false);
+                setReactionQuote(null);
               }}
               className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
               title="Tutup pesan"
@@ -388,7 +461,7 @@ export default function ProfAkunWidget() {
             </button>
           </div>
 
-          {/* Contextual Text */}
+          {/* Contextual / Reaction Text */}
           <p className="text-xs font-extrabold text-[#0D1B3D] leading-snug">
             {greeting.text}
           </p>
@@ -398,29 +471,62 @@ export default function ProfAkunWidget() {
             </p>
           )}
 
-          {/* Precision Speech Tail pointing directly down to Prof Akun mascot */}
-          <div className="absolute -bottom-2 right-4 w-3.5 h-3.5 bg-white/95 border-r border-b border-blue-200/80 rotate-45 pointer-events-none group-hover:border-blue-400 transition-colors" />
-        </div>
+          {/* Precision Speech Tail */}
+          <div className={`absolute -bottom-2 right-4 w-3.5 h-3.5 border-r border-b rotate-45 pointer-events-none transition-colors ${
+            isReaction ? 'bg-amber-50 border-amber-300' : 'bg-white/95 border-blue-200/80 group-hover:border-blue-400'
+          }`} />
+        </motion.div>
       )}
 
-      {/* FLOATING AVATAR TRIGGER BUTTON (Uncropped Free Character Mascot) */}
-      <button
-        onClick={handleOpenModal}
-        className="group relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none select-none"
-        title="Buka Prof Akun Asisten Portal"
-      >
-        {/* Soft Ground Shadow */}
-        <div className="absolute -bottom-1 w-14 h-3 bg-slate-900/25 rounded-full blur-[3px] transition-all duration-300 group-hover:w-16 group-hover:bg-blue-600/40" />
+      {/* FLOATING AVATAR TRIGGER BUTTON */}
+      <div className="relative">
+        
+        {/* Floating Sparkle Particles Burst */}
+        <AnimatePresence>
+          {sparkles.map((sp) => (
+            <motion.div
+              key={sp.id}
+              initial={{ opacity: 1, y: 0, scale: 0.5, x: sp.x }}
+              animate={{ opacity: 0, y: -45, scale: 1.3, x: sp.x + (Math.random() * 20 - 10) }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.7, ease: 'easeOut' }}
+              className="absolute top-0 pointer-events-none z-30"
+            >
+              <Sparkles className="h-5 w-5 text-amber-400 drop-shadow-md" />
+            </motion.div>
+          ))}
+        </AnimatePresence>
 
-        {/* Uncropped Free Mascot Image */}
-        <div className="relative z-10 transition-transform duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 active:scale-95">
-          <img
-            src={isOpen ? currentSlide.image : '/images/prof-akun-waving.png'}
-            alt="Prof Akun Mascot"
-            className="h-20 sm:h-24 w-auto object-contain filter drop-shadow-[0_8px_16px_rgba(13,27,61,0.25)] group-hover:drop-shadow-[0_14px_24px_rgba(37,99,235,0.35)] transition-all duration-300"
-          />
-        </div>
-      </button>
+        <button
+          onClick={handleMascotClick}
+          className="group relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none select-none"
+          title="Klik Prof Akun untuk Reaksi / Buka Panduan"
+        >
+          {/* Soft Ground Shadow */}
+          <div className="absolute -bottom-1 w-14 h-3 bg-slate-900/25 rounded-full blur-[3px] transition-all duration-300 group-hover:w-16 group-hover:bg-blue-600/40" />
+
+          {/* Uncropped Free Mascot Image with Framer Motion Bounce / Spin Physics */}
+          <motion.div
+            animate={{
+              scale: isBouncing ? [1, 1.22, 0.92, 1.1, 1] : 1,
+              rotate: isSpinning ? [0, 360] : isBouncing ? [-8, 8, -4, 4, 0] : 0,
+              y: isBouncing ? [0, -16, 0, -6, 0] : 0,
+            }}
+            transition={{
+              duration: isSpinning ? 0.75 : 0.45,
+              ease: 'easeOut',
+            }}
+            className="relative z-10 transition-transform duration-300 transform group-hover:-translate-y-2 group-hover:scale-110 active:scale-95"
+          >
+            <img
+              src={isOpen ? currentSlide.image : '/images/prof-akun-waving.png'}
+              alt="Prof Akun Mascot"
+              className="h-20 sm:h-24 w-auto object-contain filter drop-shadow-[0_8px_16px_rgba(13,27,61,0.25)] group-hover:drop-shadow-[0_14px_24px_rgba(37,99,235,0.35)] transition-all duration-300"
+            />
+          </motion.div>
+        </button>
+
+      </div>
 
     </motion.div>
   );
