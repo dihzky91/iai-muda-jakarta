@@ -33,24 +33,37 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-sm space-y-8">
+    <div className="relative min-h-screen bg-slate-50 flex items-center justify-center px-4 py-12 overflow-hidden">
+      {/* Background Artwork (Monas & Batik Line Art) */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <picture>
+          <source srcSet="/images/portal-login-bg.webp" type="image/webp" />
+          <img
+            src="/images/portal-login-bg.png"
+            alt="IAI Muda Jakarta Background Artwork"
+            className="w-full h-full object-cover object-center opacity-95"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/5 via-transparent to-slate-100/30" />
+      </div>
+
+      <div className="relative z-10 w-full max-w-sm space-y-8">
 
         {/* Brand */}
         <div className="text-center space-y-3">
           <div className="flex justify-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-lg shadow-blue-500/20 border border-white/90">
               <Landmark className="h-7 w-7" />
             </div>
           </div>
           <div>
-            <h1 className="font-display font-extrabold text-xl text-slate-900">Portal Admin</h1>
-            <p className="text-sm text-slate-500 mt-1">IAI Muda Wilayah DKI Jakarta</p>
+            <h1 className="font-display font-extrabold text-xl text-slate-900 drop-shadow-sm">Portal Admin</h1>
+            <p className="text-sm text-slate-600 font-medium mt-1">IAI Muda Wilayah DKI Jakarta</p>
           </div>
         </div>
 
         {/* Form */}
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 space-y-5">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl border border-white/90 shadow-2xl shadow-blue-900/10 p-8 space-y-5">
           {error && (
             <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-xs font-semibold text-red-700">
               <AlertCircle className="h-4 w-4 shrink-0" />

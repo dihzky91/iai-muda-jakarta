@@ -54,28 +54,41 @@ export default function MemberLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12">
+    <div className="relative min-h-screen flex items-center justify-center bg-slate-50 px-4 py-12 overflow-hidden">
+      {/* Background Artwork (Monas & Batik Line Art) */}
+      <div className="absolute inset-0 z-0 pointer-events-none">
+        <picture>
+          <source srcSet="/images/portal-login-bg.webp" type="image/webp" />
+          <img
+            src="/images/portal-login-bg.png"
+            alt="IAI Muda Jakarta Background Artwork"
+            className="w-full h-full object-cover object-center opacity-95"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-gradient-to-b from-blue-900/5 via-transparent to-slate-100/30" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
+        className="relative z-10 w-full max-w-md"
       >
         {/* Logo & Header */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-white p-2 rounded-2xl mb-4 shadow-xl shadow-blue-600/15 border border-slate-200/80">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/90 backdrop-blur-md p-2 rounded-2xl mb-4 shadow-xl shadow-blue-600/15 border border-white/90">
             <img
               src="/images/iai-muda-logo-badge.png"
               alt="IAI Muda Official Logo Badge"
               className="w-full h-full object-contain"
             />
           </div>
-          <h1 className="text-3xl font-display font-bold text-slate-900">Portal Pengurus</h1>
-          <p className="text-slate-500 mt-2">IAI Muda Jakarta</p>
+          <h1 className="text-3xl font-display font-extrabold text-slate-900 drop-shadow-sm">Portal Pengurus</h1>
+          <p className="text-slate-600 font-medium mt-1">IAI Muda Wilayah DKI Jakarta</p>
         </div>
 
         {/* Login Form */}
-        <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8">
+        <div className="bg-white/90 backdrop-blur-xl rounded-3xl shadow-2xl shadow-blue-900/10 border border-white/90 p-8 sm:p-9">
           <div className="mb-6">
             <h2 className="text-xl font-semibold text-slate-900">Selamat Datang Kembali</h2>
             <p className="text-sm text-slate-500 mt-1">Masukkan email dan password Anda</p>
