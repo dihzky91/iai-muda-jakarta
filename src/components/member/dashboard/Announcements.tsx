@@ -92,7 +92,7 @@ export default function Announcements({ announcements }: AnnouncementsProps) {
                 >
                   <div className="flex items-center justify-between gap-2 mb-1">
                     {getCategoryBadge(item.category)}
-                    <span className="text-[10px] text-slate-400 font-mono">
+                    <span className="text-[10px] text-slate-500 font-mono">
                       {formatDate(item.date)}
                     </span>
                   </div>
@@ -101,7 +101,7 @@ export default function Announcements({ announcements }: AnnouncementsProps) {
                     <h3 className="text-xs font-semibold text-slate-900 group-hover:text-red-800 transition-colors line-clamp-1">
                       {item.title}
                     </h3>
-                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-red-800 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-500 group-hover:text-red-800 group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5" />
                   </div>
                   {item.excerpt && (
                     <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">

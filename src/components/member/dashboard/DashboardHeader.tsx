@@ -63,10 +63,10 @@ export default function DashboardHeader({
         if (result.success && result.data?.heroBannerUrl) {
           setHeroBannerUrl(result.data.heroBannerUrl);
         } else {
-          setHeroBannerUrl('/images/hero-card-asset.png');
+          setHeroBannerUrl('/images/hero-card-asset-opt.png');
         }
       })
-      .catch(() => setHeroBannerUrl('/images/hero-card-asset.png'));
+      .catch(() => setHeroBannerUrl('/images/hero-card-asset-opt.png'));
   }, []);
 
   const hour = new Date().getHours();
@@ -97,7 +97,7 @@ export default function DashboardHeader({
   const badgeLabel = isAlumni ? 'Anggota Alumni' : 'Pengurus Aktif';
   const latestAnnouncement = announcements[0];
 
-  const activeBanner = heroBannerUrl || '/images/hero-card-asset.png';
+  const activeBanner = heroBannerUrl || '/images/hero-card-asset-opt.png';
   const isCustomImage = activeBanner && activeBanner !== 'gradient';
 
   return (
@@ -113,6 +113,9 @@ export default function DashboardHeader({
           <img
             src={activeBanner}
             alt="Hero Banner Artwork"
+            width={800}
+            height={300}
+            fetchPriority="high"
             className="w-full h-full object-cover object-right opacity-30 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"
             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
@@ -229,12 +232,15 @@ export default function DashboardHeader({
 
         {/* Right Column: 3D Membership Card & User Avatar Frame */}
         <div className="flex items-center gap-4 shrink-0">
-          {activeBanner === '/images/hero-card-asset.png' && (
+          {activeBanner === '/images/hero-card-asset-opt.png' && (
             <div className="hidden lg:block relative group/card">
               <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-500 opacity-40 blur-md group-hover/card:opacity-80 transition duration-500" />
               <img
-                src="/images/hero-card-asset.png"
+                src="/images/hero-card-asset-opt.png"
                 alt="Kartu Anggota IAI"
+                width={176}
+                height={110}
+                fetchPriority="high"
                 className="relative w-36 sm:w-44 h-auto object-contain rounded-xl shadow-2xl transition-all duration-500 hover:scale-105 hover:-rotate-2 drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] border border-white/20"
               />
             </div>
@@ -250,6 +256,8 @@ export default function DashboardHeader({
                 <img
                   src={imageUrl}
                   alt={name}
+                  width={112}
+                  height={112}
                   className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-xl object-cover border border-white/40 shadow-inner"
                 />
               ) : (

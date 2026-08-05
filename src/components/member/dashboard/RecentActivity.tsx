@@ -112,7 +112,7 @@ export default function RecentActivity({
                 {activity.subtext && (
                   <p className="text-[11px] text-slate-500 truncate mt-0.5">{activity.subtext}</p>
                 )}
-                <p className="text-[10px] text-slate-400 mt-1 font-mono">{activity.time}</p>
+                <p className="text-[10px] text-slate-500 mt-1 font-mono">{activity.time}</p>
               </div>
               {index === 0 && (
                 <span className="w-2 h-2 rounded-full bg-blue-600 mt-1.5 shrink-0 animate-pulse" />

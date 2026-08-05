@@ -40,22 +40,28 @@ async function getActiveMembersWithLatestStatus() {
       )
     );
 
-  // Step 2: Status terakhir tiap anggota via WHERE subquery (didukung Drizzle)
-  const latestStatuses = await db
-    .select({
-      memberId: schema.memberStatuses.memberId,
-      status: schema.memberStatuses.status,
-      reason: schema.memberStatuses.reason,
-      createdAt: schema.memberStatuses.createdAt,
-    })
-    .from(schema.memberStatuses)
-    .where(
-      sql`(${schema.memberStatuses.memberId}, ${schema.memberStatuses.createdAt}) IN (
-        SELECT ms2.member_id, MAX(ms2.created_at)
-        FROM member_statuses ms2
-        GROUP BY ms2.member_id
-      )`
-    );
+  // Step 2: Status terakhir tiap anggota via CTE Window Function (Dioptimasi untuk TiDB/MySQL)
+  const [rows] = (await db.execute(sql`
+    WITH ranked_statuses AS (
+      SELECT 
+        member_id AS memberId, 
+        status, 
+        reason, 
+        created_at AS createdAt,
+        ROW_NUMBER() OVER (PARTITION BY member_id ORDER BY created_at DESC) AS rn
+      FROM member_statuses
+    )
+    SELECT memberId, status, reason, createdAt
+    FROM ranked_statuses
+    WHERE rn = 1
+  `)) as any;
+
+  const latestStatuses = (Array.isArray(rows) ? rows : []) as Array<{
+    memberId: number;
+    status: string;
+    reason: string | null;
+    createdAt: Date;
+  }>;
 
   // Step 3: Gabungkan di JavaScript
   const statusMap = new Map(latestStatuses.map(s => [s.memberId, s]));

@@ -69,7 +69,7 @@ export default function ProfileCompleteness({ member }: ProfileCompletenessProps
             ) : (
               <Circle className="w-4 h-4 text-slate-300 shrink-0" />
             )}
-            <span className={`text-xs font-medium ${check.filled ? 'text-slate-700' : 'text-slate-400'}`}>
+            <span className={`text-xs font-medium ${check.filled ? 'text-slate-700' : 'text-slate-500'}`}>
               {check.label}
             </span>
           </div>

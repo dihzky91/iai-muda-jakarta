@@ -327,7 +327,7 @@ export function LeaveRequestCard() {
       {!showForm && (
         <button
           onClick={() => setShowForm(true)}
-          className="w-full mt-3 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-xs font-semibold transition"
+          className="w-full mt-3 px-3 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-800 text-xs font-semibold transition"
         >
           Ajukan Cuti
         </button>

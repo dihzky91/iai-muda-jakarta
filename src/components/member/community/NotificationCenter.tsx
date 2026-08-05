@@ -41,7 +41,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // Auto refresh every 30s
+    const interval = setInterval(fetchNotifications, 60000); // Auto refresh every 60s for TiDB RU efficiency
     return () => clearInterval(interval);
   }, []);
 
@@ -107,6 +107,7 @@ export default function NotificationCenter() {
           setIsOpen(!isOpen);
           if (!isOpen) fetchNotifications();
         }}
+        aria-label="Notifikasi Portal"
         className="relative p-2.5 rounded-2xl bg-white hover:bg-slate-100 border border-slate-200/80 text-slate-600 transition-all cursor-pointer shadow-sm"
         title="Notifikasi"
       >

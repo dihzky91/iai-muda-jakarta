@@ -178,7 +178,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
         <nav className="flex-1 overflow-y-auto py-5 px-4 space-y-6">
           {navGroups.map((group) => (
             <div key={group.title}>
-              <p className="px-3 text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              <p className="px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
                 {group.title}
               </p>
               <div className="space-y-1">
@@ -211,6 +211,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
           </div>
           <button
             onClick={handleLogout}
+            aria-label="Keluar dari akun portal"
             className="mt-2 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-red-800 hover:bg-red-50 transition-colors cursor-pointer"
           >
             <LogOut className="w-4 h-4" />
@@ -238,6 +239,7 @@ export default function MemberLayout({ children }: { children: React.ReactNode }
           <NotificationCenter />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu portal"
             className="p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
           >
             {mobileMenuOpen ? <X className="w-6 h-6 text-slate-700" /> : <Menu className="w-6 h-6 text-slate-700" />}

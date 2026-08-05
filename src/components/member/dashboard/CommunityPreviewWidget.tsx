@@ -145,7 +145,7 @@ export default function CommunityPreviewWidget() {
             </Link>
           ))
         ) : (
-          <div className="p-6 text-center text-xs text-slate-400">Belum ada diskusi. Mulai buat postingan pertama Anda!</div>
+          <div className="p-6 text-center text-xs text-slate-500">Belum ada diskusi. Mulai buat postingan pertama Anda!</div>
         )}
       </div>
     </div>

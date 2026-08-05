@@ -1,7 +1,26 @@
 import type { Metadata } from 'next';
+import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import PublicHeader from '@/src/components/PublicHeader';
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-mono',
+  display: 'swap',
+});
 
 async function getFaviconUrl(): Promise<string | null> {
   try {
@@ -47,14 +66,8 @@ export async function generateMetadata(): Promise<Metadata> {
     title: 'IAI Muda Wilayah DKI Jakarta',
     description: 'Website resmi IAI Muda Wilayah DKI Jakarta — Badan kelengkapan Ikatan Akuntan Indonesia yang menaungi mahasiswa akuntansi dan akuntan muda.',
     keywords: 'IAI Muda, Ikatan Akuntan Indonesia, DKI Jakarta, akuntan muda, akuntansi, webinar, sertifikasi CA',
-    icons: faviconUrl ? { icon: faviconUrl } : undefined,
-    /**
-     * Canonical menunjuk ke '/' — satu-satunya URL halaman publik yang benar
-     * ada. Sebelumnya HomeClient menimpa tag ini di sisi klien dengan
-     * /struktur, /acara, /kalender, /galeri, /artikel; kelimanya 404, jadi
-     * mesin pencari diarahkan ke alamat mati.
-     */
-    alternates: { canonical: '/' },
+    icons: faviconUrl ? { icon: faviconUrl } : { icon: '/favicon.ico' },
+    alternates: { canonical: './' },
     openGraph: {
       type: 'website',
       title: 'IAI Muda Wilayah DKI Jakarta',
@@ -77,7 +90,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const headerData = await getHeaderData();
   
   return (
-    <html lang="id" suppressHydrationWarning>
+    <html lang="id" className={`${inter.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable}`} suppressHydrationWarning>
       <body>
         <Providers>
           <PublicHeader 

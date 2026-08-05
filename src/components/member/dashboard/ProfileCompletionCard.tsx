@@ -76,7 +76,7 @@ export default function ProfileCompletionCard({ member }: ProfileCompletionCardP
             ) : (
               <Circle className="w-3.5 h-3.5 text-slate-300 shrink-0" />
             )}
-            <span className={`text-xs font-medium truncate ${check.filled ? 'text-slate-700' : 'text-slate-400'}`}>
+            <span className={`text-xs font-medium truncate ${check.filled ? 'text-slate-700' : 'text-slate-500'}`}>
               {check.label}
             </span>
           </div>

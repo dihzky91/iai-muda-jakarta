@@ -84,9 +84,7 @@ const GUIDE_SLIDES: GuideSlide[] = [
   },
 ];
 
-const getContextualGreeting = (pathname: string | null): { text: string; sub?: string } => {
-  const currentHour = new Date().getHours();
-
+const getContextualGreeting = (pathname: string | null, isMounted: boolean): { text: string; sub?: string } => {
   if (pathname?.includes('/directory')) {
     return {
       text: 'Temukan rekan pengurus di Direktori.',
@@ -111,6 +109,12 @@ const getContextualGreeting = (pathname: string | null): { text: string; sub?: s
       sub: 'Klik untuk jelajahi panduan portal 💬',
     };
   }
+
+  if (!isMounted) {
+    return { text: 'Hai Pengurus! ☕', sub: 'Prof Akun siap membantu kamu!' };
+  }
+
+  const currentHour = new Date().getHours();
 
   // Time-based greetings
   if (currentHour >= 4 && currentHour < 12) {
@@ -141,6 +145,11 @@ export default function ProfAkunWidget() {
   const [showSpeechBubble, setShowSpeechBubble] = useState(true);
   const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
   const [dragBounds, setDragBounds] = useState({ left: -300, right: 0, top: -500, bottom: 0 });
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Interactive Mascot State (Easter Eggs & Reactions)
   const [tapCount, setTapCount] = useState(0);
@@ -257,7 +266,7 @@ export default function ProfAkunWidget() {
   };
 
   const currentSlide = GUIDE_SLIDES[currentSlideIndex];
-  const greeting = reactionQuote || getContextualGreeting(pathname);
+  const greeting = reactionQuote || getContextualGreeting(pathname, isMounted);
   const isReaction = !!reactionQuote;
 
   return (
@@ -330,6 +339,7 @@ export default function ProfAkunWidget() {
                   {/* Close Button with Micro Hover Animation */}
                   <button
                     onClick={handleCloseModal}
+                    aria-label="Tutup modal Prof Akun"
                     className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 text-white/80 hover:text-white flex items-center justify-center transition-all duration-200 cursor-pointer backdrop-blur-sm border border-white/10"
                     title="Tutup"
                   >
@@ -374,7 +384,7 @@ export default function ProfAkunWidget() {
                         {currentSlide.icon}
                         <span>{currentSlide.badge}</span>
                       </span>
-                      <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-lg">
+                      <span className="text-[11px] font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-lg">
                         {currentSlideIndex + 1} / {GUIDE_SLIDES.length}
                       </span>
                     </div>
@@ -419,9 +429,10 @@ export default function ProfAkunWidget() {
                   <button
                     onClick={handlePrevSlide}
                     disabled={currentSlideIndex === 0}
+                    aria-label="Kembali ke slide sebelumnya"
                     className={`flex items-center gap-1 text-xs font-bold px-3 py-2 rounded-xl transition-all ${
                       currentSlideIndex === 0
-                        ? 'text-slate-300 bg-slate-100/50 cursor-not-allowed'
+                        ? 'text-slate-400 bg-slate-100/50 cursor-not-allowed'
                         : 'text-slate-700 bg-slate-100 hover:bg-slate-200 active:scale-95 cursor-pointer'
                     }`}
                   >
@@ -435,6 +446,7 @@ export default function ProfAkunWidget() {
                       <button
                         key={idx}
                         onClick={() => setCurrentSlideIndex(idx)}
+                        aria-label={`Ke slide ${idx + 1}`}
                         className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
                           idx === currentSlideIndex
                             ? 'w-5 bg-gradient-to-r from-blue-600 to-indigo-600 shadow-sm'
@@ -447,6 +459,7 @@ export default function ProfAkunWidget() {
                   {/* Next / Finish Button */}
                   <button
                     onClick={handleNextSlide}
+                    aria-label={currentSlideIndex === GUIDE_SLIDES.length - 1 ? "Selesai panduan" : "Lanjut ke slide berikutnya"}
                     className="flex items-center gap-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#0D1B3D] to-[#1E293B] hover:from-[#070E20] hover:to-[#0D1B3D] px-4 py-2 rounded-xl shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95"
                   >
                     {currentSlideIndex === GUIDE_SLIDES.length - 1 ? (
@@ -490,7 +503,7 @@ export default function ProfAkunWidget() {
               isReaction ? 'text-amber-700' : 'text-blue-700'
             }`}>
               <span className={`w-2 h-2 rounded-full ${isReaction ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} />
-              {isReaction ? '✨ Reaksi Prof' : 'Prof Akun • AI Assistant'}
+              {isReaction ? '✨ Reaksi Prof' : 'Prof Akun'}
             </span>
             <button
               onClick={(e) => {
@@ -498,7 +511,8 @@ export default function ProfAkunWidget() {
                 setShowSpeechBubble(false);
                 setReactionQuote(null);
               }}
-              className="text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
+              aria-label="Tutup pesan"
+              className="text-slate-500 hover:text-slate-700 p-0.5 rounded-full hover:bg-slate-100 transition-colors"
               title="Tutup pesan"
             >
               <X className="h-3.5 w-3.5" />
@@ -510,7 +524,7 @@ export default function ProfAkunWidget() {
             {greeting.text}
           </p>
           {greeting.sub && (
-            <p className="text-[11px] font-semibold text-slate-500 leading-tight">
+            <p className="text-[11px] font-semibold text-slate-600 leading-tight">
               {greeting.sub}
             </p>
           )}
@@ -543,6 +557,7 @@ export default function ProfAkunWidget() {
 
         <button
           onClick={handleMascotClick}
+          aria-label="Buka bantuan Prof Akun"
           className="group relative flex flex-col items-center justify-center transition-all duration-300 cursor-pointer focus:outline-none select-none"
           title="Klik Prof Akun untuk Reaksi / Buka Panduan"
         >
@@ -565,6 +580,8 @@ export default function ProfAkunWidget() {
             <img
               src={isOpen ? currentSlide.image : '/images/prof-akun-waving.png'}
               alt="Prof Akun Mascot"
+              width={104}
+              height={104}
               className="h-22 sm:h-26 w-auto object-contain filter drop-shadow-[0_10px_20px_rgba(13,27,61,0.3)] group-hover:drop-shadow-[0_16px_28px_rgba(37,99,235,0.4)] transition-all duration-300"
             />
           </motion.div>
