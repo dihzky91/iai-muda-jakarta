@@ -114,14 +114,30 @@ export default function HeroSection({
         </svg>
       </div>
 
-      {/* 5. Jakarta Skyline Silhouette (Monas & Gedung-gedung dari Gambar Referensi) */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
-        <img
-          src="/images/jakarta-skyline-bg.png"
-          alt="Siluet Jakarta Skyline Monas"
-          className="w-full h-full object-fill object-bottom opacity-90 select-none"
-        />
+      {/* 5. Jakarta Skyline Silhouette & Batik Artwork (Monas & Batik Line Art) */}
+      <div
+        className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0"
+        style={{
+          maskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
+          WebkitMaskImage: 'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%)',
+        }}
+      >
+        <picture>
+          <source srcSet="/images/portal-login-bg.webp" type="image/webp" />
+          <img
+            src="/images/portal-login-bg.png"
+            alt="Siluet Jakarta Skyline Monas & Batik Artwork"
+            width={1672}
+            height={941}
+            fetchPriority="high"
+            className="w-full h-full object-cover object-center opacity-90 select-none"
+          />
+        </picture>
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-transparent to-[#f8fafc]" />
       </div>
+
+      {/* Smooth Seamless Bottom Transition Overlay (Menghilangkan Garis Potong Bawah) */}
+      <div className="absolute bottom-0 inset-x-0 h-44 bg-gradient-to-t from-[#f8fafc] via-[#f8fafc]/80 to-transparent pointer-events-none z-0" />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="lg:grid lg:grid-cols-12 lg:gap-8 items-center">
