@@ -36,13 +36,13 @@ export default function PortalPageHeader({
         if (result.success && result.data?.heroBannerUrl) {
           setHeroBannerUrl(result.data.heroBannerUrl);
         } else {
-          setHeroBannerUrl('/images/hero-card-asset.png');
+          setHeroBannerUrl('/images/hero-card-asset-opt.png');
         }
       })
-      .catch(() => setHeroBannerUrl('/images/hero-card-asset.png'));
+      .catch(() => setHeroBannerUrl('/images/hero-card-asset-opt.png'));
   }, []);
 
-  const activeBanner = heroBannerUrl || '/images/hero-card-asset.png';
+  const activeBanner = heroBannerUrl || '/images/hero-card-asset-opt.png';
   const isCustomImage = activeBanner && activeBanner !== 'gradient';
 
   return (
@@ -58,6 +58,9 @@ export default function PortalPageHeader({
           <img
             src={activeBanner}
             alt="Hero Banner Artwork"
+            width={800}
+            height={300}
+            fetchPriority="high"
             className="w-full h-full object-cover object-right opacity-30 mix-blend-overlay transition-transform duration-700 group-hover:scale-105"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = 'none';

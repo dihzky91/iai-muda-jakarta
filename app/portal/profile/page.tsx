@@ -379,7 +379,7 @@ export default function MemberProfile() {
                     <div>
                       <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Angkatan</label>
                       <p className="text-slate-900 font-medium">{member.generation?.name || '-'}</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Dikelola admin</p>
+                      <p className="text-xs text-slate-500 mt-0.5">Dikelola admin</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -544,6 +544,7 @@ export default function MemberProfile() {
                       type="button"
                       onClick={() => setFormData({ ...formData, showPublic: !formData.showPublic })}
                       disabled={!isEditing || saving}
+                      aria-label="Tampilkan profil di website publik"
                       className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
                         formData.showPublic ? 'bg-blue-600' : 'bg-slate-300'
                       }`}
