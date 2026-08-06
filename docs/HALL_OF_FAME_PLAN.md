@@ -23,13 +23,12 @@ Fitur **Hall of Fame & History Timeline** bertujuan untuk:
 
 Fitur ini akan diakses pada rute halaman `/portal/hall-of-fame` dengan 4 bagian visual utama:
 
-### 1. Hero Banner & Filter Kabinet (`#0D1B3D` & Gold Accent)
+### 1. Hero Banner & Filter Periode Generasi (`#0D1B3D` & Gold Accent)
 - **Visual:** Banner bermewahkan gradien warna Navy Tua khas IAI Muda (`#0D1B3D`) dengan aksen emas (`amber-400`).
-- **Filter Selector Periode:** Dropdown/Tab interaktif untuk memilih periode kabinet:
-  - `2024/2025` — Kabinet Akselerasi *(Periode Berjalan)*
-  - `2023/2024` — Kabinet Inovasi
-  - `2022/2023` — Kabinet Sinergi
-  - `2021/2022` — Kabinet Pelopor *(Pendirian)*
+- **Filter Selector Periode:** Dropdown/Tab interaktif berbasis data real `generations` organisasi:
+  - `Generasi ke-2 (2025-2026)` *(Periode Berjalan / Aktif)*
+  - `Generasi ke-1 (2024-2025)` *(Periode Demisioner)*
+- **Nama Kabinet (Opsional):** Jika diisi di CMS (misal: "Kabinet Akselerasi"), nama kabinet akan muncul di samping periode. Jika kosong, UI secara otomatis hanya menampilkan nama Generasi & Tahun (misal: "Generasi ke-2 (2025–2026)").
 
 ### 2. Interactive Vertical History Timeline (Garis Sejarah Organisasi)
 - **Visual:** Garis vertikal menyala (*glowing timeline node*) di tengah/kiri layar dengan animasi Framer Motion saat di-scroll.
@@ -57,25 +56,19 @@ Fitur ini akan diakses pada rute halaman `/portal/hall-of-fame` dengan 4 bagian 
 
 ## 🗄️ 3. Perancangan Database (Drizzle ORM Schema)
 
-Perubahan skema database yang akan ditambahkan pada file `db/schema.ts`:
+Skema database Hall of Fame menginduk langsung ke tabel `generations` yang sudah ada di `db/schema.ts`, sehingga periode selalu sinkron dengan data organisasi:
 
 ```typescript
-// 1. Tabel Master Periode Kabinet
-export const cabinetPeriods = mysqlTable('cabinet_periods', {
-  id: serial('id').primaryKey(),
-  yearRange: varchar('year_range', { length: 20 }).notNull().unique(), // e.g. '2023/2024'
-  cabinetName: varchar('cabinet_name', { length: 100 }).notNull(), // e.g. 'Kabinet Inovasi'
-  chairpersonName: varchar('chairperson_name', { length: 100 }).notNull(),
-  logoUrl: varchar('logo_url', { length: 255 }),
-  visionMission: text('vision_mission'),
-  isCurrent: boolean('is_current').default(false).notNull(),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+// 1. Ekstensi/Metadata Kabinet pada Tabel Generation (Opsional Nama Kabinet)
+// Kolom tambahan pada tabel generations yang sudah ada:
+// - cabinetName: varchar('cabinet_name', { length: 100 }) -> Nullable / Opsional
+// - visionMission: text('vision_mission') -> Nullable
+// - logoUrl: varchar('logo_url', { length: 255 }) -> Nullable
 
-// 2. Tabel Timeline Milestone Sejarah
+// 2. Tabel Timeline Milestone Sejarah (Berelasi dengan generationId)
 export const historyMilestones = mysqlTable('history_milestones', {
   id: serial('id').primaryKey(),
-  periodId: int('period_id').notNull(),
+  generationId: int('generation_id').notNull(),
   eventDate: varchar('event_date', { length: 50 }).notNull(),
   title: varchar('title', { length: 150 }).notNull(),
   description: text('description').notNull(),
@@ -84,13 +77,13 @@ export const historyMilestones = mysqlTable('history_milestones', {
   sortOrder: int('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-  idxPeriodId: index('idx_milestones_period_id').on(table.periodId),
+  idxGenId: index('idx_milestones_generation_id').on(table.generationId),
 }));
 
 // 3. Tabel Jajaran Alumni & BPH Demisioner
 export const alumniBoard = mysqlTable('alumni_board', {
   id: serial('id').primaryKey(),
-  periodId: int('period_id').notNull(),
+  generationId: int('generation_id').notNull(),
   name: varchar('name', { length: 100 }).notNull(),
   roleName: varchar('role_name', { length: 100 }).notNull(), // e.g. 'Ketua Umum', 'Sekretaris Umum'
   currentCompany: varchar('current_company', { length: 150 }), // e.g. 'Senior Auditor di KAP PwC'
@@ -99,37 +92,57 @@ export const alumniBoard = mysqlTable('alumni_board', {
   sortOrder: int('sort_order').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({
-  idxAlumniPeriodId: index('idx_alumni_period_id').on(table.periodId),
+  idxAlumniGenId: index('idx_alumni_generation_id').on(table.generationId),
 }));
 ```
 
 ---
 
-## 🛠️ 4. Perancangan Endpoint API
+## 🖥️ 4. Pengaturan & Pengelolaan di Admin CMS
+
+Pengaturan dan input data Hall of Fame akan ditempatkan di **Admin CMS** pada menu baru:
+
+📍 **Path Admin CMS:** `/admin/hall-of-fame` (atau sub-modul di bawah menu **Pengaturan Organisasi / Generasi**).
+
+### Fitur Admin CMS:
+1. **Kelola Periode Generasi & Metadata Kabinet**: 
+   - Memilih Generasi (misal Gen-1, Gen-2).
+   - *Field* Nama Kabinet bersifat **opsional** (boleh dikosongkan).
+2. **Kelola Timeline Sejarah / Milestone**:
+   - Tambah, edit, dan hapus milestone momen penting organisasi per generasi.
+   - Re-order urutan timeline dan upload foto dokumentasi.
+3. **Kelola Jajaran BPH Demisioner & Alumni**:
+   - Tambah data foto, nama, jabatan terdahulu, karir saat ini, dan legacy quote.
+4. **Kelola Wall of Champions**:
+   - Menentukan apresiasi Member of the Year & Proker Terbaik per periode.
+
+---
+
+## 🛠️ 5. Perancangan Endpoint API
 
 ### Public & Member Endpoints
-1. **`GET /api/hall-of-fame/periods`**
-   - Mengambil seluruh daftar periode kabinet yang terdaftar untuk dropdown filter.
-2. **`GET /api/hall-of-fame/details?periodId={id}`**
-   - Mengambil detail periode kabinet, jajaran BPH demisioner, serta timeline milestone sejarah untuk periode terpilih.
+1. **`GET /api/hall-of-fame/generations`**
+   - Mengambil seluruh daftar generasi yang ada di database untuk dropdown filter.
+2. **`GET /api/hall-of-fame/details?generationId={id}`**
+   - Mengambil detail generasi/kabinet, jajaran BPH demisioner, serta timeline milestone sejarah untuk generasi terpilih.
 
 ### Admin CMS Management Endpoints
-1. **`POST /api/admin/hall-of-fame/periods`** — Menambah/mengedit data periode kabinet baru.
+1. **`PUT /api/admin/hall-of-fame/generations/[id]`** — Mengedit metadata generasi/kabinet.
 2. **`POST /api/admin/hall-of-fame/milestones`** — Menambah node timeline sejarah proker akbar.
 3. **`POST /api/admin/hall-of-fame/alumni`** — Menambah/mengedit data BPH demisioner.
 
 ---
 
-## 🗓️ 5. Rencana Eksekusi & Tahapan Pengembangan
+## 🗓️ 6. Rencana Eksekusi & Tahapan Pengembangan
 
 | Tahap | Aktivitas | File Terkait / Output |
 | :--- | :--- | :--- |
-| **Tahap 1** | Skema Database & Migrasi | Update `db/schema.ts` & file seeder awal |
-| **Tahap 2** | API Routes & Services | `src/app/api/hall-of-fame/route.ts` |
+| **Tahap 1** | Skema Database & Migrasi | Update `db/schema.ts` (relasi ke `generationId`) & seeder data real |
+| **Tahap 2** | API Routes & Services | `app/api/hall-of-fame/route.ts` |
 | **Tahap 3** | Komponen UI Timeline & Legacy Wall | `src/components/member/HallOfFameView.tsx` |
-| **Tahap 4** | Halaman Portal & Integrasi Navigasi | `src/app/portal/hall-of-fame/page.tsx` & Header Link |
-| **Tahap 5** | Admin CMS Module | Modul Pengelolaan Hall of Fame di Admin CMS |
+| **Tahap 4** | Halaman Portal & Integrasi Navigasi | `app/portal/hall-of-fame/page.tsx` & Header Link |
+| **Tahap 5** | Modul Admin CMS | `app/admin/hall-of-fame/page.tsx` (CMS Pengelolaan) |
 
 ---
 
-*Dokumen ini siap dijadikan acuan saat pengembangan fitur Hall of Fame & History Timeline dimulai.*
+*Dokumen ini telah disesuaikan dengan periode generasi real organisasi IAI Muda DKI Jakarta dan siap dijalankan.*

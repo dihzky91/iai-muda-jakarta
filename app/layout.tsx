@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import PublicHeader from '@/src/components/PublicHeader';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -99,6 +100,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
           {children}
           <CommandPalette />
+          <Analytics />
         </Providers>
       </body>
     </html>

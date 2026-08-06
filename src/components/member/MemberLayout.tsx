@@ -21,6 +21,7 @@ import {
   BookOpenCheck,
   Megaphone,
   MessageSquare,
+  Trophy,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import NotificationCenter from './community/NotificationCenter';
@@ -57,6 +58,7 @@ const navGroups: NavGroup[] = [
   {
     title: 'Organisasi',
     items: [
+      { href: '/portal/hall-of-fame', label: 'Hall of Fame', icon: Trophy },
       { href: '/portal/onboarding', label: 'Onboarding Library', icon: BookOpenCheck },
       { href: '/portal/directory', label: 'Direktori Anggota', icon: Users },
       { href: '/portal/calendar', label: 'Kalender', icon: CalendarDays },

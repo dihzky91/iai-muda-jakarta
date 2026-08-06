@@ -21,10 +21,13 @@ import {
   Eye,
   EyeOff,
   CheckCircle2,
+  Sparkles,
+  ChevronRight,
 } from 'lucide-react';
 import { useMemberAuth } from '@/src/context/MemberAuthContext';
 import { MemberLayout } from '@/src/components/member';
 import PortalPageHeader from '@/src/components/member/PortalPageHeader';
+import MemberJourneyModal from '@/src/components/member/MemberJourneyModal';
 
 export default function MemberProfile() {
   const router = useRouter();
@@ -34,6 +37,7 @@ export default function MemberProfile() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isJourneyOpen, setIsJourneyOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -268,6 +272,32 @@ export default function MemberProfile() {
             <p className="text-sm font-medium">{message.text}</p>
           </motion.div>
         )}
+
+        {/* Banner Pemantik My IAI Muda Journey */}
+        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white p-6 rounded-3xl border border-amber-500/30 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-3 bg-amber-500/20 rounded-2xl border border-amber-400/30 text-amber-400 shrink-0">
+              <Sparkles className="w-6 h-6 animate-pulse" />
+            </div>
+            <div>
+              <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-400 bg-amber-400/10 px-2.5 py-0.5 rounded-full border border-amber-400/20">
+                Interactive Feature
+              </span>
+              <h2 className="text-lg font-extrabold text-white mt-1">My IAI Muda Journey</h2>
+              <p className="text-xs text-slate-300">
+                Tinjau riwayat pengabdian, trajektori karir (BPH / Koordinator Bidang / Staf), dan unduh kartu resume untuk LinkedIn.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setIsJourneyOpen(true)}
+            className="flex items-center gap-2 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 font-extrabold text-xs px-5 py-3 rounded-2xl transition-all cursor-pointer shadow-md shrink-0 whitespace-nowrap"
+          >
+            <Sparkles className="w-4 h-4" /> Lihat Perjalananku
+          </button>
+        </div>
+
+        <MemberJourneyModal isOpen={isJourneyOpen} onClose={() => setIsJourneyOpen(false)} />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Photo & Preview */}

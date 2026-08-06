@@ -7,6 +7,9 @@ export interface Generation {
   id: number;
   name: string;      // e.g. "Generasi ke-1", "Generasi ke-2"
   years: string;     // e.g. "2024-2025", "2025-2026"
+  cabinetName?: string | null;
+  visionMission?: string | null;
+  logoUrl?: string | null;
   isActive: boolean; // Indicates if this is the current active committee
 }
 

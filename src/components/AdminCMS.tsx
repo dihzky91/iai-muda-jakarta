@@ -9,7 +9,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   LayoutDashboard, Calendar, Users, History, BookOpen, Image as ImageIcon,
   ShieldCheck, Settings as SettingsIcon, LogOut, UserCog, Globe,
-  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList, MessageSquare, Handshake,
+  PanelLeftClose, PanelLeft, Menu, X, FileText, ClipboardList, MessageSquare, Handshake, Crown,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Generation, Member, Event, Article, GalleryItem, Settings, Pillar, Partner } from '../types';
@@ -28,7 +28,9 @@ import HRManager from './admin/hr/HRManager';
 import CommunityModerationManager from './admin/CommunityModerationManager';
 import PartnersManager from './admin/PartnersManager';
 
-export type CmsTab = 'dashboard' | 'events' | 'members' | 'partners' | 'hr' | 'community' | 'articles' | 'gallery' | 'generations' | 'users' | 'settings' | 'pillars' | 'onboarding';
+import HallOfFameManager from './admin/HallOfFameManager';
+
+export type CmsTab = 'dashboard' | 'events' | 'members' | 'partners' | 'hr' | 'community' | 'articles' | 'gallery' | 'generations' | 'hallOfFame' | 'users' | 'settings' | 'pillars' | 'onboarding';
 
 interface AdminCMSProps {
   generations: Generation[];
@@ -66,6 +68,7 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'partners', label: 'Jejaring HIMA', icon: Handshake, count: p => p.partners?.length || 0 },
   { key: 'hr', label: 'HR Command Center', icon: ClipboardList },
   { key: 'community', label: 'Moderasi Feed', icon: MessageSquare },
+  { key: 'hallOfFame', label: 'Hall of Fame', icon: Crown },
   { key: 'onboarding', label: 'Onboarding Library', icon: FileText },
   { key: 'articles', label: 'Artikel & Berita', icon: BookOpen, count: p => p.articles.length },
   { key: 'gallery', label: 'Galeri Kegiatan', icon: ImageIcon, count: p => p.gallery?.length || 0 },
@@ -73,7 +76,6 @@ const NAV_ITEMS: Array<{ key: CmsTab; label: string; icon: React.ElementType; co
   { key: 'pillars', label: 'Pilar Organisasi', icon: ShieldCheck, count: p => p.pillars.length },
   { key: 'settings', label: 'Pengaturan', icon: SettingsIcon },
 ];
-
 
 
 export default function AdminCMS({
@@ -139,6 +141,7 @@ export default function AdminCMS({
     partners: 'Jejaring HIMA',
     hr: 'HR Command Center',
     community: 'Moderasi Feed',
+    hallOfFame: 'Hall of Fame',
     onboarding: 'Onboarding Library',
     articles: 'Artikel & Berita',
     gallery: 'Galeri Kegiatan',
@@ -179,6 +182,8 @@ export default function AdminCMS({
         return <HRManager />;
       case 'community':
         return <CommunityModerationManager />;
+      case 'hallOfFame':
+        return <HallOfFameManager generations={generations} />;
       case 'onboarding':
         return <OnboardingManager />;
       case 'articles':

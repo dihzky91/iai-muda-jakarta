@@ -15,6 +15,9 @@ export const generations = mysqlTable('generations', {
   slug: varchar('slug', { length: 100 }).notNull().unique(),
   name: varchar('name', { length: 255 }).notNull(),
   years: varchar('years', { length: 50 }).notNull(),
+  cabinetName: varchar('cabinet_name', { length: 100 }),
+  visionMission: text('vision_mission'),
+  logoUrl: varchar('logo_url', { length: 500 }),
   isActive: boolean('is_active').default(false).notNull(),
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -667,6 +670,77 @@ export const partners = mysqlTable('partners', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 });
+
+// ============================================================================
+// HALL OF FAME TABLES
+// ============================================================================
+
+export const historyMilestones = mysqlTable('history_milestones', {
+  id: serial('id').primaryKey(),
+  generationId: int('generation_id').notNull(),
+  eventDate: varchar('event_date', { length: 50 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  imageUrl: varchar('image_url', { length: 500 }),
+  impactTag: varchar('impact_tag', { length: 100 }),
+  sortOrder: int('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxGenId: index('idx_milestones_generation_id').on(table.generationId),
+}));
+
+export const alumniBoard = mysqlTable('alumni_board', {
+  id: serial('id').primaryKey(),
+  generationId: int('generation_id').notNull(),
+  name: varchar('name', { length: 255 }).notNull(),
+  roleName: varchar('role_name', { length: 255 }).notNull(),
+  currentCompany: varchar('current_company', { length: 255 }),
+  photoUrl: varchar('photo_url', { length: 500 }),
+  quote: text('quote'),
+  sortOrder: int('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxAlumniGenId: index('idx_alumni_generation_id').on(table.generationId),
+}));
+
+export const wallOfChampions = mysqlTable('wall_of_champions', {
+  id: serial('id').primaryKey(),
+  generationId: int('generation_id').notNull(),
+  awardType: mysqlEnum('award_type', ['member_of_the_year', 'best_proker', 'other']).default('other').notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  winnerName: varchar('winner_name', { length: 255 }).notNull(),
+  description: text('description'),
+  imageUrl: varchar('image_url', { length: 500 }),
+  sortOrder: int('sort_order').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  idxChampionsGenId: index('idx_champions_generation_id').on(table.generationId),
+}));
+
+export const historyMilestonesRelations = relations(historyMilestones, ({ one }) => ({
+  generation: one(generations, {
+    fields: [historyMilestones.generationId],
+    references: [generations.id],
+  }),
+}));
+
+export const alumniBoardRelations = relations(alumniBoard, ({ one }) => ({
+  generation: one(generations, {
+    fields: [alumniBoard.generationId],
+    references: [generations.id],
+  }),
+}));
+
+export const wallOfChampionsRelations = relations(wallOfChampions, ({ one }) => ({
+  generation: one(generations, {
+    fields: [wallOfChampions.generationId],
+    references: [generations.id],
+  }),
+}));
+
 
 
 
