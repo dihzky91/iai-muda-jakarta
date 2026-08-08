@@ -86,7 +86,6 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 import CommandPalette from '@/src/components/CommandPalette';
-import { Analytics } from '@vercel/analytics/next';
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const headerData = await getHeaderData();
